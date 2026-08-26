@@ -19,12 +19,12 @@ async function load(){
   ]);
   if(p.error||c.error){console.error('NuoNuo menu load error',{products:p.error,categories:c.error});$('#loading').innerHTML=`<div>Menu connection failed.</div><small>${esc(errText(p.error||c.error))}</small>`;return}
   products=p.data||[];cats=c.data||[];$('#loading').remove();
-  $('#cats').innerHTML=[{id:'',name:'All'},...cats].map((c,i)=>`<button data-id="${c.id}" class="tab ${i?'':'active'}" onclick="filterCat(this,'${c.id}')">${esc(c.name)}</button>`).join('');
+  $('#cats').innerHTML=cats.map((c,i)=>`<button data-id="${c.id}" class="tab ${i?'':'active'}" onclick="filterCat(this,'${c.id}')">${esc(c.name)}</button>`).join('');
   renderCategories();renderHero();startHero();menu();
 }
 window.filterCat=(b,id)=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');menu(id,$('#searchInput')?.value||'')};
 function currentCategory(){return document.querySelector('.tab.active')?.dataset.id||''}
-$('#shopBtn').onclick=()=>scrollToId('menu');$('#searchBtn').onclick=()=>{$('#searchWrap').classList.toggle('hidden');if(!$('#searchWrap').classList.contains('hidden'))$('#searchInput').focus()};$('#searchInput').oninput=()=>menu(currentCategory(),$('#searchInput').value);
+$('#shopBtn').onclick=()=>scrollToId('menu');
 $('#menuToggle').onclick=()=>$('#mobileNav').classList.toggle('open');$('#cart').onclick=()=>{$('#drawer').classList.remove('hidden');$('#drawer').setAttribute('aria-hidden','false');document.body.classList.add('cart-open');render()};$('#close').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};$('#drawerBackdrop').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};
 function setAuthMode(mode){authMode=mode;$('#loginTab').classList.toggle('active',mode==='login');$('#signupTab').classList.toggle('active',mode==='signup');$('#authTitle').textContent=mode==='login'?'Welcome back.':'Create your NuoNuo account.';$('#authSubmit').textContent=mode==='login'?'Sign in':'Create account';$('#authNameField').classList.toggle('hidden',mode==='login');$('#authName').required=mode==='signup';$('#authMessage').textContent=''}
 async function refreshAuth(){const {data:{session}}=await sb.auth.getSession();if(session){$('#accountLabel').textContent='Account';$('#accountSignedOut').classList.add('hidden');$('#accountSignedIn').classList.remove('hidden');$('#signedInEmail').textContent=session.user.email||'';$('#checkoutAccountHint').textContent=`Signed in as ${session.user.email||'your account'}.`;}else{$('#accountLabel').textContent='Sign in';$('#accountSignedOut').classList.remove('hidden');$('#accountSignedIn').classList.add('hidden');$('#checkoutAccountHint').textContent='You can checkout as a guest, or sign in for a faster checkout.'}}
