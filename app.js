@@ -44,7 +44,7 @@ function menu(cat='',query=''){
 }
 function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;
-  holder.innerHTML=cats.slice(0,6).map(c=>{
+  holder.innerHTML=cats.map(c=>{
     const p=products.find(x=>x.category_id===c.id),img=imageSrc(p?.image_url);
     return `<button class="category-card" type="button" onclick="filterByCategory('${c.id}')">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
   }).join('')||'<p>No categories yet.</p>';
@@ -70,34 +70,28 @@ async function load(){
     }
     sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    // Keep the public storefront compatible with both database versions:
-    // categories does NOT require sales_channel, and products may or may not have it.
+    // IMPORTANT: use the same public storefront query that previously loaded
+    // the real NuoNuo menu and its image URLs. Do not filter products with a
+    // second sales_channel query, because that can blank the storefront when
+    // older/newer rows use different channel values.
     const [p,c]=await Promise.all([
-      sb.from('products').select('id,name,description,selling_price,calculated_cost,image_url,category_id').eq('user_id',owner).eq('active',true).order('name'),
-      sb.from('categories').select('id,name,sort_order').eq('user_id',owner).order('sort_order').order('name')
+      sb.from('products').select('id,name,description,selling_price,calculated_cost,image_url,category_id').eq('user_id',owner).eq('sales_channel','nuonuo').eq('active',true).order('name'),
+      sb.from('categories').select('id,name,sort_order').eq('user_id',owner).eq('sales_channel','nuonuo').order('sort_order').order('name')
     ]);
     if(p.error||c.error) throw (p.error||c.error);
 
     products=p.data||[];
     cats=c.data||[];
 
-    // If sales_channel exists, use it. If an older schema does not have the column,
-    // keep the already-loaded products instead of blanking the whole storefront.
-    try{
-      const ch=await sb.from('products').select('id,sales_channel').eq('user_id',owner).eq('active',true);
-      if(!ch.error&&Array.isArray(ch.data)){
-        const channels=new Map(ch.data.map(x=>[x.id,x.sales_channel]));
-        products=products.map(x=>({...x,sales_channel:channels.get(x.id)})).filter(x=>isNuoNuoChannel(x.sales_channel));
-      }
-    }catch(e){console.warn('NuoNuo sales_channel filter skipped:',e)}
-
     $('#loading')?.remove();
     const select=$('#categorySelect');
     if(select){
-      select.innerHTML='<option value="">Select a category</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+      select.innerHTML='<option value="">Categories</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
       select.onchange=()=>menu(select.value,$('#searchInput')?.value||'');
     }
-    renderCategories();renderHero();startHero();
+    renderCategories();
+    renderHero();
+    startHero();
     menu('');
   }catch(e){
     console.error('NuoNuo menu load error',e);
