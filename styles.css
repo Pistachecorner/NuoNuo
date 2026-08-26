@@ -123,3 +123,63 @@ body.cart-open{overflow:hidden}
      if the browser/system is dark and a transparent logo is rendered on a dark surface. */
   .brand-logo-picture,.footer-logo-picture{background:transparent}
 }
+
+/* Full storefront dark mode: follows the customer's device/browser setting. */
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#f3efe8;
+    --muted:#aaa49c;
+    --line:#34312e;
+    --bg:#11100f;
+    --card:#191817;
+    --accent:#f3efe8;
+  }
+  html,body{background:var(--bg);color:var(--ink)}
+  body{color-scheme:dark}
+  .site-header{
+    background:rgba(17,16,15,.94);
+    border-color:var(--line);
+  }
+  .icon-btn{color:#f3efe8}
+  .account-link{color:#e9e4dc}
+  .brand b{color:#f3efe8}
+  .brand small{color:#9b958e}
+  .cart-btn{background:#151413;border-color:#d8d1c8;color:#f3efe8}
+  .cart-btn i{background:#f3efe8;color:#171615}
+  .mobile-nav{background:var(--bg);border-color:var(--line)}
+  .mobile-nav button{color:var(--ink)}
+  .hero-copy small,.section-kicker,.modal small,.success small{color:#a7a098}
+  .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3{color:#f3efe8}
+  .hero-copy p,.body p,.about-section p,.modal-sub{color:#aaa49c}
+  .hero-visual{background:#201e1b;box-shadow:0 18px 45px rgba(0,0,0,.35)}
+  .hero-placeholder{background:#181715;color:#aaa49c}
+  .category-card{background:#201e1b;border-color:var(--line)}
+  .text-btn{color:#c4bdb5}
+  .tab{background:#191817;border-color:#3a3734;color:#c7c0b8}
+  .tab.active{background:#eee8df;color:#171615;border-color:#eee8df}
+  .search-wrap input,
+  .fields input,.fields select,.fields textarea,.account-modal input{
+    background:#191817;color:#f3efe8;border-color:#3a3734;
+  }
+  .search-wrap input::placeholder{color:#817b74}
+  .card{background:var(--card);border-color:var(--line);box-shadow:none}
+  .add,.dark,.hero-btn{background:#eee8df;color:#171615}
+  .about-section{background:#1c1a18}
+  .panel{background:#151413;color:var(--ink)}
+  .close-btn{color:#f3efe8}
+  .line,.summary{border-color:var(--line)}
+  .qty button{background:#191817;color:#f3efe8;border-color:#3a3734}
+  .modal,.account-modal,.success{background:#151413;color:var(--ink)}
+  .auth-tabs{border-color:var(--line)}
+  .auth-tabs button{color:#98918a}
+  .auth-tabs button.active{color:#f3efe8;border-color:#f3efe8}
+  .checkout-hint{color:#9f9891}
+  .site-footer{background:#1a1817;border-color:var(--line)}
+  .footer-socials span{color:#9f9891}
+  .footer-socials a{color:#ddd7cf}
+  .footer-bottom{color:#817b74}
+  .footer-mark{background:#eee8df;color:#171615}
+  .toast{background:#eee8df;color:#171615}
+  .brand-logo-picture,.footer-logo-picture{background:transparent}
+  .brand-logo-picture .brand-logo,.footer-logo-picture .footer-logo{background:transparent}
+}
