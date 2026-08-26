@@ -1,15 +1,17 @@
-# NuoNuo Public Ordering Website V2
+# NuoNuo Public Ordering Website
 
-Customer-facing NuoNuo storefront connected to the existing Nuonuo Management Supabase database.
+Customer-facing NuoNuo storefront connected to the existing Supabase database.
 
-## Important
-The current management schema uses `active`, `calculated_cost`, `categories`, `products`, `customers`, `orders`, and `order_items`. V1 incorrectly assumed `sales_channel` and several order columns already existed. V2 includes a migration that adds the required storefront fields and RLS policies.
+## Fix in this build
+- Restored product/category loading without assuming the channel is spelled exactly `nuonuo`.
+- Supports channel values such as `nuonuo`, `nuonuo_local`, and `NuoNuo · Local`.
+- Keeps the public storefront restricted to NuoNuo-channel rows in the browser, with Supabase RLS remaining the security boundary.
+- Restores product images in the category cards, hero, and menu.
+- The menu is intentionally empty on first load. Customers must click a category before products appear.
+- No Management pages, owner data, orders, recipes, costs, or staff data are exposed by the public UI.
 
 ## Setup
-1. Put the same Supabase Project URL and anon/publishable key into `config.js`.
-2. Put the Nuonuo Management Auth user's UUID into `NUONUO_STORE_OWNER_ID`.
-3. Run `NUONUO_PUBLIC_STORE_RLS.sql` in Supabase SQL Editor.
-4. The SQL file already contains the configured Nuonuo Management Auth user UUID and its INSERT/UPSERT is ready to run.
-5. Deploy the folder as the public NuoNuo website.
-
-The public browser never uses a service-role key. The storefront only exposes active NuoNuo products/categories and only allows anonymous creation of pending unpaid NuoNuo orders.
+1. Keep the same Supabase Project URL and anon/publishable key in `config.js`.
+2. Keep `NUONUO_STORE_OWNER_ID` set to the NuoNuo Management owner's Auth UUID.
+3. Keep the NuoNuo public-store RLS policies enabled in Supabase.
+4. Deploy the folder to Vercel.
