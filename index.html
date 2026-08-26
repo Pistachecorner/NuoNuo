@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>NuoNuo · Order Online</title>
   <meta name="description" content="NuoNuo desserts · local pickup & delivery in Ipoh">
-  <link rel="icon" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon-light.png" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="favicon-dark.png" media="(prefers-color-scheme: dark)">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -14,7 +15,7 @@
   <header class="site-header">
     <div class="header-left">
       <button id="menuToggle" class="icon-btn" aria-label="Open menu">☰</button>
-      <a class="brand" href="#" aria-label="NuoNuo home"><img src="nuonuo-logo.png" alt="NuoNuo" class="brand-logo"></a>
+      <a class="brand" href="#" aria-label="NuoNuo home"><picture class="brand-logo-picture"><source srcset="nuonuo-logo-dark.png" media="(prefers-color-scheme: dark)"><img src="nuonuo-logo.png" alt="NuoNuo" class="brand-logo"></picture></a>
       <button id="accountBtn" class="account-link" type="button"><span class="person-icon">♙</span><span id="accountLabel">Sign in</span></button>
     </div>
     <nav id="mobileNav" class="mobile-nav" aria-label="Main navigation">
@@ -66,7 +67,7 @@
   </section>
 
   <footer class="site-footer">
-    <a class="footer-brand" href="#" aria-label="NuoNuo home"><img src="nuonuo-logo.png" alt="NuoNuo" class="footer-logo"></a>
+    <a class="footer-brand" href="#" aria-label="NuoNuo home"><picture class="footer-logo-picture"><source srcset="nuonuo-logo-dark.png" media="(prefers-color-scheme: dark)"><img src="nuonuo-logo.png" alt="NuoNuo" class="footer-logo"></picture></a>
     <div class="footer-socials">
       <span>Follow & contact us</span>
       <a href="https://instagram.com/nuonuodessert" target="_blank" rel="noopener">Instagram · @nuonuodessert</a>

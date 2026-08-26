@@ -112,3 +112,14 @@ body.cart-open{overflow:hidden}
   .footer-logo{width:165px;height:54px}
   .hero-placeholder img{max-width:82%;max-height:60%}
 }
+
+/* NuoNuo logo variants for system dark mode */
+.brand-logo-picture{display:block;width:148px;height:46px}
+.brand-logo-picture .brand-logo{width:148px;height:46px}
+.footer-logo-picture{display:block;width:190px;height:62px}
+.footer-logo-picture .footer-logo{width:190px;height:62px}
+@media (prefers-color-scheme: dark){
+  /* The storefront stays intentionally light; these rules only ensure the logo remains visible
+     if the browser/system is dark and a transparent logo is rendered on a dark surface. */
+  .brand-logo-picture,.footer-logo-picture{background:transparent}
+}
