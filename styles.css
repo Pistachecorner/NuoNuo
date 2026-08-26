@@ -60,3 +60,42 @@ body.cart-open{overflow:hidden}
   .category-card{height:100px}
   .category-card h3{font-size:13px}
 }
+
+/* V4.2 brand polish */
+.cart-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  background:transparent;
+  border-radius:0;
+  padding:7px 2px 7px 8px;
+  color:#1d1d1d;
+  font-size:13px;
+  letter-spacing:.02em;
+}
+.cart-btn:hover{opacity:.68}
+.cart-icon{width:20px;height:20px;display:grid;place-items:center}
+.cart-icon svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.cart-btn i{
+  min-width:21px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  font-style:normal;
+  background:#1d1d1d;
+  color:#fff;
+  border-radius:50%;
+  padding:0;
+  margin-left:0;
+  font-size:10px;
+  line-height:1;
+}
+.hero-copy small{letter-spacing:.24em}
+.hero-copy h1{max-width:760px}
+@media(max-width:650px){
+  .cart-btn{padding:7px 0 7px 5px;gap:6px}
+  .cart-label{display:none}
+  .cart-icon,.cart-icon svg{width:21px;height:21px}
+  .cart-btn i{min-width:20px;height:20px}
+}
