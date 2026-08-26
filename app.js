@@ -70,25 +70,17 @@ async function load(){
     }
     sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    // IMPORTANT: use the same public storefront query that previously loaded
-    // the real NuoNuo menu and its image URLs. Do not filter products with a
-    // second sales_channel query, because that can blank the storefront when
-    // older/newer rows use different channel values.
-    // IMPORTANT: NuoNuo Management stores the live menu in the same
-    // `products` and `categories` tables. Those tables do NOT use a
-    // sales_channel column. Filter only by the Management owner and active
-    // product status so the storefront shows exactly what exists in Menu.
-    const [p,c]=await Promise.all([
-      sb.from('products').select('id,name,description,selling_price,calculated_cost,image_url,category_id,active').eq('user_id',owner).eq('active',true).order('name'),
-      sb.from('categories').select('id,name,sort_order').eq('user_id',owner).order('sort_order').order('name')
-    ]);
-    if(p.error||c.error){
-      console.error('NuoNuo Management menu query failed',p.error||c.error);
-      throw (p.error||c.error);
+    // The Management tables are protected by RLS and must NOT be opened to
+    // anonymous browser reads. The storefront uses one locked SECURITY DEFINER
+    // RPC that returns only public menu fields. This keeps costs, owner IDs and
+    // other Management-only columns private while reading the exact same live menu.
+    const {data:menuData,error:menuError}=await sb.rpc('get_nuonuo_public_menu');
+    if(menuError){
+      console.error('NuoNuo public menu RPC failed',menuError);
+      throw menuError;
     }
-
-    products=p.data||[];
-    cats=c.data||[];
+    products=Array.isArray(menuData?.products)?menuData.products:[];
+    cats=Array.isArray(menuData?.categories)?menuData.categories:[];
 
     $('#loading')?.remove();
     const select=$('#categorySelect');
