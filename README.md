@@ -9,7 +9,7 @@ The current management schema uses `active`, `calculated_cost`, `categories`, `p
 1. Put the same Supabase Project URL and anon/publishable key into `config.js`.
 2. Put the Nuonuo Management Auth user's UUID into `NUONUO_STORE_OWNER_ID`.
 3. Run `NUONUO_PUBLIC_STORE_RLS.sql` in Supabase SQL Editor.
-4. In the SQL file, replace `YOUR-OWNER-UUID` with the same Auth user UUID and run that INSERT/UPSERT line.
+4. The SQL file already contains the configured Nuonuo Management Auth user UUID and its INSERT/UPSERT is ready to run.
 5. Deploy the folder as the public NuoNuo website.
 
 The public browser never uses a service-role key. The storefront only exposes active NuoNuo products/categories and only allows anonymous creation of pending unpaid NuoNuo orders.
