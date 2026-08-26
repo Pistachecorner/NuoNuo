@@ -188,3 +188,14 @@ body.cart-open{overflow:hidden}
 
 /* V4.4 desktop menu fix */
 @media(min-width:901px){.mobile-nav{left:3.5%;right:auto;top:72px;width:260px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;box-shadow:0 14px 35px rgba(0,0,0,.08);padding:10px 18px}.mobile-nav button{padding:12px 0}}
+
+/* V5 customer account + phone auth */
+.header-me{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 13px;font-size:12px}
+.header-me:hover{background:var(--ink);color:var(--bg)}
+.secondary-action{margin-bottom:10px;background:transparent!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+.optional{font-size:10px;color:var(--muted);font-weight:400}
+.me-modal label{display:block;margin:12px 0;font-size:12px;color:var(--muted)}
+.me-modal label input{margin-top:5px}
+.birthday-help,.birthday-notice{font-size:12px;line-height:1.6;color:var(--muted);background:rgba(210,190,130,.12);border:1px solid rgba(150,120,50,.18);border-radius:10px;padding:11px 13px;margin:12px 0}
+.birthday-notice{color:var(--ink)}
+@media(max-width:650px){.header-me{display:none}.account-link .person-icon{display:none}.account-link{font-size:12px}.me-modal{width:min(460px,94%)}}

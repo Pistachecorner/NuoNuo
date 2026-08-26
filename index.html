@@ -91,6 +91,22 @@
     </div>
   </aside>
 
+  <div id="meModal" class="overlay hidden"><div class="account-modal me-modal">
+    <button id="meClose" class="close-btn" aria-label="Close">×</button>
+    <small>NUONUO · ME</small><h2>My details.</h2>
+    <p class="modal-sub">Keep your details here for faster checkout. Name, phone and address are required when ordering. Email and birthday are optional.</p>
+    <form id="meForm">
+      <label>Name<input id="meName" required autocomplete="name"></label>
+      <label>Phone<input id="mePhone" required autocomplete="tel"></label>
+      <label>Email <span class="optional">(optional)</span><input id="meEmail" type="email" autocomplete="email"></label>
+      <label>Address<input id="meAddress" required autocomplete="street-address"></label>
+      <label>Birthday <span class="optional">(optional)</span><input id="meBirthday" type="date" autocomplete="bday"></label>
+      <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
+      <button id="meSave" class="dark" type="submit">Save details</button>
+      <p id="meMessage" class="form-message"></p>
+    </form>
+  </div></div>
+
   <div id="accountModal" class="overlay hidden">
     <div class="account-modal">
       <button id="accountClose" class="close-btn" aria-label="Close">×</button>
@@ -101,7 +117,7 @@
         <div class="auth-tabs"><button id="loginTab" class="active" type="button">Sign in</button><button id="signupTab" type="button">Register</button></div>
         <form id="authForm">
           <label id="authNameField" class="hidden">Name<input id="authName" autocomplete="name"></label>
-          <label>Email<input id="authEmail" type="email" required autocomplete="email"></label>
+          <label>Phone<input id="authPhone" type="tel" required autocomplete="tel" placeholder="+601112345678"></label>
           <label>Password<input id="authPassword" type="password" required minlength="6" autocomplete="current-password"></label>
           <button id="authSubmit" class="dark" type="submit">Sign in</button>
           <p id="authMessage" class="form-message"></p>
@@ -109,7 +125,8 @@
       </div>
       <div id="accountSignedIn" class="hidden">
         <small>NUONUO ACCOUNT</small><h2>You’re signed in.</h2>
-        <p id="signedInEmail" class="modal-sub"></p>
+        <p id="signedInPhone" class="modal-sub"></p>
+        <button id="meFromAccount" class="dark secondary-action" type="button">My details · Me</button>
         <button id="logoutCustomer" class="dark" type="button">Log out</button>
       </div>
     </div>
@@ -117,24 +134,26 @@
 
   <div id="modal" class="hidden overlay"><div class="modal">
     <button id="x" class="close-btn">×</button><small>NUONUO</small><h2>Checkout</h2>
-    <p id="checkoutAccountHint" class="checkout-hint"></p>
+    <p id="checkoutAccountHint" class="checkout-hint"></p><p id="checkoutProfileNote" class="checkout-hint"></p>
     <form id="form">
       <div class="fields">
         <label>Name<input id="name" required autocomplete="name"></label>
         <label>Phone<input id="phone" required autocomplete="tel"></label>
-        <label>Email<input id="email" type="email" autocomplete="email"></label>
+        <label>Email <span class="optional">(optional)</span><input id="email" type="email" autocomplete="email"></label>
         <label>Order date<input id="date" type="date" required></label>
         <label class="wide">Address<input id="address" required autocomplete="street-address"></label>
+        <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday"></label>
         <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select></label>
         <label>Payment<select id="payment"><option>Bank transfer</option><option>Cash</option></select></label>
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>
+      <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
       <div id="summary"></div><div class="total"><span>Total</span><b id="checkoutTotal">RM 0.00</b></div>
       <button class="dark" id="place" type="submit">Place order</button><p id="error" class="form-message"></p>
     </form>
   </div></div>
 
-  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
+  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
 </body>
 </html>
