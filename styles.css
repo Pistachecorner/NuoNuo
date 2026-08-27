@@ -249,12 +249,10 @@ body.cart-open{overflow:hidden}
 .history-items{margin:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .history-items>div{display:flex;justify-content:space-between;padding:7px 0;font-size:12px}
 .history-total{font-size:12px}
-.voucher-checkout{margin:14px 0;padding:16px;border:1px solid var(--line);border-radius:12px}
-.voucher-checkout label{display:block;font-size:11px;color:var(--muted);letter-spacing:.02em}
-.voucher-checkout input{margin-top:7px}
-.voucher-checkout .secondary-action{margin:10px 0 0;width:auto;border-radius:8px;padding:9px 14px;font-size:12px;transition:opacity .2s ease,transform .2s ease}
-.voucher-checkout .secondary-action:hover{opacity:.86}
-.voucher-checkout .secondary-action:active{transform:translateY(1px)}
+.voucher-checkout{margin:14px 0;padding:13px;border:1px solid var(--line);border-radius:10px}
+.voucher-checkout label{display:block;font-size:11px;color:var(--muted)}
+.voucher-checkout input{margin-top:5px}
+.voucher-checkout .secondary-action{margin:8px 0 0;width:auto}
 #voucherDiscount{display:block;margin-top:6px;font-size:12px}
 
 /* Rewards/history summary additions. */
