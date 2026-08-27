@@ -633,3 +633,75 @@ body{background:var(--bg)}
   .logout-btn{border-color:#59475A;color:#F8F1F7}
   .logout-btn:hover{background:#BA8DB9;color:#2D202D}
 }
+
+/* V11 palette refinement: topbar carries the same two-tone palette; dark background is a soft neutral gray-purple. */
+.site-header{
+  background:linear-gradient(110deg,#E8F1F4 0%,#EDF2F3 46%,#FCE5D7 100%);
+  border-bottom-color:#D7E1E5;
+  box-shadow:0 5px 20px rgba(91,111,122,.08)
+}
+.site-header .header-title{color:#3D5360}
+.site-header .icon-btn,.site-header .account-link{color:#30424C}
+.site-header .cart-btn{background:rgba(255,255,255,.52);border-color:#728B9A;color:#30424C}
+.site-header .cart-btn i{background:#728B9A;color:#fff}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#F6F0F5;
+    --muted:#BDB5BF;
+    --line:#514C56;
+    --bg:#29272D;
+    --card:#323038;
+    --accent:#BA8DB9;
+  }
+  html,body{background:#29272D;color:#F6F0F5}
+  body{
+    background:
+      radial-gradient(circle at 10% 8%,rgba(186,141,185,.08),transparent 30%),
+      radial-gradient(circle at 90% 18%,rgba(255,240,225,.06),transparent 28%),
+      #29272D
+  }
+  .site-header{
+    background:linear-gradient(110deg,#403B45 0%,#514850 48%,#66585A 100%);
+    border-bottom-color:#625861;
+    box-shadow:0 8px 28px rgba(12,10,14,.24)
+  }
+  .site-header .header-title{color:#FFF0E1}
+  .site-header .icon-btn,.site-header .account-link{color:#FFF4EE}
+  .site-header .cart-btn{
+    background:linear-gradient(110deg,rgba(186,141,185,.28),rgba(255,240,225,.18));
+    border-color:#BA8DB9;
+    color:#FFF4EE
+  }
+  .site-header .cart-btn i{background:#BA8DB9;color:#302830}
+  .mobile-nav{background:#343139;border-bottom-color:#514C56}
+  .hero-copy h1{color:#F8F2F6}
+  .hero-copy p,.body p,.about-section p,.modal-sub{color:#C9C1CA}
+  .hero-visual,.category-card,.pic{background:#3A3740}
+  .card{background:#323038;border-color:#514C56}
+  .panel{background:#343139}
+  .modal,.account-modal,.success{background:#323038}
+  .tab{background:#343139;color:#E5DCE5;border-color:#514C56}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#343139;color:#F6F0F5;border-color:#514C56}
+  .qty button{background:#343139;color:#F6F0F5;border-color:#514C56}
+
+  /* Purple + warm-cream reference palette, without a saturated purple page background. */
+  .about-section{
+    background:linear-gradient(135deg,#5A4B59 0%,#7A6278 44%,#B995B0 72%,#FFF0E1 100%);
+    border-color:#766274;
+  }
+  .hero-visual.no-image,.no-image{
+    background:linear-gradient(135deg,#625261 0%,#8C6D89 43%,#C6A5B5 72%,#FFF0E1 100%)
+  }
+  .site-footer{
+    background:linear-gradient(135deg,#302D34 0%,#3B353E 52%,#51464F 100%);
+    border-color:#514C56;
+    color:#D9D0D8
+  }
+  .footer-socials a{color:#F0DDEB}
+  .footer-bottom{border-top-color:rgba(255,240,225,.14);color:#BDB2BC}
+  .footer-mark{background:#BA8DB9;color:#302830}
+  .hero-btn,.add,.dark{background:#BA8DB9;color:#302830;border-color:#BA8DB9}
+  .hero-btn:hover,.add:hover,.dark:hover{background:#CDA8CA;border-color:#CDA8CA}
+  .tab.active{background:#BA8DB9;color:#302830;border-color:#BA8DB9}
+}
