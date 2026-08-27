@@ -1,3 +1,6 @@
-window.NUONUO_STORE_SUPABASE_URL="https://brbukpdamogcejrrvyct.supabase.co";
-window.NUONUO_STORE_SUPABASE_ANON_KEY="sb_publishable_k4wu3z8ftsEpf0fYUZh4vg_fNnq1QwU";
-window.NUONUO_STORE_OWNER_ID="0d59b9c2-a3c1-4b28-b42f-228082819ade";
+export default function handler(req, res) {
+  const url = process.env.NUONUO_STORE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const key = process.env.NUONUO_STORE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '';
+  if (!url || !key) return res.status(404).json({ error: 'Store config is not set' });
+  return res.status(200).json({ url, key });
+}

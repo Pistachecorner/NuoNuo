@@ -243,29 +243,57 @@ $('#passwordForm').onsubmit=async e=>{
 $('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
 function birthdayMonthActive(birthday){return !!birthday&&Number(String(birthday).slice(5,7))===new Date().getMonth()+1}
 function updateCheckoutAddressRequirement(){const delivery=$('#fulfil').value==='delivery';const input=$('#address');if(input)input.required=delivery}
-async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value=new Date().toISOString().slice(0,10);$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}</span><b>${money(x.qty*x.price)}</b></div>`).join('');$('#checkoutTotal').textContent=money(cart.reduce((n,x)=>n+x.qty*x.price,0));$('#voucherCode').value='';$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();$('#modal').classList.remove('hidden')}
-$('#checkout').onclick=prepareCheckout;$('#fulfil').onchange=updateCheckoutAddressRequirement;$('#x').onclick=()=>$('#modal').classList.add('hidden');$('#done').onclick=()=>{$('#success').classList.add('hidden');scrollToId('menu')};
-$('#applyVoucher').onclick=async()=>{
-  const msg=$('#voucherMessage'),code=$('#voucherCode').value.trim();
-  msg.textContent='';$('#voucherDiscount').textContent='';
-  if(!code){msg.textContent='Enter a voucher code.';return}
+async function renderCheckoutVouchers(subtotal){
+  const box=$('#checkoutVouchers'),status=$('#voucherCheckoutStatus'),msg=$('#voucherMessage'),discount=$('#voucherDiscount');
+  if(!box)return;
+  box.innerHTML='';msg.textContent='';discount.textContent='';msg.dataset.valid='false';delete msg.dataset.code;
+  status.textContent='Optional';status.classList.remove('is-disabled','is-selected');
+  if(!currentProfile){
+    box.innerHTML='<div class="checkout-voucher-empty">Sign in to see your available vouchers.</div>';
+    return;
+  }
+  const rewards=await loadRewards();
+  const vouchers=Array.isArray(rewards?.vouchers)?rewards.vouchers:[];
+  const now=Date.now();
+  const available=vouchers.filter(v=>!v.used_at && v.expires_at && new Date(v.expires_at).getTime()>now);
+  if(!available.length){
+    box.innerHTML='<div class="checkout-voucher-empty">No available vouchers.</div>';
+    return;
+  }
+  const canUse=subtotal>=60;
+  status.textContent=canUse?'Available':'Add RM '+Math.max(0,60-subtotal).toFixed(2)+' to use';
+  if(!canUse)status.classList.add('is-disabled');
+  box.innerHTML=available.map(v=>{
+    const code=String(v.code||'');
+    const expires=new Date(v.expires_at).toLocaleDateString('en-GB');
+    return `<button type="button" class="checkout-voucher-card${canUse?'':' is-disabled'}" data-voucher-code="${esc(code)}" ${canUse?'':'disabled'}>
+      <span class="checkout-voucher-icon">%</span>
+      <span class="checkout-voucher-main"><b>RM ${Number(v.amount||10).toFixed(2)} off</b><small>Min. spend RM ${Number(v.minimum_spend||60).toFixed(2)} · Expires ${expires}</small></span>
+      <span class="checkout-voucher-action">${canUse?'Use':'Locked'}</span>
+    </button>`;
+  }).join('');
+  if(!canUse){msg.textContent='This voucher can be used when your order reaches RM 60.00.';return;}
+  box.querySelectorAll('.checkout-voucher-card').forEach(card=>card.onclick=()=>applyCheckoutVoucher(card.dataset.voucherCode));
+}
+async function applyCheckoutVoucher(code){
+  const msg=$('#voucherMessage'),discount=$('#voucherDiscount'),subtotal=cart.reduce((n,x)=>n+x.qty*x.price,0);
+  msg.textContent='';discount.textContent='';msg.dataset.valid='false';delete msg.dataset.code;
   if(!currentProfile){msg.textContent='Please sign in to use a voucher.';return}
-  const subtotal=cart.reduce((n,x)=>n+x.qty*x.price,0);
-  if(subtotal<50){msg.textContent='Minimum spend is RM 50.';return}
+  if(subtotal<60){msg.textContent='Minimum spend is RM 60.00.';return}
   try{
     const {data,error}=await sb.rpc('check_nuonuo_voucher',{p_code:code,p_subtotal:subtotal});
     if(error)throw error;
     if(!data?.valid)throw new Error(data?.message||'Voucher is not valid.');
-    $('#voucherDiscount').textContent=`RM ${Number(data.discount||10).toFixed(2)} discount applied`;
-    $('#voucherMessage').dataset.valid='true';
-    $('#voucherMessage').dataset.code=code;
-    $('#voucherMessage').textContent='Voucher ready to use.';
-    $('#checkoutTotal').textContent=money(Math.max(0,subtotal-Number(data.discount||10)));
-  }catch(err){
-    $('#voucherMessage').dataset.valid='false';
-    $('#voucherMessage').textContent=errText(err);
-  }
-};
+    const amount=Number(data.discount||10);
+    discount.textContent=`RM ${amount.toFixed(2)} discount applied`;
+    msg.dataset.valid='true';msg.dataset.code=code;msg.textContent='Voucher selected.';
+    $('#checkoutTotal').textContent=money(Math.max(0,subtotal-amount));
+    $('#voucherCheckoutStatus').textContent='Selected';$('#voucherCheckoutStatus').classList.add('is-selected');
+    document.querySelectorAll('.checkout-voucher-card').forEach(card=>card.classList.toggle('is-selected',card.dataset.voucherCode===code));
+  }catch(err){msg.textContent=errText(err);}
+}
+async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value=new Date().toISOString().slice(0,10);$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}</span><b>${money(x.qty*x.price)}</b></div>`).join('');const subtotal=cart.reduce((n,x)=>n+x.qty*x.price,0);$('#checkoutTotal').textContent=money(subtotal);$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';$('#voucherMessage').dataset.valid='false';delete $('#voucherMessage').dataset.code;document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();await renderCheckoutVouchers(subtotal);$('#modal').classList.remove('hidden')}
+$('#checkout').onclick=prepareCheckout;$('#fulfil').onchange=updateCheckoutAddressRequirement;$('#x').onclick=()=>$('#modal').classList.add('hidden');$('#done').onclick=()=>{$('#success').classList.add('hidden');scrollToId('menu')};
 $('#form').onsubmit=async e=>{e.preventDefault();$('#error').textContent='';$('#place').disabled=true;try{const subtotal=cart.reduce((n,x)=>n+x.qty*x.price,0),name=$('#name').value.trim(),phone=$('#phone').value.trim(),email=$('#email').value.trim(),address=$('#address').value.trim(),birthday=$('#birthdayCheckout').value||null,fulfil=$('#fulfil').value,payment=$('#payment').value,note=$('#note').value.trim(),date=$('#date').value;const {data:{session}}=await sb.auth.getSession();if(!name||!phone)throw new Error('Name and phone number are required to place an order.');if(fulfil==='delivery'&&!address)throw new Error('Address is required for delivery orders.');if(!/^\+?[0-9]{8,15}$/.test(normalizePhone(phone)))throw new Error('Please enter a valid phone number.');if(session){await saveProfile({name,phone,email,address,birthday})}const items=cart.map(x=>({product_id:x.id,quantity:x.qty}));
 const voucherCode=$('#voucherMessage').dataset.valid==='true'?$('#voucherMessage').dataset.code:'';
 let result,oe;
