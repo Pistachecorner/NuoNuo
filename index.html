@@ -94,16 +94,17 @@
   <div id="meModal" class="overlay hidden"><div class="account-modal me-modal">
     <button id="meClose" class="close-btn" aria-label="Close">×</button>
     <small>NUONUO · ME</small><h2>My details.</h2>
-    <p class="modal-sub">Keep your details here for faster checkout. Name, phone and address are required when ordering. Email and birthday are optional.</p>
+    <p class="modal-sub">Keep your details here for faster checkout. Name and phone are required. Address is optional unless you choose delivery. Email and birthday are optional.</p>
     <form id="meForm">
       <label>Name<input id="meName" required autocomplete="name"></label>
       <label>Phone<input id="mePhone" required autocomplete="tel"></label>
       <label>Email <span class="optional">(optional)</span><input id="meEmail" type="email" autocomplete="email"></label>
-      <label>Address<input id="meAddress" required autocomplete="street-address"></label>
+      <label>Address <span class="optional">(optional)</span><input id="meAddress" autocomplete="street-address"></label>
       <label>Birthday <span class="optional">(optional)</span><input id="meBirthday" type="date" autocomplete="bday"></label>
       <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
       <button id="meSave" class="dark" type="submit">Save details</button>
       <p id="meMessage" class="form-message"></p>
+      <button id="logoutCustomer" class="logout-btn" type="button">Log out</button>
     </form>
   </div></div>
 
@@ -123,12 +124,7 @@
           <p id="authMessage" class="form-message"></p>
         </form>
       </div>
-      <div id="accountSignedIn" class="hidden">
-        <small>NUONUO ACCOUNT</small><h2>You’re signed in.</h2>
-        <p id="signedInPhone" class="modal-sub"></p>
-        <button id="meFromAccount" class="dark secondary-action" type="button">My details · Me</button>
-        <button id="logoutCustomer" class="dark" type="button">Log out</button>
-      </div>
+      <div id="accountSignedIn" class="hidden"></div>
     </div>
   </div>
 
@@ -141,7 +137,7 @@
         <label>Phone<input id="phone" required autocomplete="tel"></label>
         <label>Email <span class="optional">(optional)</span><input id="email" type="email" autocomplete="email"></label>
         <label>Order date<input id="date" type="date" required></label>
-        <label class="wide">Address<input id="address" required autocomplete="street-address"></label>
+        <label class="wide">Address <span class="optional">(required for delivery)</span><input id="address" autocomplete="street-address"></label>
         <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday"></label>
         <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select></label>
         <label>Payment<select id="payment"><option>Bank transfer</option><option>Cash</option></select></label>

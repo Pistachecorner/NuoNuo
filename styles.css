@@ -228,3 +228,7 @@ body.cart-open{overflow:hidden}
 #grid .body{min-width:0!important;padding:18px 20px!important;}
 #grid .body h3{font-size:22px!important;}
 @media(max-width:650px){#grid .card{grid-template-columns:100px minmax(0,1fr)!important;min-height:100px!important;}#grid .pic{width:100px!important;height:100px!important;}#grid .body{padding:12px 13px!important;}#grid .body h3{font-size:18px!important;}}
+
+/* Customer profile actions */
+.logout-btn{width:100%;margin-top:8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:10px 15px}
+.logout-btn:hover{background:var(--ink);color:var(--bg)}
