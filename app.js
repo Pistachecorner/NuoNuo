@@ -112,8 +112,6 @@ async function openMe(){
   fillProfileForm(p);
   $('#meMessage').textContent='';
   $('#meModal').classList.remove('hidden');
-  await loadRewards();
-  await openOrderHistory();
 }
 async function refreshAuth(){
   const {data:{session}}=await sb.auth.getSession();
@@ -126,6 +124,7 @@ async function refreshAuth(){
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent=profileComplete(currentProfile)?`Signed in as ${welcomeName}.`:'You are signed in, but your name and phone still need to be completed.';
     nav?.classList.remove('hidden');
+    if(nav) nav.onclick=()=>openRewardsAndOrders();
   }else{
     currentProfile=null;
     currentRewards=null;
@@ -136,7 +135,10 @@ async function refreshAuth(){
     nav?.classList.add('hidden');
   }
 }
-$('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
+$('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};
+window.openRewardsAndOrders=async()=>{if(!currentProfile)return;$('#rewardsModal').classList.remove('hidden');await loadRewards();await openOrderHistory()};
+$('#rewardsClose').onclick=()=>$('#rewardsModal').classList.add('hidden');
+$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
 $('#authForm').onsubmit=async e=>{e.preventDefault();$('#authMessage').textContent='';$('#authSubmit').disabled=true;try{const phone=normalizePhone($('#authPhone').value),password=$('#authPassword').value,name=$('#authName').value.trim();if(!/^\+?[0-9]{8,15}$/.test(phone.replace(/\s/g,'')))throw new Error('Please enter a valid phone number, e.g. +601112345678.');if(authMode==='signup'){const authEmail=authEmailFromPhone(phone);const {data,error}=await sb.auth.signUp({email:authEmail,password,options:{data:{full_name:name,display_name:name,account_type:'customer',app:'nuonuo-public-store',phone}}});if(error)throw error;if(data.session){await saveProfile({name,phone,email:'',address:'',birthday:''});$('#authMessage').textContent='Account created. You are signed in.';await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}else{$('#authMessage').textContent='Account created, but no session was returned. In Supabase, keep Email confirmations OFF for this password-only customer login.'}}else{const authEmail=authEmailFromPhone(phone);const {error}=await sb.auth.signInWithPassword({email:authEmail,password});if(error)throw error;await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}}catch(err){$('#authMessage').textContent=errText(err)}finally{$('#authSubmit').disabled=false}};
 function normalizePhone(value){return String(value||'').replace(/[()\s-]/g,'').trim()}
 // NuoNuo uses the phone number as the customer's login ID without requiring
