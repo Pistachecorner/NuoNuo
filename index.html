@@ -167,16 +167,9 @@
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>
       <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
-      <div class="voucher-checkout" id="voucherCheckoutBox">
-        <div class="voucher-checkout-head">
-          <div>
-            <small>NUONUO · VOUCHER</small>
-            <h3>Use a voucher</h3>
-          </div>
-          <span id="voucherCheckoutStatus" class="voucher-status">Optional</span>
-        </div>
-        <p class="voucher-checkout-note">Select an available voucher below. Minimum spend RM 60.</p>
-        <div id="checkoutVouchers" class="checkout-vouchers"></div>
+      <div class="voucher-checkout">
+        <label>Voucher <span class="optional">(optional)</span><input id="voucherCode" placeholder="Enter voucher code" autocomplete="off"></label>
+        <button id="applyVoucher" type="button" class="secondary-action">Apply voucher</button>
         <p id="voucherMessage" class="form-message"></p>
         <b id="voucherDiscount"></b>
       </div>
