@@ -112,6 +112,8 @@ async function openMe(){
   fillProfileForm(p);
   $('#meMessage').textContent='';
   $('#meModal').classList.remove('hidden');
+  await loadRewards();
+  await openOrderHistory();
 }
 async function refreshAuth(){
   const {data:{session}}=await sb.auth.getSession();
@@ -124,7 +126,6 @@ async function refreshAuth(){
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent=profileComplete(currentProfile)?`Signed in as ${welcomeName}.`:'You are signed in, but your name and phone still need to be completed.';
     nav?.classList.remove('hidden');
-    if(nav) nav.onclick=()=>openRewardsAndOrders();
   }else{
     currentProfile=null;
     currentRewards=null;
@@ -135,10 +136,7 @@ async function refreshAuth(){
     nav?.classList.add('hidden');
   }
 }
-$('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};
-window.openRewardsAndOrders=async()=>{if(!currentProfile){return}$('#rewardsModal').classList.remove('hidden');await syncHistoricalRewards();await loadRewards();await openOrderHistory()};
-$('#rewardsClose').onclick=()=>$('#rewardsModal').classList.add('hidden');
-$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
+$('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
 $('#authForm').onsubmit=async e=>{e.preventDefault();$('#authMessage').textContent='';$('#authSubmit').disabled=true;try{const phone=normalizePhone($('#authPhone').value),password=$('#authPassword').value,name=$('#authName').value.trim();if(!/^\+?[0-9]{8,15}$/.test(phone.replace(/\s/g,'')))throw new Error('Please enter a valid phone number, e.g. +601112345678.');if(authMode==='signup'){const authEmail=authEmailFromPhone(phone);const {data,error}=await sb.auth.signUp({email:authEmail,password,options:{data:{full_name:name,display_name:name,account_type:'customer',app:'nuonuo-public-store',phone}}});if(error)throw error;if(data.session){await saveProfile({name,phone,email:'',address:'',birthday:''});$('#authMessage').textContent='Account created. You are signed in.';await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}else{$('#authMessage').textContent='Account created, but no session was returned. In Supabase, keep Email confirmations OFF for this password-only customer login.'}}else{const authEmail=authEmailFromPhone(phone);const {error}=await sb.auth.signInWithPassword({email:authEmail,password});if(error)throw error;await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}}catch(err){$('#authMessage').textContent=errText(err)}finally{$('#authSubmit').disabled=false}};
 function normalizePhone(value){return String(value||'').replace(/[()\s-]/g,'').trim()}
 // NuoNuo uses the phone number as the customer's login ID without requiring
@@ -148,14 +146,6 @@ function authEmailFromPhone(phone){const digits=normalizePhone(phone).replace(/^
 async function saveProfile(profile){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Please sign in first.');const normalizedPhone=normalizePhone(profile.phone)||normalizePhone(session.user.phone);const payload={auth_user_id:session.user.id,owner_id:owner,name:profile.name?.trim()||null,phone:normalizedPhone||null,email:profile.email?.trim()||null,address:profile.address?.trim()||null,birthday:profile.birthday||null,updated_at:new Date().toISOString()};const {data,error}=await sb.from('nuonuo_customer_profiles').upsert(payload,{onConflict:'auth_user_id,owner_id'}).select().single();if(error)throw error;currentProfile=data;return data}
 $('#meForm').onsubmit=async e=>{e.preventDefault();$('#meMessage').textContent='';$('#meSave').disabled=true;try{await saveProfile({name:$('#meName').value,phone:$('#mePhone').value,email:$('#meEmail').value,address:$('#meAddress').value,birthday:$('#meBirthday').value});await refreshAuth();$('#meModal').classList.add('hidden');showToast('Your details are saved')}catch(err){$('#meMessage').textContent=errText(err)}finally{$('#meSave').disabled=false}};
 $('#meClose').onclick=()=>$('#meModal').classList.add('hidden');
-
-async function syncHistoricalRewards(){
-  if(!sb||!currentProfile)return;
-  try{
-    const {error}=await sb.rpc('sync_nuonuo_customer_rewards');
-    if(error) console.warn('Historical rewards sync unavailable:',error);
-  }catch(e){console.warn('Historical rewards sync unavailable:',e)}
-}
 
 async function loadRewards(){
   if(!sb||!currentProfile){

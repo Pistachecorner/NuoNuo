@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>NuoNuo · Order Online</title>
+  <meta name="description" content="NuoNuo desserts · local pickup & delivery in Ipoh">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fcfbf8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#11100f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" href="favicon-light.png" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="favicon-dark.png" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-left">
+      <button id="menuToggle" class="icon-btn" aria-label="Open menu">☰</button>
+      <a class="brand" href="#" aria-label="NuoNuo home"><picture class="brand-logo-picture"><source srcset="nuonuo-logo-dark.png" media="(prefers-color-scheme: dark)"><img src="nuonuo-logo.png" alt="NuoNuo" class="brand-logo"></picture></a>
+      <button id="accountBtn" class="account-link" type="button"><span class="person-icon">♙</span><span id="accountLabel">Sign in</span></button>
+    </div>
+    <nav id="mobileNav" class="mobile-nav" aria-label="Main navigation">
+      <button type="button" onclick="scrollToId('menu')">Shop</button>
+      <button type="button" onclick="scrollToId('categories')">Categories</button>
+      <button type="button" onclick="scrollToId('about')">About NuoNuo</button>
+      <button id="myOrdersNav" class="hidden" type="button" onclick="openMe()">My orders & rewards</button>
+    </nav>
+    <div class="header-actions">
+      <button id="cart" class="cart-btn" aria-label="Open cart">
+        <span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h2l1.7 9.2a2 2 0 0 0 2 1.8h6.9a2 2 0 0 0 1.9-1.4L20 8H7"/><circle cx="10" cy="19" r="1.4"/><circle cx="18" cy="19" r="1.4"/></svg></span>
+        <span class="cart-label">Cart</span><i id="count">0</i>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero-wrap">
+    <div class="hero-copy">
+      <small>NUONUO</small>
+      <h1>Less sweet,<br>never less delicious.</h1>
+      <p>Freshly made desserts, prepared with care. Local pickup & delivery only.</p>
+      <button id="shopBtn" class="hero-btn" type="button">Shop NuoNuo <span>→</span></button>
+    </div>
+    <div class="hero-visual" id="heroVisual">
+      <div class="hero-placeholder"><img src="nuonuo-logo.png" alt="NuoNuo"></div>
+      <div class="hero-caption"><span id="heroProductName">Freshly made</span><small>Explore the menu</small></div>
+    </div>
+  </section>
+
+  <section id="categories" class="section category-section">
+    <div class="section-kicker">NUONUO MENU</div>
+    <div class="section-title-row"><h2>Choose your favourites</h2><button class="text-btn" onclick="scrollToId('menu')">View all →</button></div>
+    <div id="categoryCards" class="category-cards"></div>
+  </section>
+
+  <section id="menu" class="section menu-section">
+    <div class="section-title-row menu-title">
+      <div><div class="section-kicker">SHOP ONLINE</div><h2>Something sweet for today.</h2></div>
+      <div class="category-select-wrap"><label for="categorySelect">Categories</label><select id="categorySelect"><option value="">Select a category</option></select></div>
+    </div>
+    <div id="searchWrap" class="search-wrap hidden"><input id="searchInput" type="search" placeholder="Search desserts…" autocomplete="off"></div>
+    <div id="loading">Loading menu…</div>
+    <div id="grid"></div>
+  </section>
+
+  <section id="about" class="about-section">
+    <div><div class="section-kicker">NUONUO</div><h2>Little desserts,<br>made thoughtfully.</h2></div>
+    <p>Available for local pickup and delivery. Order online and we’ll prepare everything fresh for you.</p>
+  </section>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="#" aria-label="NuoNuo home"><picture class="footer-logo-picture"><source srcset="nuonuo-logo-dark.png" media="(prefers-color-scheme: dark)"><img src="nuonuo-logo.png" alt="NuoNuo" class="footer-logo"></picture></a>
+    <div class="footer-socials">
+      <span>Follow & contact us</span>
+      <a href="https://instagram.com/nuonuodessert" target="_blank" rel="noopener">Instagram · @nuonuodessert</a>
+      <a href="https://wa.me/601113079717" target="_blank" rel="noopener">WhatsApp · +60 11-1307 9717</a>
+    </div>
+    <div class="footer-bottom">© NuoNuo · by Pistaché Corner</div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <aside id="drawer" class="hidden" aria-hidden="true">
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <div class="panel">
+      <button id="close" class="close-btn" aria-label="Close cart">×</button>
+      <small>YOUR ORDER</small><h2>Cart</h2>
+      <div id="items"></div>
+      <div class="total"><span>Total</span><b id="total">RM 0.00</b></div>
+      <button id="checkout" class="dark">Checkout</button>
+    </div>
+  </aside>
+
+  <div id="meModal" class="overlay hidden"><div class="account-modal me-modal">
+    <button id="meClose" class="close-btn" aria-label="Close">×</button>
+    <small>NUONUO · ME</small><h2>My details.</h2>
+    <p class="modal-sub">Keep your details here for faster checkout. Name and phone are required. Address is optional unless you choose delivery. Email and birthday are optional.</p>
+    <form id="meForm">
+      <label>Name<input id="meName" required autocomplete="name"></label>
+      <label>Phone<input id="mePhone" required autocomplete="tel"></label>
+      <label>Email <span class="optional">(optional)</span><input id="meEmail" type="email" autocomplete="email"></label>
+      <label>Address <span class="optional">(optional)</span><input id="meAddress" autocomplete="street-address"></label>
+      <label>Birthday <span class="optional">(optional)</span><input id="meBirthday" type="date" autocomplete="bday"></label>
+      <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
+      <button id="meSave" class="dark" type="submit">Save details</button>
+      <p id="meMessage" class="form-message"></p>
+      <div id="rewardsBox" class="rewards-box"></div>
+      <div id="historyBox" class="history-box hidden"></div>
+      <button type="button" class="secondary-action" onclick="openChangePassword()">Change password</button>
+      <button id="logoutCustomer" class="logout-btn" type="button">Log out</button>
+    </form>
+  </div></div>
+
+  <div id="passwordModal" class="overlay hidden"><div class="account-modal">
+    <button id="passwordClose" class="close-btn" aria-label="Close">×</button>
+    <small>NUONUO ACCOUNT</small><h2>Change password.</h2>
+    <p class="modal-sub">Confirm your current password once, then choose a new one.</p>
+    <form id="passwordForm">
+      <label>Current password<input id="oldPassword" type="password" required autocomplete="current-password"></label>
+      <label>New password<input id="newPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <label>Confirm new password<input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <button id="passwordSubmit" class="dark" type="submit">Change password</button>
+      <p id="passwordMessage" class="form-message"></p>
+    </form>
+  </div></div>
+
+  <div id="accountModal" class="overlay hidden">
+    <div class="account-modal">
+      <button id="accountClose" class="close-btn" aria-label="Close">×</button>
+      <div id="accountSignedOut">
+        <small>NUONUO ACCOUNT</small>
+        <h2 id="authTitle">Welcome back.</h2>
+        <p class="modal-sub">Create an account or sign in to make ordering easier.</p>
+        <div class="auth-tabs"><button id="loginTab" class="active" type="button">Sign in</button><button id="signupTab" type="button">Register</button></div>
+        <form id="authForm">
+          <label id="authNameField" class="hidden">Name<input id="authName" autocomplete="name"></label>
+          <label>Phone<input id="authPhone" type="tel" required autocomplete="tel" placeholder="+601112345678"></label>
+          <label>Password<input id="authPassword" type="password" required minlength="6" autocomplete="current-password"></label>
+          <button id="authSubmit" class="dark" type="submit">Sign in</button>
+          <p id="authMessage" class="form-message"></p>
+        </form>
+      </div>
+      <div id="accountSignedIn" class="hidden"></div>
+    </div>
+  </div>
+
+  <div id="modal" class="hidden overlay"><div class="modal">
+    <button id="x" class="close-btn">×</button><small>NUONUO</small><h2>Checkout</h2>
+    <p id="checkoutAccountHint" class="checkout-hint"></p><p id="checkoutProfileNote" class="checkout-hint"></p>
+    <form id="form">
+      <div class="fields">
+        <label>Name<input id="name" required autocomplete="name"></label>
+        <label>Phone<input id="phone" required autocomplete="tel"></label>
+        <label>Email <span class="optional">(optional)</span><input id="email" type="email" autocomplete="email"></label>
+        <label>Order date<input id="date" type="date" required></label>
+        <label class="wide">Address <span class="optional">(required for delivery)</span><input id="address" autocomplete="street-address"></label>
+        <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday"></label>
+        <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select></label>
+        <label>Payment<select id="payment"><option>Bank transfer</option><option>Cash</option></select></label>
+        <label class="wide">Note<textarea id="note"></textarea></label>
+      </div>
+      <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
+      <div class="voucher-checkout">
+        <label>Voucher <span class="optional">(optional)</span><input id="voucherCode" placeholder="Enter voucher code" autocomplete="off"></label>
+        <button id="applyVoucher" type="button" class="secondary-action">Apply voucher</button>
+        <p id="voucherMessage" class="form-message"></p>
+        <b id="voucherDiscount"></b>
+      </div>
+      <div id="summary"></div><div class="total"><span>Total</span><b id="checkoutTotal">RM 0.00</b></div>
+      <button class="dark" id="place" type="submit">Place order</button><p id="error" class="form-message"></p>
+    </form>
+  </div></div>
+
+  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
