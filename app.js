@@ -33,14 +33,13 @@ function imageSrc(value){
 }
 function menu(cat='',query=''){
   let q=query.trim().toLowerCase();
-  if(!cat){
-    $('#grid').innerHTML='<div class="menu-empty">Select a category to view the menu.</div>';return;
-  }
-  let list=products.filter(p=>p.category_id===cat&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
+  let list=products.filter(p=>(!cat||p.category_id===cat)&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
     const img=imageSrc(p.image_url);
-    return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
-  }).join('')||'<p>No products available in this category.</p>';
+    const category=cats.find(c=>c.id===p.category_id);
+    const categoryName=category?.name||'Uncategorized';
+    return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><div class="product-category">${esc(categoryName)}</div><h3>${esc(p.name)}</h3>${p.description?`<p class="product-description">${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
+  }).join('')||'<p>No products available.</p>';
 }
 function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;

@@ -869,3 +869,9 @@ body{background:var(--bg)}
   .hero-copy p{font-size:15px;line-height:1.65}
   .hero-visual{height:auto;aspect-ratio:4/3;border-radius:18px}
 }
+
+/* V14.1 menu product metadata: category + description */
+.product-category{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7d8790;margin:0 0 7px;font-weight:600}
+.product-description{color:#777;font-size:12px;line-height:1.6;margin:0;min-height:20px}
+@media(max-width:650px){.product-category{font-size:9px;letter-spacing:.14em}.product-description{font-size:11px;line-height:1.5}}
+@media(prefers-color-scheme:dark){.product-category{color:#c8b5cb}.product-description{color:#b9b2bb}}
