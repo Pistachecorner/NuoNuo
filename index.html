@@ -25,7 +25,7 @@
       <button type="button" onclick="scrollToId('menu')">Shop</button>
       <button type="button" onclick="scrollToId('categories')">Categories</button>
       <button type="button" onclick="scrollToId('about')">About NuoNuo</button>
-      <button id="myOrdersNav" class="hidden" type="button" onclick="openMyOrders()">My orders</button>
+      <button id="mobileMyOrders" type="button">My orders</button>
     </nav>
     <div class="header-actions">
       <button id="cart" class="cart-btn" aria-label="Open cart">
@@ -105,31 +105,30 @@
       <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
       <button id="meSave" class="dark" type="submit">Save details</button>
       <p id="meMessage" class="form-message"></p>
-
-      <div class="account-section">
-        <div class="account-section-head"><div><small>SECURITY</small><h3>Change password</h3></div></div>
-        <p class="account-section-copy">Enter your current password once, then choose a new password.</p>
+      <div class="customer-summary">
+        <div><span>Total orders</span><b id="customerOrderCount">0</b></div>
+        <div><span>Total spent</span><b id="customerTotalSpent">RM 0.00</b></div>
+      </div>
+      <section class="customer-section">
+        <div class="customer-section-head"><small>REWARDS</small><b>Your vouchers</b></div>
+        <p class="customer-note">Earn RM10 for every RM100 spent. Each voucher is valid for 3 months and requires a minimum RM50 purchase.</p>
+        <div id="voucherList" class="voucher-list"><p class="customer-empty">No vouchers yet.</p></div>
+      </section>
+      <section class="customer-section">
+        <div class="customer-section-head"><small>ORDER HISTORY</small><b>Your orders</b></div>
+        <div id="orderHistory" class="order-history"><p class="customer-empty">No orders yet.</p></div>
+      </section>
+      <section class="customer-section password-section">
+        <div class="customer-section-head"><small>SECURITY</small><b>Change password</b></div>
+        <p class="customer-note">Confirm your current password once, then choose a new password.</p>
         <form id="passwordForm">
           <label>Current password<input id="currentPassword" type="password" required autocomplete="current-password"></label>
           <label>New password<input id="newPassword" type="password" required minlength="6" autocomplete="new-password"></label>
           <label>Confirm new password<input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password"></label>
-          <button id="passwordSave" class="secondary-action" type="submit">Change password</button>
+          <button id="changePasswordBtn" class="secondary-action" type="submit">Change password</button>
           <p id="passwordMessage" class="form-message"></p>
         </form>
-      </div>
-
-      <div class="account-section rewards-section">
-        <div class="account-section-head"><div><small>REWARDS</small><h3>My rewards</h3></div></div>
-        <div class="reward-stats"><div><b id="orderCount">0</b><span>Orders</span></div><div><b id="totalSpend">RM 0.00</b><span>Total spent</span></div><div><b id="voucherCount">0</b><span>RM10 vouchers</span></div></div>
-        <p class="account-section-copy">Every RM100 spent earns one RM10 voucher for a future purchase.</p>
-        <div id="voucherList" class="voucher-list"></div>
-      </div>
-
-      <div class="account-section history-section">
-        <div class="account-section-head"><div><small>ORDER HISTORY</small><h3>What you’ve ordered</h3></div></div>
-        <div id="orderHistory" class="order-history"><p class="muted">Loading your orders…</p></div>
-      </div>
-
+      </section>
       <button id="logoutCustomer" class="logout-btn" type="button">Log out</button>
     </form>
   </div></div>
@@ -171,15 +170,15 @@
       </div>
       <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
       <div id="voucherCheckout" class="voucher-checkout hidden">
-        <label>Voucher <span class="optional">(optional)</span><select id="voucherSelect"><option value="">No voucher</option></select></label>
-        <p id="voucherHint" class="voucher-hint"></p>
+        <label>Voucher <span class="optional">(optional)</span><input id="voucherCode" placeholder="Enter voucher code" autocomplete="off"></label>
+        <p id="voucherHint" class="customer-note"></p>
       </div>
       <div id="summary"></div><div class="total"><span>Total</span><b id="checkoutTotal">RM 0.00</b></div>
       <button class="dark" id="place" type="submit">Place order</button><p id="error" class="form-message"></p>
     </form>
   </div></div>
 
-  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden">🎟️ You earned an RM10 voucher for your next purchase.</p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
+  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successReward" class="birthday-notice"></p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
 </body>
 </html>
