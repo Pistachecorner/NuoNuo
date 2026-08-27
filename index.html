@@ -105,11 +105,17 @@
       <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
       <button id="meSave" class="dark" type="submit">Save details</button>
       <p id="meMessage" class="form-message"></p>
-      <div id="rewardsBox" class="rewards-box"></div>
-      <div id="historyBox" class="history-box hidden"></div>
       <button type="button" class="secondary-action" onclick="openChangePassword()">Change password</button>
       <button id="logoutCustomer" class="logout-btn" type="button">Log out</button>
     </form>
+  </div></div>
+
+  <div id="rewardsModal" class="overlay hidden"><div class="account-modal me-modal">
+    <button id="rewardsClose" class="close-btn" aria-label="Close">×</button>
+    <small>NUONUO · REWARDS</small><h2>My rewards & orders.</h2>
+    <p class="modal-sub">View your rewards, vouchers and complete order history here.</p>
+    <div id="rewardsBox" class="rewards-box"></div>
+    <div id="historyBox" class="history-box"></div>
   </div></div>
 
   <div id="passwordModal" class="overlay hidden"><div class="account-modal">
