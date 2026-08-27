@@ -409,3 +409,51 @@ body{background:var(--bg)}
   .modal,.account-modal,.success{background:#26323b;box-shadow:0 20px 60px rgba(5,10,15,.28)}
   .site-footer{background:#202a32;border-color:#394751}
 }
+
+
+/* V7 refined layered storefront */
+.site-header{position:sticky;isolation:isolate}
+.header-title{position:absolute;left:50%;transform:translateX(-50%);font:400 24px Georgia,serif;letter-spacing:-.02em;color:#3a3150;pointer-events:none}
+@media(max-width:650px){.header-title{font-size:21px}}
+@media(prefers-color-scheme: dark){
+  :root{
+    --ink:#eef3f7;
+    --muted:#aab8c3;
+    --line:#43515d;
+    --bg:#202a32;
+    --card:#2a3741;
+    --accent:#aebfcd;
+  }
+  html,body{background:#202a32;color:#eef3f7}
+  .site-header{background:#364550;border-bottom-color:#53636f;box-shadow:0 8px 28px rgba(6,12,18,.26)}
+  .header-title{color:#f1f5f7}
+  .icon-btn{color:#edf3f6}
+  .account-link{color:#e0e8ed}
+  .cart-btn{background:#2c3943;border-color:#aebfcd;color:#edf3f6}
+  .cart-btn i{background:#aebfcd;color:#25313a}
+  .mobile-nav{background:#303e49;border-color:#53636f;box-shadow:0 14px 35px rgba(6,12,18,.28)}
+  .mobile-nav button{color:#edf3f7}
+  .hero-copy small,.section-kicker,.modal small,.success small{color:#9fafba}
+  .hero-copy p,.about-section p{color:#b1bec7}
+  .hero-btn,.add,.dark{background:#b8c9d5;color:#25313a;border-color:#b8c9d5;box-shadow:0 8px 24px rgba(142,169,186,.18)}
+  .hero-btn:hover,.add:hover,.dark:hover{background:#cad7df;border-color:#cad7df}
+  .hero-visual{background:#2b3943;box-shadow:0 18px 45px rgba(4,9,14,.42)}
+  .category-card{background:#2a3741;border-color:#43515d}
+  .about-section{background:#2e3d48;border-color:#465662}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#2b3944;color:#eef3f7;border-color:#465662}
+  .search-wrap input::placeholder{color:#91a0ab}
+  .tab{background:#2d3b46;color:#cbd6dd;border-color:#4a5965}
+  .tab.active{background:#b8c9d5;color:#25313a;border-color:#b8c9d5}
+  .card{background:#2a3741;border-color:#43515d;box-shadow:0 12px 30px rgba(5,11,16,.22)}
+  .pic{background-color:#303e48;color:#9eacb6}
+  .body p{color:#aab7c0}
+  .panel{background:#303e49;box-shadow:-18px 0 45px rgba(5,11,16,.30)}
+  .modal,.account-modal,.success{background:#2a3741;box-shadow:0 20px 60px rgba(5,11,16,.34)}
+  .close-btn{color:#dce5ea}
+  .line,.summary{border-bottom-color:#43515d}
+  .qty button{background:#2d3b46;color:#edf3f7;border-color:#4a5965}
+  .site-footer{background:#26323b;border-color:#3d4b56}
+  .site-footer a,.site-footer{color:#aebbc4}
+  .logout-btn{color:#dbe4e9;border-color:#4a5965}
+  .logout-btn:hover{background:#b8c9d5;color:#25313a}
+}
