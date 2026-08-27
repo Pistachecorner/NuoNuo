@@ -178,8 +178,8 @@ function renderRewards(){
   box.innerHTML=`
     <div class="rewards-head"><b>My rewards</b><span>${available.length} available voucher${available.length===1?'':'s'}</span></div>
     <div class="reward-stats"><span><b>${Number(currentRewards.order_count||0)}</b><small>Total orders</small></span><span><b>${money(currentRewards.total_spent||0)}</b><small>Total spent</small></span></div>
-    <p class="reward-rule">🎟️ Every RM 100 qualifying order earns RM 10 off for your next purchase. Min. spend RM 50 · valid for 3 months.</p>
-    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM ${Number(v.amount||10).toFixed(2)} off · min. spend RM ${Number(v.minimum_spend||50).toFixed(2)} · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
+    <p class="reward-rule">🎟️ Every cumulative RM 100 qualifying spend earns 1 × RM 10 voucher. Vouchers can accumulate. Each voucher is valid for 1 month and can be used on a purchase of RM 60 or more.</p>
+    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM ${Number(v.amount||10).toFixed(2)} off · min. spend RM ${Number(v.minimum_spend||60).toFixed(2)} · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
     <button type="button" class="secondary-action" onclick="openOrderHistory()">View order history</button>
   `;
 }
