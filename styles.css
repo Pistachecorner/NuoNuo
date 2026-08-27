@@ -257,27 +257,5 @@ body.cart-open{overflow:hidden}
 .voucher-checkout .secondary-action:active{transform:translateY(1px)}
 #voucherDiscount{display:block;margin-top:6px;font-size:12px}
 
-/* Checkout voucher selector: isolated from the storefront/menu styles. */
-.voucher-checkout{padding:20px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.voucher-checkout-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.voucher-checkout-head small{font-size:9px;letter-spacing:.14em;color:var(--muted)}
-.voucher-checkout-head h3{margin:5px 0 0;font-size:20px;font-weight:600}
-.voucher-status{display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--muted);white-space:nowrap}
-.voucher-status.is-disabled{opacity:.75}
-.voucher-status.is-selected{color:var(--ink);border-color:var(--ink)}
-.voucher-checkout-note{margin:8px 0 14px;color:var(--muted);font-size:11px;line-height:1.5}
-.checkout-vouchers{display:grid;gap:10px}
-.checkout-voucher-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--ink);cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}
-.checkout-voucher-card:hover{border-color:var(--ink);transform:translateY(-1px)}
-.checkout-voucher-card.is-selected{border-color:var(--ink);background:rgba(255,255,255,.045)}
-.checkout-voucher-card.is-disabled,.checkout-voucher-card:disabled{opacity:.48;cursor:not-allowed;transform:none}
-.checkout-voucher-icon{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;font-size:16px;flex:0 0 auto}
-.checkout-voucher-main{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
-.checkout-voucher-main b{font-size:13px;font-weight:600}
-.checkout-voucher-main small{font-size:10px;color:var(--muted)}
-.checkout-voucher-action{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
-.checkout-voucher-empty{padding:15px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:11px}
-@media(max-width:650px){.voucher-checkout{padding:16px}.checkout-voucher-card{padding:12px}.voucher-checkout-head h3{font-size:18px}}
-
 /* Rewards/history summary additions. */
 .reward-stats span{display:flex;flex-direction:column;gap:2px}.reward-stats span small{font-size:10px;color:var(--muted);font-weight:400}.reward-rule{font-size:11px;color:var(--muted);line-height:1.5;margin:10px 0}.history-summary{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 8px;align-items:end;padding:12px 0;margin-bottom:10px;border-bottom:1px solid var(--line)}.history-summary b{font-size:18px}.history-summary span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
