@@ -25,6 +25,7 @@
       <button type="button" onclick="scrollToId('menu')">Shop</button>
       <button type="button" onclick="scrollToId('categories')">Categories</button>
       <button type="button" onclick="scrollToId('about')">About NuoNuo</button>
+      <button id="myOrdersNav" class="hidden" type="button" onclick="openMe()">My orders & rewards</button>
     </nav>
     <div class="header-actions">
       <button id="cart" class="cart-btn" aria-label="Open cart">
@@ -104,7 +105,23 @@
       <p class="birthday-help">🎁 Save your birthday so NuoNuo can recognise your birthday month and include a complimentary gift with an eligible order.</p>
       <button id="meSave" class="dark" type="submit">Save details</button>
       <p id="meMessage" class="form-message"></p>
+      <div id="rewardsBox" class="rewards-box"></div>
+      <div id="historyBox" class="history-box hidden"></div>
+      <button type="button" class="secondary-action" onclick="openChangePassword()">Change password</button>
       <button id="logoutCustomer" class="logout-btn" type="button">Log out</button>
+    </form>
+  </div></div>
+
+  <div id="passwordModal" class="overlay hidden"><div class="account-modal">
+    <button id="passwordClose" class="close-btn" aria-label="Close">×</button>
+    <small>NUONUO ACCOUNT</small><h2>Change password.</h2>
+    <p class="modal-sub">Confirm your current password once, then choose a new one.</p>
+    <form id="passwordForm">
+      <label>Current password<input id="oldPassword" type="password" required autocomplete="current-password"></label>
+      <label>New password<input id="newPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <label>Confirm new password<input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <button id="passwordSubmit" class="dark" type="submit">Change password</button>
+      <p id="passwordMessage" class="form-message"></p>
     </form>
   </div></div>
 
@@ -144,12 +161,18 @@
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>
       <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
+      <div class="voucher-checkout">
+        <label>Voucher <span class="optional">(optional)</span><input id="voucherCode" placeholder="Enter voucher code" autocomplete="off"></label>
+        <button id="applyVoucher" type="button" class="secondary-action">Apply voucher</button>
+        <p id="voucherMessage" class="form-message"></p>
+        <b id="voucherDiscount"></b>
+      </div>
       <div id="summary"></div><div class="total"><span>Total</span><b id="checkoutTotal">RM 0.00</b></div>
       <button class="dark" id="place" type="submit">Place order</button><p id="error" class="form-message"></p>
     </form>
   </div></div>
 
-  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
+  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
 </body>
 </html>
