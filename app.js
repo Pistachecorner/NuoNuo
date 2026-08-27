@@ -179,7 +179,7 @@ function renderRewards(){
     <div class="rewards-head"><b>My rewards</b><span>${available.length} available voucher${available.length===1?'':'s'}</span></div>
     <div class="reward-stats"><span><b>${Number(currentRewards.order_count||0)}</b><small>Total orders</small></span><span><b>${money(currentRewards.total_spent||0)}</b><small>Total spent</small></span></div>
     <p class="reward-rule">🎟️ Every cumulative RM 100 qualifying spend earns 1 × RM 10 voucher. Vouchers can accumulate. Each voucher is valid for 1 month and can be used on a purchase of RM 60 or more.</p>
-    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM ${Number(v.amount||10).toFixed(2)} off · min. spend RM ${Number(v.minimum_spend||60).toFixed(2)} · expires ${new Date(v.expires_at).toLocaleDateString('en-GB')}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
+    ${available.length?available.map(v=>`<article class="voucher-card"><div class="voucher-card-top"><b class="voucher-code">${esc(v.code)}</b><span class="voucher-badge">Valid</span></div><div class="voucher-card-main"><span class="voucher-ticket-icon">%</span><div class="voucher-card-details"><b>RM ${Number(v.amount||10).toFixed(2)} off</b><span>Min. spend RM ${Number(v.minimum_spend||60).toFixed(2)} <i>•</i> Expires ${new Date(v.expires_at).toLocaleDateString('en-GB')}</span></div></div><div class="voucher-card-divider"></div><div class="voucher-card-bottom"><span class="voucher-validity">Valid for 1 month from the date of issue.</span><button type="button" class="voucher-copy-btn" onclick="copyVoucher('${esc(v.code)}')"><span>▣</span> Copy code</button></div></article>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
   `;
 }
 window.copyVoucher=async code=>{
@@ -267,7 +267,7 @@ async function renderCheckoutVouchers(subtotal){
     const code=String(v.code||'');
     const expires=new Date(v.expires_at).toLocaleDateString('en-GB');
     return `<button type="button" class="checkout-voucher-card${canUse?'':' is-disabled'}" data-voucher-code="${esc(code)}" ${canUse?'':'disabled'}>
-      <span class="checkout-voucher-icon">%</span>
+      <span class="checkout-voucher-ticket-icon">%</span>
       <span class="checkout-voucher-main"><b>RM ${Number(v.amount||10).toFixed(2)} off</b><small>Min. spend RM ${Number(v.minimum_spend||60).toFixed(2)} · Expires ${expires}</small></span>
       <span class="checkout-voucher-action">${canUse?'Use':'Locked'}</span>
     </button>`;

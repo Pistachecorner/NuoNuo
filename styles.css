@@ -281,3 +281,32 @@ body.cart-open{overflow:hidden}
 
 /* Rewards/history summary additions. */
 .reward-stats span{display:flex;flex-direction:column;gap:2px}.reward-stats span small{font-size:10px;color:var(--muted);font-weight:400}.reward-rule{font-size:11px;color:var(--muted);line-height:1.5;margin:10px 0}.history-summary{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 8px;align-items:end;padding:12px 0;margin-bottom:10px;border-bottom:1px solid var(--line)}.history-summary b{font-size:18px}.history-summary span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+
+/* Voucher presentation only: isolated overrides, storefront/menu styles untouched. */
+.voucher-card{margin:16px 0 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.01));box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.voucher-card-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.voucher-code{font-size:19px;letter-spacing:.01em}
+.voucher-badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;border-radius:999px;background:rgba(196,157,83,.22);color:var(--ink);font-size:11px;letter-spacing:.02em}
+.voucher-card-main{display:flex;align-items:center;gap:16px;margin-top:22px}
+.voucher-ticket-icon{width:44px;height:44px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:9px;font-size:22px;flex:0 0 auto}
+.voucher-card-details{display:flex;flex-direction:column;gap:7px;min-width:0}
+.voucher-card-details b{font-size:18px}
+.voucher-card-details span{font-size:12px;color:var(--muted);line-height:1.5}
+.voucher-card-details i{font-style:normal;margin:0 7px}
+.voucher-card-divider{height:1px;background:var(--line);margin:22px 0}
+.voucher-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.voucher-validity{font-size:12px;color:var(--muted)}
+.voucher-copy-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-width:148px;padding:11px 18px;border:1px solid var(--ink);border-radius:10px;background:transparent;color:var(--ink);font-size:12px;cursor:pointer;transition:background .18s ease,color .18s ease,transform .18s ease}
+.voucher-copy-btn:hover{background:var(--ink);color:var(--bg)}
+.voucher-copy-btn:active{transform:translateY(1px)}
+.voucher-copy-btn span{font-size:16px;line-height:1}
+
+/* Checkout uses the same voucher-card language, with a compact selectable treatment. */
+.checkout-voucher-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:15px;padding:16px 18px;border-radius:13px}
+.checkout-voucher-ticket-icon{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--ink);border-radius:8px;font-size:18px;flex:0 0 auto}
+.checkout-voucher-main b{font-size:14px}
+.checkout-voucher-main small{font-size:11px}
+.checkout-voucher-action{padding:8px 12px;border:1px solid var(--line);border-radius:999px;font-size:10px}
+.checkout-voucher-card.is-selected .checkout-voucher-action{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+@media(max-width:650px){.voucher-card{padding:18px;border-radius:14px}.voucher-code{font-size:16px}.voucher-card-main{gap:12px}.voucher-card-details b{font-size:16px}.voucher-card-bottom{align-items:flex-start;flex-direction:column}.voucher-copy-btn{width:100%}.checkout-voucher-card{grid-template-columns:auto minmax(0,1fr);padding:14px}.checkout-voucher-action{grid-column:2;justify-self:start}}
