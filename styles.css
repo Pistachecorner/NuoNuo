@@ -793,3 +793,79 @@ body{background:var(--bg)}
   .footer-socials a{color:#F0DDEB}
   .footer-bottom{color:#BDB2BC;border-top-color:rgba(255,240,225,.14)}
 }
+
+
+/* V14 — editorial hero inspired dark dessert atmosphere */
+@media (prefers-color-scheme: dark){
+  html,body{background:#242229;color:#f6f1eb}
+  .hero-wrap{
+    position:relative;
+    max-width:none;
+    padding:64px max(5vw,40px) 58px;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse at 78% 22%, rgba(104,70,101,.26) 0%, rgba(104,70,101,0) 34%),
+      radial-gradient(ellipse at 22% 82%, rgba(111,74,57,.18) 0%, rgba(111,74,57,0) 34%),
+      linear-gradient(135deg,#2b252c 0%,#25232a 48%,#30262d 100%);
+  }
+  .hero-wrap:before,
+  .hero-wrap:after{
+    content:"";
+    position:absolute;
+    pointer-events:none;
+    border-radius:50%;
+    filter:blur(2px);
+    opacity:.5;
+  }
+  /* soft cocoa / cream dessert-inspired forms, intentionally abstract */
+  .hero-wrap:before{
+    width:520px;height:520px;right:-180px;top:-230px;
+    background:
+      radial-gradient(circle at 42% 55%,rgba(117,77,67,.48) 0 9%,transparent 10%),
+      radial-gradient(circle at 58% 47%,rgba(179,132,125,.18) 0 16%,transparent 17%),
+      radial-gradient(circle at 47% 51%,transparent 0 34%,rgba(116,77,67,.22) 35% 38%,transparent 39% 46%,rgba(182,137,132,.12) 47% 50%,transparent 51%);
+  }
+  .hero-wrap:after{
+    width:430px;height:430px;left:-190px;bottom:-220px;
+    background:
+      radial-gradient(circle at 52% 46%,rgba(164,127,99,.16) 0 12%,transparent 13%),
+      radial-gradient(circle at 48% 50%,transparent 0 30%,rgba(129,91,71,.18) 31% 34%,transparent 35% 43%,rgba(190,151,124,.10) 44% 47%,transparent 48%);
+  }
+  .hero-copy,.hero-visual{position:relative;z-index:1}
+  .hero-copy{padding-left:clamp(0px,3vw,48px)}
+  .hero-copy small{color:#d9b7d6}
+  .hero-copy h1{
+    font-size:clamp(50px,5.2vw,74px);
+    line-height:.94;
+    letter-spacing:-.045em;
+    margin-top:18px;
+    margin-bottom:27px;
+    max-width:680px;
+  }
+  .hero-copy p{color:#d5cbd2;max-width:600px}
+  .hero-btn{background:#c795c6;color:#241d26;border-color:#c795c6;box-shadow:0 10px 26px rgba(199,149,198,.16)}
+  .hero-btn:hover{background:#d5a9d3;border-color:#d5a9d3}
+  .hero-visual{height:clamp(390px,38vw,540px);border-radius:26px;box-shadow:0 24px 60px rgba(5,3,7,.42)}
+  .hero-caption span{font-size:28px}
+  .site-header{
+    background:linear-gradient(100deg,#403842 0%,#4b3c49 48%,#51414d 100%);
+    border-bottom-color:#62515f;
+  }
+  .header-title{color:#f6eee9}
+  .icon-btn,.account-link{color:#f1e9e7}
+  .cart-btn{background:rgba(255,239,238,.08);border-color:#b894b5;color:#f5ecef}
+  .cart-btn i{background:#c795c6;color:#2c202b}
+  .mobile-nav{background:#39313a;border-color:#5b4b57}
+  .section,.hero-wrap{color:#f6f1eb}
+  .site-footer{background:linear-gradient(135deg,#29262d 0%,#31282f 100%);border-color:#4a4049}
+}
+
+@media(max-width:900px){
+  .hero-wrap{padding:48px 5% 38px}
+}
+@media(max-width:650px){
+  .hero-wrap{padding:36px 5% 28px;gap:30px}
+  .hero-copy h1{font-size:clamp(48px,12vw,58px);line-height:.93;margin:15px 0 24px}
+  .hero-copy p{font-size:15px;line-height:1.65}
+  .hero-visual{height:auto;aspect-ratio:4/3;border-radius:18px}
+}
