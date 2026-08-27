@@ -111,18 +111,25 @@ async function openMe(){
   const p=await getProfile();
   fillProfileForm(p);
   $('#meMessage').textContent='';
+  $('#rewardsModal')?.classList.add('hidden');
   $('#meModal').classList.remove('hidden');
 }
 window.openRewards=async()=>{
-  if(!currentProfile)return;
+  if(!currentProfile){
+    $('#accountModal').classList.remove('hidden');
+    setAuthMode('login');
+    return;
+  }
+  $('#meModal').classList.add('hidden');
   $('#rewardsModal').classList.remove('hidden');
+  $('#rewardsBox').innerHTML='<p class="reward-empty">Loading rewards…</p>';
+  $('#historyBox').innerHTML='<p class="reward-empty">Loading order history…</p>';
   await loadRewards();
   await openOrderHistory();
 };
 async function refreshAuth(){
   const {data:{session}}=await sb.auth.getSession();
-  const nav=$('#myOrdersNav');
-  const detailsNav=$('#myDetailsNav');
+  const detailsNav=$('#myDetailsNav'),ordersNav=$('#myOrdersNav');
   if(session){
     currentProfile=await getProfile();
     const welcomeName=currentProfile?.name?.trim()||'Customer';
@@ -130,7 +137,8 @@ async function refreshAuth(){
     $('#accountSignedOut').classList.add('hidden');
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent=profileComplete(currentProfile)?`Signed in as ${welcomeName}.`:'You are signed in, but your name and phone still need to be completed.';
-    nav?.classList.remove('hidden'); detailsNav?.classList.remove('hidden');
+    detailsNav?.classList.remove('hidden');
+    ordersNav?.classList.remove('hidden');
   }else{
     currentProfile=null;
     currentRewards=null;
@@ -138,7 +146,10 @@ async function refreshAuth(){
     $('#accountSignedOut').classList.remove('hidden');
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent='Guest checkout: name and phone are required. Address is required only for delivery.';
-    nav?.classList.add('hidden'); detailsNav?.classList.add('hidden');
+    detailsNav?.classList.add('hidden');
+    ordersNav?.classList.add('hidden');
+    $('#meModal')?.classList.add('hidden');
+    $('#rewardsModal')?.classList.add('hidden');
   }
 }
 $('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
@@ -153,6 +164,12 @@ $('#meForm').onsubmit=async e=>{e.preventDefault();$('#meMessage').textContent='
 $('#meClose').onclick=()=>$('#meModal').classList.add('hidden');
 $('#rewardsClose').onclick=()=>$('#rewardsModal').classList.add('hidden');
 
+async function fetchOrderHistory(){
+  if(!sb||!currentProfile)return null;
+  const {data,error}=await sb.rpc('get_nuonuo_customer_order_history');
+  if(error)throw error;
+  return data||{orders:[],order_count:0,total_spent:0};
+}
 async function loadRewards(){
   if(!sb||!currentProfile){
     currentRewards=null;
@@ -161,11 +178,27 @@ async function loadRewards(){
   }
   try{
     const {data,error}=await sb.rpc('get_nuonuo_customer_rewards');
-    if(error) throw error;
+    if(error)throw error;
     currentRewards=data||null;
   }catch(e){
-    console.warn('Rewards feature unavailable until the optional rewards SQL is run:',e);
-    currentRewards=null;
+    // The history RPC is already available in this customer build. Use it as
+    // a safe fallback so the rewards area still shows earned rewards even if
+    // the optional voucher RPC has not been installed yet.
+    try{
+      const history=await fetchOrderHistory();
+      const orders=Array.isArray(history?.orders)?history.orders:[];
+      const earned=orders.reduce((sum,o)=>sum+Math.floor(Math.max(0,Number(o.total||0))/100),0);
+      currentRewards={
+        order_count:Number(history?.order_count||orders.length||0),
+        total_spent:Number(history?.total_spent||0),
+        vouchers:[],
+        fallback:true,
+        earned_rewards:earned
+      };
+    }catch(historyError){
+      console.warn('Rewards and order history unavailable:',e,historyError);
+      currentRewards=null;
+    }
   }
   renderRewards();
   return currentRewards;
@@ -174,16 +207,23 @@ function renderRewards(){
   const box=$('#rewardsBox');
   if(!box)return;
   if(!currentRewards){
-    box.innerHTML='<small>Rewards & order history will appear here after the rewards setup is enabled.</small>';
+    box.innerHTML='<p class="reward-empty">Rewards could not be loaded yet.</p>';
     return;
   }
   const vouchers=Array.isArray(currentRewards.vouchers)?currentRewards.vouchers:[];
   const available=vouchers.filter(v=>!v.used_at && new Date(v.expires_at)>new Date());
+  const earned=Number(currentRewards.earned_rewards||0);
+  const earnedCount=currentRewards.fallback?earned:available.length;
   box.innerHTML=`
-    <div class="rewards-head"><b>My rewards</b><span>${available.length} voucher${available.length===1?'':'s'}</span></div>
-    <div class="reward-stats"><span><b>${Number(currentRewards.order_count||0)}</b> orders</span><span><b>${money(currentRewards.total_spent||0)}</b> spent</span></div>
-    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM 10 off · min. spend RM 50 · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
-    <button type="button" class="secondary-action" onclick="openOrderHistory()">View order history</button>
+    <div class="rewards-head"><b>My rewards</b><span>${available.length} active voucher${available.length===1?'':'s'}</span></div>
+    <div class="reward-stats">
+      <span><b>${Number(currentRewards.order_count||0)}</b><small>Total orders</small></span>
+      <span><b>${money(currentRewards.total_spent||0)}</b><small>Total spent</small></span>
+      <span><b>${currentRewards.fallback?earned:available.length}</b><small>${currentRewards.fallback?'Rewards earned':'Active rewards'}</small></span>
+    </div>
+    <p class="reward-rule">🎟️ Every RM 100 qualifying order earns RM 10 off for your next purchase. Min. spend RM 50 · valid for 3 months.</p>
+    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM ${Number(v.amount||10).toFixed(2)} off · min. spend RM ${Number(v.minimum_spend||50).toFixed(2)} · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):
+      (currentRewards.fallback&&earnedCount>0?`<div class="reward-earned">🎟️ You have ${earnedCount} RM 10 reward${earnedCount===1?'':'s'} earned from qualifying orders.</div><p class="reward-note">Voucher codes will appear here automatically once the rewards setup is connected.</p>`:'<p class="reward-empty">No active vouchers yet.</p>')}
   `;
 }
 window.copyVoucher=async code=>{
@@ -195,18 +235,25 @@ window.openOrderHistory=async()=>{
   box.classList.remove('hidden');
   box.innerHTML='<p>Loading order history…</p>';
   try{
-    const {data,error}=await sb.rpc('get_nuonuo_customer_order_history');
-    if(error)throw error;
+    const data=await fetchOrderHistory();
     const orders=Array.isArray(data?.orders)?data.orders:[];
-    box.innerHTML=orders.length?orders.map(o=>`
+    const count=Number(data?.order_count||orders.length||0);
+    const spent=Number(data?.total_spent||0);
+    const summary=`<div class="history-summary"><b>${count}</b><span>Total orders</span><b>${money(spent)}</b><span>Total spent</span></div>`;
+    if(!orders.length && data?.diagnostics){
+      const d=data.diagnostics;
+      box.innerHTML=summary+`<p class="reward-empty">No orders found yet.</p><small class="history-debug">Profile: ${d.profile_found?'OK':'missing'} · Phone: ${d.phone_found?'OK':'missing'} · Matching customers: ${Number(d.matching_customers||0)} · Matching orders: ${Number(d.matching_orders||0)}</small>`;
+      return;
+    }
+    box.innerHTML=summary+(orders.length?orders.map(o=>`
       <div class="history-order">
         <div class="history-top"><b>${esc(o.order_number||'Order')}</b><span>${new Date(o.created_at).toLocaleString()}</span></div>
         <div class="history-items">${(Array.isArray(o.items)?o.items:[]).map(i=>`<div><span>${esc(i.name||'Item')} × ${i.quantity}</span><b>${money(i.line_total)}</b></div>`).join('')}</div>
         <div class="history-total"><span>${esc(o.status||'Pending')}</span><b>${money(o.total)}</b></div>
-      </div>`).join(''):'<p class="reward-empty">No orders found yet.</p>';
+      </div>`).join(''):'<p class="reward-empty">No orders found yet.</p>');
   }catch(e){
-    console.warn('Order history unavailable until the optional rewards SQL is run:',e);
-    box.innerHTML='<p class="reward-empty">Order history is not available yet. Please run the NuoNuo rewards SQL once.</p>';
+    console.warn('Order history unavailable:',e);
+    box.innerHTML='<p class="reward-empty">Order history is not available yet.</p>';
   }
 };
 
@@ -236,7 +283,7 @@ $('#passwordForm').onsubmit=async e=>{
   finally{btn.disabled=false}
 };
 
-$('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');$('#rewardsModal').classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
+$('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
 function birthdayMonthActive(birthday){return !!birthday&&Number(String(birthday).slice(5,7))===new Date().getMonth()+1}
 function updateCheckoutAddressRequirement(){const delivery=$('#fulfil').value==='delivery';const input=$('#address');if(input)input.required=delivery}
 async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value=new Date().toISOString().slice(0,10);$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}</span><b>${money(x.qty*x.price)}</b></div>`).join('');$('#checkoutTotal').textContent=money(cart.reduce((n,x)=>n+x.qty*x.price,0));$('#voucherCode').value='';$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();$('#modal').classList.remove('hidden')}
