@@ -310,3 +310,21 @@ body.cart-open{overflow:hidden}
 .checkout-voucher-action{padding:8px 12px;border:1px solid var(--line);border-radius:999px;font-size:10px}
 .checkout-voucher-card.is-selected .checkout-voucher-action{border-color:var(--ink);background:var(--ink);color:var(--bg)}
 @media(max-width:650px){.voucher-card{padding:18px;border-radius:14px}.voucher-code{font-size:16px}.voucher-card-main{gap:12px}.voucher-card-details b{font-size:16px}.voucher-card-bottom{align-items:flex-start;flex-direction:column}.voucher-copy-btn{width:100%}.checkout-voucher-card{grid-template-columns:auto minmax(0,1fr);padding:14px}.checkout-voucher-action{grid-column:2;justify-self:start}}
+
+/* Compact voucher card: presentation-only override. */
+.voucher-card{margin:10px 0 0;padding:14px;border-radius:12px;box-shadow:none}
+.voucher-card-top{gap:10px}
+.voucher-code{font-size:15px}
+.voucher-badge{padding:5px 12px;font-size:10px}
+.voucher-card-main{gap:10px;margin-top:13px}
+.voucher-ticket-icon{width:34px;height:34px;border-radius:7px;font-size:18px}
+.voucher-card-details{gap:3px}
+.voucher-card-details b{font-size:15px}
+.voucher-card-details span{font-size:10px;line-height:1.4}
+.voucher-card-details i{margin:0 5px}
+.voucher-card-divider{margin:13px 0}
+.voucher-card-bottom{gap:10px}
+.voucher-validity{font-size:10px}
+.voucher-copy-btn{min-width:112px;padding:8px 12px;gap:6px;border-radius:8px;font-size:10px}
+.voucher-copy-btn span{font-size:13px}
+@media(max-width:650px){.voucher-card{padding:13px;border-radius:11px}.voucher-code{font-size:14px}.voucher-card-main{gap:9px;margin-top:11px}.voucher-card-details b{font-size:14px}.voucher-card-bottom{align-items:center;flex-direction:row}.voucher-copy-btn{width:auto;min-width:104px}}
