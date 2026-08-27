@@ -232,33 +232,3 @@ body.cart-open{overflow:hidden}
 /* Customer profile actions */
 .logout-btn{width:100%;margin-top:8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:10px 15px}
 .logout-btn:hover{background:var(--ink);color:var(--bg)}
-
-/* Customer rewards + order history. Additive only. */
-.customer-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 22px}
-.customer-summary>div{border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:rgba(127,127,127,.04)}
-.customer-summary span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.customer-summary b{font-size:18px}
-.customer-section{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
-.customer-section-head small{display:block;font-size:9px;letter-spacing:.18em;color:var(--muted);margin-bottom:5px}
-.customer-section-head b{font:21px Georgia,serif;font-weight:400}
-.customer-note{font-size:11px;line-height:1.55;color:var(--muted);margin:8px 0 12px}
-.customer-empty{font-size:12px;color:var(--muted);padding:10px 0}
-.voucher-card{border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin:8px 0;display:flex;justify-content:space-between;gap:12px;align-items:center;opacity:.58}
-.voucher-card.available{opacity:1}
-.voucher-card b{display:block;font-size:13px;letter-spacing:.08em}
-.voucher-card span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
-.voucher-card small{font-size:10px;color:var(--muted);text-align:right;white-space:nowrap}
-.order-card{border-bottom:1px solid var(--line);padding:12px 0}
-.order-card summary{list-style:none;display:flex;justify-content:space-between;gap:12px;cursor:pointer}
-.order-card summary::-webkit-details-marker{display:none}
-.order-card summary>span{min-width:0}.order-card summary b{display:block;font-size:13px}.order-card summary small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.order-card summary strong{font-size:13px;white-space:nowrap}
-.order-card-body{padding:10px 0 3px}.order-status{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.12em;border:1px solid var(--line);border-radius:99px;padding:4px 7px;color:var(--muted)}
-.order-items{margin-top:9px}.order-items>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:11px}.order-items b{white-space:nowrap}
-.password-section label{display:block;margin:10px 0;font-size:11px;color:var(--muted)}
-.password-section input{margin-top:5px}
-.success-message{color:#5b7b59}
-.voucher-checkout{border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin:13px 0}
-.voucher-checkout label{font-size:11px;color:var(--muted)}
-.voucher-checkout input{display:block;width:100%;margin-top:6px;border:1px solid var(--line);padding:11px;border-radius:8px;background:var(--card);color:var(--ink);outline:none}
-#successReward:empty{display:none}
-@media(max-width:650px){.customer-summary{grid-template-columns:1fr 1fr}.voucher-card{display:block}.voucher-card small{display:block;text-align:left;margin-top:8px}}
