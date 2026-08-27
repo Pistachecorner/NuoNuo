@@ -705,3 +705,66 @@ body{background:var(--bg)}
   .hero-btn:hover,.add:hover,.dark:hover{background:#CDA8CA;border-color:#CDA8CA}
   .tab.active{background:#BA8DB9;color:#302830;border-color:#BA8DB9}
 }
+
+/* V12 editorial hero refinement: wider 4:3 product image, stronger composition and layered surfaces. */
+.hero-wrap{
+  grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);
+  gap:58px;
+  padding-top:64px;
+  padding-bottom:58px;
+}
+.hero-copy{padding-left:2%;position:relative;z-index:2}
+.hero-copy h1{max-width:720px}
+.hero-copy p{max-width:470px}
+.hero-visual{
+  height:auto;
+  aspect-ratio:4 / 3;
+  min-height:0;
+  border-radius:28px;
+  transform:translateX(1.5%);
+  box-shadow:0 22px 55px rgba(36,48,58,.10);
+}
+.hero-caption{left:28px;bottom:24px}
+.hero-caption span{font-size:30px}
+.hero-caption small{font-size:11px}
+
+@media (prefers-color-scheme:dark){
+  .hero-visual{box-shadow:0 24px 60px rgba(10,8,13,.34)}
+}
+
+@media(max-width:900px){
+  .hero-wrap{grid-template-columns:1fr;gap:38px;padding-top:48px}
+  .hero-copy{padding-left:0}
+  .hero-visual{width:100%;transform:none;aspect-ratio:4 / 3;height:auto}
+}
+
+@media(max-width:650px){
+  .hero-wrap{padding:34px 5% 28px;gap:28px}
+  .hero-copy h1{font-size:52px}
+  .hero-visual{aspect-ratio:4 / 3;height:auto;border-radius:18px}
+  .hero-caption{left:18px;bottom:16px}
+  .hero-caption span{font-size:25px}
+  .hero-caption small{font-size:10px}
+}
+
+@media(max-width:430px){
+  .hero-copy h1{font-size:48px}
+  .hero-visual{aspect-ratio:4 / 3;height:auto}
+}
+
+/* Keep the Light Mode footer neutral: no leftover purple surfaces. */
+.site-footer{background:linear-gradient(135deg,#EEF3F5 0%,#F7F9FA 58%,#FCEFE9 100%);border-color:#D5E0E5}
+
+/* Editorial two-tone surfaces for Light Mode. */
+@media (prefers-color-scheme: light){
+  body{background:linear-gradient(180deg,#F4F7F8 0%,#F7F9FA 58%,#F3F6F7 100%)}
+  .site-header{background:linear-gradient(110deg,#DDE9EE 0%,#EEF3F4 50%,#FCE5D7 100%)}
+  .hero-wrap{background:linear-gradient(110deg,rgba(114,139,154,.035) 0%,rgba(255,255,255,0) 52%,rgba(252,229,215,.055) 100%)}
+}
+
+/* Soft gray-purple Dark Mode: purple belongs to accents, not the page background. */
+@media (prefers-color-scheme: dark){
+  body{background:linear-gradient(180deg,#29272D 0%,#2D2B31 58%,#29272D 100%)}
+  .site-header{background:linear-gradient(110deg,#49434B 0%,#57515A 48%,#6A5A60 100%)}
+  .hero-wrap{background:linear-gradient(110deg,rgba(186,141,185,.035) 0%,rgba(255,240,225,.025) 100%)}
+}
