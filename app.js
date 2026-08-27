@@ -112,17 +112,12 @@ async function openMe(){
   fillProfileForm(p);
   $('#meMessage').textContent='';
   $('#meModal').classList.remove('hidden');
-}
-window.openRewardsOrders=async()=>{
-  if(!currentProfile){return}
-  $('#rewardsModal').classList.remove('hidden');
   await loadRewards();
   await openOrderHistory();
-};
+}
 async function refreshAuth(){
   const {data:{session}}=await sb.auth.getSession();
-  const detailsNav=$('#myDetailsNav');
-  const ordersNav=$('#myOrdersNav');
+  const nav=$('#myOrdersNav');
   if(session){
     currentProfile=await getProfile();
     const welcomeName=currentProfile?.name?.trim()||'Customer';
@@ -130,8 +125,7 @@ async function refreshAuth(){
     $('#accountSignedOut').classList.add('hidden');
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent=profileComplete(currentProfile)?`Signed in as ${welcomeName}.`:'You are signed in, but your name and phone still need to be completed.';
-    detailsNav?.classList.remove('hidden');
-    ordersNav?.classList.remove('hidden');
+    nav?.classList.remove('hidden');
   }else{
     currentProfile=null;
     currentRewards=null;
@@ -139,10 +133,7 @@ async function refreshAuth(){
     $('#accountSignedOut').classList.remove('hidden');
     $('#accountSignedIn').classList.add('hidden');
     $('#checkoutAccountHint').textContent='Guest checkout: name and phone are required. Address is required only for delivery.';
-    detailsNav?.classList.add('hidden');
-    ordersNav?.classList.add('hidden');
-    $('#meModal')?.classList.add('hidden');
-    $('#rewardsModal')?.classList.add('hidden');
+    nav?.classList.add('hidden');
   }
 }
 $('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
@@ -155,7 +146,6 @@ function authEmailFromPhone(phone){const digits=normalizePhone(phone).replace(/^
 async function saveProfile(profile){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Please sign in first.');const normalizedPhone=normalizePhone(profile.phone)||normalizePhone(session.user.phone);const payload={auth_user_id:session.user.id,owner_id:owner,name:profile.name?.trim()||null,phone:normalizedPhone||null,email:profile.email?.trim()||null,address:profile.address?.trim()||null,birthday:profile.birthday||null,updated_at:new Date().toISOString()};const {data,error}=await sb.from('nuonuo_customer_profiles').upsert(payload,{onConflict:'auth_user_id,owner_id'}).select().single();if(error)throw error;currentProfile=data;return data}
 $('#meForm').onsubmit=async e=>{e.preventDefault();$('#meMessage').textContent='';$('#meSave').disabled=true;try{await saveProfile({name:$('#meName').value,phone:$('#mePhone').value,email:$('#meEmail').value,address:$('#meAddress').value,birthday:$('#meBirthday').value});await refreshAuth();$('#meModal').classList.add('hidden');showToast('Your details are saved')}catch(err){$('#meMessage').textContent=errText(err)}finally{$('#meSave').disabled=false}};
 $('#meClose').onclick=()=>$('#meModal').classList.add('hidden');
-$('#rewardsClose').onclick=()=>$('#rewardsModal').classList.add('hidden');
 
 async function loadRewards(){
   if(!sb||!currentProfile){
@@ -178,7 +168,7 @@ function renderRewards(){
   const box=$('#rewardsBox');
   if(!box)return;
   if(!currentRewards){
-    box.innerHTML='<div class="rewards-head"><b>My rewards</b><span>0 available vouchers</span></div><p class="reward-rule">🎟️ Every RM 100 qualifying order earns RM 10 off for your next purchase. Min. spend RM 50 · valid for 3 months.</p><p class="reward-empty">No active vouchers yet.</p>';
+    box.innerHTML='<small>Rewards & order history will appear here after the rewards setup is enabled.</small>';
     return;
   }
   const vouchers=Array.isArray(currentRewards.vouchers)?currentRewards.vouchers:[];
@@ -219,7 +209,7 @@ window.openOrderHistory=async()=>{
       </div>`).join(''):'<p class="reward-empty">No orders found yet.</p>');
   }catch(e){
     console.warn('Order history unavailable until the optional rewards SQL is run:',e);
-    box.innerHTML='<p class="reward-empty">Order history is temporarily unavailable. Your menu and checkout are unaffected. Run the separate customer rewards SQL once if rewards history has not been enabled.</p>';
+    box.innerHTML='<p class="reward-empty">Order history is not available yet. Please run the NuoNuo rewards SQL once.</p>';
   }
 };
 
@@ -249,7 +239,7 @@ $('#passwordForm').onsubmit=async e=>{
   finally{btn.disabled=false}
 };
 
-$('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');$('#rewardsModal')?.classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
+$('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
 function birthdayMonthActive(birthday){return !!birthday&&Number(String(birthday).slice(5,7))===new Date().getMonth()+1}
 function updateCheckoutAddressRequirement(){const delivery=$('#fulfil').value==='delivery';const input=$('#address');if(input)input.required=delivery}
 async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value=new Date().toISOString().slice(0,10);$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}</span><b>${money(x.qty*x.price)}</b></div>`).join('');$('#checkoutTotal').textContent=money(cart.reduce((n,x)=>n+x.qty*x.price,0));$('#voucherCode').value='';$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();$('#modal').classList.remove('hidden')}
