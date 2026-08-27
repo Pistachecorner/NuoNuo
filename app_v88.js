@@ -8,25 +8,7 @@
 */
 const SUPABASE_URL = window.NUONUO_SUPABASE_URL || "PASTE_SUPABASE_URL_HERE";
 const SUPABASE_ANON_KEY = window.NUONUO_SUPABASE_ANON_KEY || "PASTE_SUPABASE_ANON_KEY_HERE";
-const NUONUO_BUILD = "2026-08-26-pistache-corner-company-brand-v108";
-const CHANNELS = { pistache:{label:"Pistaché",desc:"Nationwide · Shipping available"}, nuonuo:{label:"NuoNuo",desc:"Local · No shipping"} };
-let activeChannel = localStorage.getItem("nuonuo_active_channel") || "nuonuo";
-const channelLabel = ch => CHANNELS[ch]?.label || ch || "NuoNuo";
-const channelDesc = ch => CHANNELS[ch]?.desc || "";
-function channelHeaderHtml(){ return `<div class="channel-context"><span class="channel-context-dot"></span><strong>${esc(channelLabel(activeChannel))}</strong><span>${esc(channelDesc(activeChannel))}</span></div>`; }
-async function getChannelSalesRows(){
-  let {data,error}=await sb.from("sales").select("*").eq("user_id",dataUserId()).order("sale_date",{ascending:false});
-  if(error)throw error;
-  const rows=data||[];
-  const orderIds=[...new Set(rows.map(s=>s.order_id).filter(Boolean))];
-  if(!orderIds.length)return rows.filter(s=>(s.sales_channel||"nuonuo")===activeChannel);
-  const {data:orders,error:oe}=await sb.from("orders").select("id,sales_channel").eq("user_id",dataUserId()).in("id",orderIds);
-  if(oe)throw oe;
-  const orderChannel=Object.fromEntries((orders||[]).map(o=>[o.id,o.sales_channel||"nuonuo"]));
-  return rows.filter(s=>(s.sales_channel||orderChannel[s.order_id]||"nuonuo")===activeChannel);
-}
-function setActiveChannel(ch){ activeChannel = CHANNELS[ch]?ch:"nuonuo"; localStorage.setItem("nuonuo_active_channel",activeChannel); updateChannelUI(); if(session && ["menu","orders","pending","dashboard","sales","reports"].includes(currentPage)) navigate(currentPage); }
-function updateChannelUI(){ const s=$("#channelSwitcher"); if(s) s.value=activeChannel; const n=$("#activeChannelName"); if(n) n.textContent=channelLabel(activeChannel); }
+const NUONUO_BUILD = "2026-08-25-multi-owner-session-fix-v69";
 let sb = null;
 
 let session = null;
@@ -161,12 +143,12 @@ function parseMeasureUnit(unit){
   // plus a compound box definition such as 63pcs/box. In the compound form,
   // `amount` is the number of base units contained in one purchase unit.
   const raw=String(unit??'').trim().toLowerCase().replace(/\s+/g,'');
-  const compound=raw.match(/^([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|unit|個|件|包|瓶|盒)\/(box|boxes|pack|packs|bottle|bottles|unit|units)$/i);
+  const compound=raw.match(/^([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|unit|個|件|包|瓶|盒)\/(box|boxes|pack|packs)$/i);
   if(compound){
     const amount=Number(compound[1]);
     const baseRaw=compound[2].toLowerCase();
     const purchaseRaw=compound[3].toLowerCase();
-    const purchaseUnit=(purchaseRaw==='pack'||purchaseRaw==='packs')?'pack':(purchaseRaw==='bottle'||purchaseRaw==='bottles'?'bottle':(purchaseRaw==='unit'||purchaseRaw==='units'?'unit':'box'));
+    const purchaseUnit=(purchaseRaw==='pack'||purchaseRaw==='packs')?'pack':'box';
     let baseUnit=baseRaw;
     if(baseRaw==='kg') return {amount:amount*1000,unit:'g',purchaseUnit,valid:true,compound:true};
     if(baseRaw==='l') return {amount:amount*1000,unit:'ml',purchaseUnit,valid:true,compound:true};
@@ -187,10 +169,7 @@ function parseMeasureUnit(unit){
 }
 function inventoryPurchaseUnit(item){
   const p=parseMeasureUnit(item?.unit);
-  // For compound definitions such as 5000g/unit, 1000g/pack,
-  // or 500ml/bottle, show the actual purchase unit instead of
-  // incorrectly defaulting every compound item to Box.
-  if(p.compound && p.purchaseUnit) return p.purchaseUnit;
+  if(p.compound) return 'box';
   if(p.purchaseUnit) return p.purchaseUnit;
   return String(item?.unit||'unit');
 }
@@ -393,7 +372,6 @@ async function showApp(s){
   $("#app").classList.toggle("staff-mode", isStaff());
   $("#userEmail").textContent=s.user.email || "";
   updateLiveClock();
-  updateChannelUI();
   await navigate(currentPage);
 }
 function showLogin(){
@@ -446,7 +424,7 @@ function bindCoreEvents(){
 const pages = {
   dashboard:"Dashboard", orders:"Orders", pending:"Pending Orders", menu:"Menu",
   ingredients:"Ingredients", inventory:"Inventory", wastage:"Wastage", customers:"Customers",
-  sales:"Sales", expenses:"Expenses", invoices:"Invoices", purchasing:"Purchasing", suppliers:"Suppliers", movements:"Inventory Movements", audit:"Audit Log", reports:"Reports", partners:"Partners & Profit", financials:"Company Finances", settings:"Account Settings", staff:"Staff"
+  sales:"Sales", expenses:"Expenses", invoices:"Invoices", purchasing:"Purchasing", suppliers:"Suppliers", movements:"Inventory Movements", audit:"Audit Log", reports:"Reports", partners:"Partners & Profit", settings:"Account Settings", staff:"Staff"
 };
 async function navigate(name){
   currentPage=name;
@@ -578,30 +556,18 @@ function renderReportProductChart(){
   if(otherRow&&otherDetails){otherRow.addEventListener('click',toggleOther);otherRow.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleOther();}});host.querySelectorAll('.report-pie-other').forEach(el=>el.addEventListener('click',toggleOther));}
 }
 
-function inventoryStatus(item){
-  const stock=Number(item?.current_stock||0);
-  const threshold=Number(item?.low_stock_threshold||0);
-  if(stock<=0) return {label:'Out of Stock',className:'inventory-status-out',style:'background-color:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;'};
-  if(stock<=threshold) return {label:'Low Stock',className:'inventory-status-low',style:'background-color:#ffedd5;color:#c2410c;border:1px solid #fdba74;'};
-  return {label:'In Stock',className:'inventory-status-in',style:'background-color:#dcfce7;color:#15803d;border:1px solid #86efac;'};
-}
-
-function inventoryStatusBadge(item){
-  const status=inventoryStatus(item);
-  return `<span class=\"badge inventory-status-badge ${status.className}\" style=\"${status.style}\">${status.label}</span>`;
-}
-
 function renderInventoryTable(){
   const items=window.__inventoryItems||[];
   const filter=window.__inventoryFilter||'ingredient';
   const labels={ingredient:'Ingredients',packaging:'Packaging',kitchenware:'Kitchenware / Utensils',electronic:'Electronic Equipment',equipment:'Equipment',other:'Other'};
   const filtered=items.filter(i=>(i.item_type||'other')===filter);
   const rows=filtered.map(i=>{
-    const status=inventoryStatus(i);
-    const purchaseUnit=inventoryUnitSummary(i);
+    const low=Number(i.current_stock||0)<=Number(i.low_stock_threshold||0);
+    const isIngredient=i.item_type==='ingredient';
     const stockLabel=inventoryDisplayStock(i);
+    const purchaseUnit=inventoryPackLabel(i);
     const value=inventoryValue(i);
-    return `<tr><td><strong>${esc(i.name)}</strong></td><td>${esc(purchaseUnit)}</td><td>${money(Number(i.cost_per_unit||0))}</td><td>${esc(stockLabel)}</td><td>${money(value)}</td><td>${inventoryStatusBadge(i)}</td><td><div class="inventory-actions"><button class="btn" type="button" onclick="openInventoryItemModalById('${i.id}')">Edit</button><button class="btn btn-danger" type="button" onclick="deleteInventoryItem('${i.id}')">Delete</button></div></td></tr>`;
+    return `<tr><td><strong>${esc(i.name)}</strong></td><td>${esc(stockLabel)}</td><td>${esc(purchaseUnit)}</td><td>${money(Number(i.cost_per_unit||0))}</td><td>${money(value)}</td><td>${low?'<span class="badge inventory-status-low">Low stock</span>':'<span class="badge inventory-status-ok">OK</span>'}</td><td><button class="btn" type="button" onclick="openInventoryItemModalById('${i.id}')">Edit</button> <button class="btn btn-danger" type="button" onclick="deleteInventoryItem('${i.id}')">Delete</button></td></tr>`;
   }).join('');
   const counts={ingredient:0,packaging:0,kitchenware:0,electronic:0,equipment:0,other:0};
   items.forEach(i=>{const t=counts[i.item_type]!=null?i.item_type:'other';counts[t]++;});
@@ -622,7 +588,7 @@ function renderInventoryTable(){
       <div class="stat"><div class="label">Low Stock</div><div class="value">${lowCount}</div></div>
     </div>
     <div class="inventory-tabs">${tabs}</div>
-    <div class="card"><div class="rpt-head" style="margin:0 0 14px;padding:0;border:0"><div><h4 style="margin:0">${esc(labels[filter])}</h4><p class="muted" style="margin:5px 0 0">${filtered.length} item${filtered.length===1?'':'s'} in this category.</p></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Purchase Unit</th><th>Cost / Unit</th><th>Current Stock</th><th>Current Value</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">No ${esc(labels[filter]).toLowerCase()} yet.</td></tr>`}</tbody></table></div></div>`;
+    <div class="card"><div class="rpt-head" style="margin:0 0 14px;padding:0;border:0"><div><h4 style="margin:0">${esc(labels[filter])}</h4><p class="muted" style="margin:5px 0 0">${filtered.length} item${filtered.length===1?'':'s'} in this category.</p></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Stock</th><th>Purchase Unit</th><th>Cost / Pack</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">No ${esc(labels[filter]).toLowerCase()} yet.</td></tr>`}</tbody></table></div></div>`;
   installPageSearch("inventory");
 }
 function setInventoryFilter(type){window.__inventoryFilter=type;renderInventoryTable();}
@@ -635,32 +601,16 @@ const render = {
     // sales on the day the payment was recorded, not on its scheduled date.
     try{ await syncPaidOrdersToSales(); }catch(e){ console.error("Dashboard paid-sales sync failed:",e); }
     const [{data:todaySalesRows,error:toError},{data:pendingOrders,error:poError},{data:inventory,error:invError}]=await Promise.all([
-      sb.from("sales").select("*").eq("user_id",dataUserId()).eq("sale_date",today),
-      sb.from("orders").select("id,order_number,status,total,payment_status,payment_method,created_at,order_date,scheduled_date,order_type,customer_id,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true}),
+      sb.from("sales").select("id,amount").eq("user_id",dataUserId()).eq("sale_date",today),
+      sb.from("orders").select("id,order_number,status,total,payment_status,payment_method,created_at,order_date,scheduled_date,order_type,customer_id,customers(name)").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true}),
       sb.from("ingredients").select("*").eq("user_id",dataUserId()).order("item_type",{ascending:true}).order("name")
     ]);
     if(toError)throw toError;
     if(poError)throw poError;
     if(invError)throw invError;
-    let channelTodaySales=todaySalesRows||[];
-    const todaySaleOrderIds=[...new Set(channelTodaySales.map(r=>r.order_id).filter(Boolean))];
-    if(todaySaleOrderIds.length && channelTodaySales.some(r=>!r.sales_channel)){
-      const {data:todayOrders,error:todayOrderError}=await sb.from("orders").select("id,sales_channel").eq("user_id",dataUserId()).in("id",todaySaleOrderIds);
-      if(todayOrderError)throw todayOrderError;
-      const oc=Object.fromEntries((todayOrders||[]).map(o=>[o.id,o.sales_channel||"nuonuo"]));
-      channelTodaySales=channelTodaySales.filter(r=>(r.sales_channel||oc[r.order_id]||"nuonuo")===activeChannel);
-    }else{ channelTodaySales=channelTodaySales.filter(r=>(r.sales_channel||activeChannel)===activeChannel); }
-    const dailySales=channelTodaySales.reduce((sum,row)=>sum+Number(row.amount||0),0);
+
+    const dailySales=(todaySalesRows||[]).reduce((sum,row)=>sum+Number(row.amount||0),0);
     const lowStockItems=(inventory||[]).filter(i=>Number(i.current_stock||0)<=Number(i.low_stock_threshold||0));
-    let financialSnapshot={cash:0,other_assets:0,liabilities:0};
-    try{
-      const {data:financialRow,error:financialError}=await sb.from("company_financials").select("cash,other_assets,liabilities").eq("user_id",dataUserId()).maybeSingle();
-      if(financialError && !String(financialError.message||"").toLowerCase().includes("company_financials")) throw financialError;
-      financialSnapshot=financialRow||financialSnapshot;
-    }catch(e){ console.error("Financial snapshot load failed:",e); }
-    const financialCash=Number(financialSnapshot.cash||0);
-    const financialAssets=financialCash+Number(financialSnapshot.other_assets||0);
-    const financialNet=financialAssets-Number(financialSnapshot.liabilities||0);
 
     // Dashboard Pending Orders must use the exact same type/date rules as the
     // Pending Orders page. Never infer type from customer name or order_date.
@@ -690,21 +640,10 @@ const render = {
     const pendingCount=dashboardPendingOrders.length;
 
     $("#page").innerHTML=`
-      ${channelHeaderHtml()}<div class="stats dashboard-stats">
+      <div class="stats dashboard-stats">
         <div class="stat"><div class="label">Daily Sales</div><div class="value">${money(dailySales)}</div></div>
         <div class="stat"><div class="label">Pending Orders</div><div class="value">${pendingCount}</div></div>
         <div class="stat"><div class="label">Low Stock</div><div class="value">${lowStockItems.length}</div></div>
-      </div>
-      <div class="card" style="margin-bottom:18px">
-        <div class="page-head compact">
-          <div><h4>Company Financial Snapshot</h4><p class="muted">Cash, other assets, liabilities and net assets.</p></div>
-          <button class="btn" onclick="navigate('financials')">Manage</button>
-        </div>
-        <div class="stats" id="dashboardFinancialSnapshot">
-          <div class="stat"><div class="label">Current Cash</div><div class="value">${money(financialCash)}</div></div>
-          <div class="stat"><div class="label">Total Assets</div><div class="value">${money(financialAssets)}</div></div>
-          <div class="stat"><div class="label">Net Assets</div><div class="value">${money(financialNet)}</div></div>
-        </div>
       </div>
       <div class="grid-2">
         <div class="card"><h4>Quick actions</h4><div class="actions">
@@ -721,7 +660,7 @@ const render = {
         </div>
         <div class="card"><div class="page-head compact"><div><h4>Low Stock Details</h4><p class="muted">Items at or below their stock threshold.</p></div><span class="pending-total-badge">${lowStockItems.length} item${lowStockItems.length===1?"":"s"}</span></div>
           <div class="table-wrap"><table><thead><tr><th>Name</th><th>Stock</th><th>Threshold</th><th>Status</th></tr></thead><tbody>
-          ${lowStockItems.map(i=>{const status=inventoryStatus(i);return `<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayThreshold(i)}</td><td>${inventoryStatusBadge(i)}</td></tr>`}).join("")||`<tr><td colspan="4" class="empty">No low-stock items.</td></tr>`}
+          ${lowStockItems.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayThreshold(i)}</td><td><span class="badge inventory-status-low">Low stock</span></td></tr>`).join("")||`<tr><td colspan="4" class="empty">No low-stock items.</td></tr>`}
           </tbody></table></div>
         </div>
       </div>`;
@@ -729,9 +668,9 @@ const render = {
 
   async menu(){
     const [{data:products,error:pe},{data:categories,error:ce},{data:addons,error:ae}]=await Promise.all([
-      sb.from("products").select("*,categories(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order",{ascending:true}).order("created_at",{ascending:false}),
-      sb.from("categories").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order").order("name"),
-      sb.from("addons").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("name")
+      sb.from("products").select("*,categories(name)").eq("user_id",dataUserId()).order("sort_order",{ascending:true}).order("created_at",{ascending:false}),
+      sb.from("categories").select("*").eq("user_id",dataUserId()).order("sort_order").order("name"),
+      sb.from("addons").select("*").eq("user_id",dataUserId()).order("name")
     ]);
     if(pe)throw pe; if(ce)throw ce; if(ae)throw ae;
 
@@ -887,14 +826,14 @@ const render = {
   },
 
   async orders(){
-    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("order_date",{ascending:false}).order("created_at",{ascending:false});
+    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).order("order_date",{ascending:false}).order("created_at",{ascending:false});
     if(error)throw error;
-    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Orders</h3><p class="muted">${esc(channelLabel(activeChannel))} · ${esc(channelDesc(activeChannel))}</p></div><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div>
+    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Orders</h3><p class="muted">Completed and active orders.</p></div><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div>
       ${orderTable(data||[],true)}`;
   },
 
   async pending(){
-    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]);
+    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]);
     if(error)throw error;
     const today=localDate();
     const allPending=(data||[]);
@@ -927,18 +866,10 @@ const render = {
 
     const productIds=[...new Set(pendingItems.map(i=>i.product_id).filter(Boolean))];
     let productMap={};
-    let categoryMapById={};
     if(productIds.length){
-      const {data:products,error:productError}=await sb.from("products").select("id,name,category_id").eq("user_id",dataUserId()).in("id",productIds);
+      const {data:products,error:productError}=await sb.from("products").select("id,name").eq("user_id",dataUserId()).in("id",productIds);
       if(productError)throw productError;
-      const productRows=products||[];
-      const categoryIds=[...new Set(productRows.map(p=>p.category_id).filter(Boolean))];
-      if(categoryIds.length){
-        const {data:categories,error:categoryError}=await sb.from("categories").select("id,name").eq("user_id",dataUserId()).in("id",categoryIds);
-        if(categoryError)throw categoryError;
-        categoryMapById=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
-      }
-      productMap=Object.fromEntries(productRows.map(p=>[p.id,{name:p.name,category:categoryMapById[p.category_id]||"Uncategorized"}]));
+      productMap=Object.fromEntries((products||[]).map(p=>[p.id,p.name]));
     }
 
     const addonIds=[...new Set(addonRows.map(a=>a.addon_id).filter(Boolean))];
@@ -989,9 +920,7 @@ const render = {
     for(const item of pendingItems){
       const itemQty=Math.max(0,Number(item.quantity||0));
       if(!itemQty)continue;
-      const productInfo=productMap[item.product_id]||{name:'Deleted product',category:'Uncategorized'};
-      const productName=productInfo.name;
-      const productCategory=productInfo.category||'Uncategorized';
+      const productName=productMap[item.product_id]||'Deleted product';
       const orderForItem=(orders||[]).find(o=>o.id===item.order_id);
 
       // Only use saved addon rows when this order item actually has addon
@@ -1027,19 +956,19 @@ const render = {
           const q=Number(qText);
           const unique=[...new Set(names.map(n=>String(n).trim()).filter(Boolean))];
           if(!unique.length)continue;
-          variants.push({name:`${productName} Add ${unique.join(' + ')}`,qty:q,category:productCategory});
+          variants.push({name:`${productName} Add ${unique.join(' + ')}`,qty:q});
           addonQtyTotal+=q;
         }
         const baseQty=Math.max(0,itemQty-addonQtyTotal);
-        if(baseQty)variants.unshift({name:productName,qty:baseQty,category:productCategory});
+        if(baseQty)variants.unshift({name:productName,qty:baseQty});
       }else{
-        variants.push({name:productName,qty:itemQty,category:productCategory});
+        variants.push({name:productName,qty:itemQty});
       }
 
       itemCounts[item.order_id]=(itemCounts[item.order_id]||0)+itemQty;
       const list=remainingByOrder[item.order_id]||(remainingByOrder[item.order_id]=[]);
       for(const v of variants){
-        const existing=list.find(x=>x.name===v.name && x.category===v.category);
+        const existing=list.find(x=>x.name===v.name);
         if(existing)existing.qty+=v.qty;
         else list.push({...v});
       }
@@ -1073,15 +1002,13 @@ const render = {
             const qty=Math.max(0,Number(item.qty||0));
             if(!name||qty<=0) continue;
             dayTotal+=qty;
-            const category=String(item.category||"Uncategorized").trim()||"Uncategorized";
-            const key=`${category}\u0000${name}`;
-            dayVariants.set(key,{name,category,qty:(dayVariants.get(key)?.qty||0)+qty});
+            dayVariants.set(name,(dayVariants.get(name)||0)+qty);
           }
         }
 
         const dateTitle=date ? formatBusinessDate(date) : "Pre-order date not set";
-        const totalRows=[...dayVariants.values()]
-          .map(item=>`<div class="pending-total-row"><strong>${item.qty} ×</strong><span class="pending-item-category">${esc(item.category)}</span><span>${esc(item.name)}</span></div>`)
+        const totalRows=[...dayVariants.entries()]
+          .map(([name,qty])=>`<div class="pending-total-row"><strong>${qty} ×</strong><span>${esc(name)}</span></div>`)
           .join("");
         const totalHtml=dayTotal>0
           ? `<div class="pending-day-total">
@@ -1102,7 +1029,7 @@ const render = {
         </section>`;
       }).join("") || `<div class="empty">No pre-orders yet.</div>`;
 
-    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Pending Orders</h3><p class="muted">${esc(channelLabel(activeChannel))} · Walk-ins show today's orders. Pre-orders are grouped by scheduled date.</p></div><div class="page-actions"><button class="btn btn-dark" onclick="printAllPendingKitchen()">Print Kitchen List</button><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div></div>
+    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Pending Orders</h3><p class="muted">Walk-ins show today's orders. Pre-orders are grouped by their scheduled date.</p></div><div class="page-actions"><button class="btn btn-dark" onclick="printAllPendingKitchen()">Print Kitchen List</button><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div></div>
       <section class="pending-group"><div class="pending-group-head"><div><h4>Walk-in · Today</h4><span class="muted small">${walkInOrders.length} order${walkInOrders.length===1?'':'s'}</span></div></div>${orderTable(walkInOrders,true,true,itemCounts,remainingByOrder)}</section>
       <div class="pending-preorders-wrap"><div class="pending-group-head"><div><h4>Pre-orders</h4><span class="muted small">Grouped by scheduled date</span></div></div>${preOrderDailyHtml}</div>`;
 
@@ -1110,11 +1037,14 @@ const render = {
 
   async sales(){
     try{await syncCompletedOrdersToSales();}catch(e){console.error("Sales sync failed:",e);}
-    const salesRows=await getChannelSalesRows();
+    const {data,error}=await sb.from("sales").select("*").eq("user_id",dataUserId()).order("sale_date",{ascending:false});
+    if(error)throw error;
+
+    const salesRows=data||[];
     const orderIds=[...new Set(salesRows.map(s=>s.order_id).filter(Boolean))];
     let orderMap={};
     if(orderIds.length){
-      const {data:orders,error:oe}=await sb.from("orders").select("id,order_number,customer_id,sales_channel").eq("user_id",dataUserId()).in("id",orderIds);
+      const {data:orders,error:oe}=await sb.from("orders").select("id,order_number,customer_id").eq("user_id",dataUserId()).in("id",orderIds);
       if(oe)throw oe;
       const customerIds=[...new Set((orders||[]).map(o=>o.customer_id).filter(Boolean))];
       let customerMap={};
@@ -1146,7 +1076,7 @@ const render = {
     const monthLabel=k=>{const [y,m]=String(k).split("-");return new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-MY",{month:"long",year:"numeric"});};
 
     $("#page").innerHTML=`
-      <div class="rpt-head"><div><h3>Sales</h3><p class="muted">${esc(channelLabel(activeChannel))} · Track sales by customer, day, and month.</p></div></div>
+      <div class="rpt-head"><div><h3>Sales</h3><p class="muted">Track sales by customer, day, and month.</p></div></div>
       <div class="stats sales-summary-stats">
         <div class="stat"><div class="label">Total Sales</div><div class="value">${money(totalSales)}</div></div>
         <div class="stat"><div class="label">Today</div><div class="value">${money(todaySales)}</div></div>
@@ -1172,61 +1102,6 @@ const render = {
           ${salesRows.map(s=>{const link=orderMap[s.order_id]||{};return `<tr><td>${esc(s.sale_date)}</td><td><strong>${esc(link.customer||"Walk-in")}</strong></td><td>${esc(link.orderNumber||"")}</td><td>${money(s.amount)}</td><td>${money(s.cost)}</td><td>${money(s.profit)}</td><td>${esc(s.payment_method||"")}</td><td><button class="btn btn-danger" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`;}).join("")||`<tr><td colspan="8" class="empty">No sales yet.</td></tr>`}
         </tbody></table></div>
       </div>`;
-  },
-
-  async financials(){
-    const uid=dataUserId();
-    const {data,error}=await sb.from("company_financials").select("*").eq("user_id",uid).maybeSingle();
-    if(error)throw error;
-    const row=data||{cash:0,other_assets:0,liabilities:0};
-    const cash=Number(row.cash||0), otherAssets=Number(row.other_assets||0), liabilities=Number(row.liabilities||0);
-    const totalAssets=cash+otherAssets, netAssets=totalAssets-liabilities;
-    $("#page").innerHTML=`
-      <div class="rpt-head">
-        <div><h3>Company Finances</h3><p class="muted">Keep a simple current snapshot of company cash, assets and liabilities.</p></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="label">Current Cash</div><div class="value">${money(cash)}</div></div>
-        <div class="stat"><div class="label">Total Assets</div><div class="value">${money(totalAssets)}</div><div class="muted">Cash + other assets</div></div>
-        <div class="stat"><div class="label">Liabilities</div><div class="value">${money(liabilities)}</div></div>
-        <div class="stat"><div class="label">Net Assets</div><div class="value">${money(netAssets)}</div><div class="muted">Total assets − liabilities</div></div>
-      </div>
-      <div class="card" style="max-width:720px">
-        <div class="page-head"><div><h4>Company Balance Snapshot</h4><p class="muted">Enter amounts that are not already recorded elsewhere. Do not add cash twice.</p></div></div>
-        <form id="companyFinancialForm" class="form-grid">
-          <label>Current Company Cash
-            <input id="companyCash" type="number" min="0" step="0.01" value="${cash.toFixed(2)}" placeholder="0.00">
-          </label>
-          <label>Other Assets <span class="muted small">(excluding cash)</span>
-            <input id="companyOtherAssets" type="number" min="0" step="0.01" value="${otherAssets.toFixed(2)}" placeholder="0.00">
-          </label>
-          <label>Liabilities / Debt
-            <input id="companyLiabilities" type="number" min="0" step="0.01" value="${liabilities.toFixed(2)}" placeholder="0.00">
-          </label>
-          <div class="card" style="grid-column:1/-1;background:var(--surface-2,#f7f7f7)">
-            <div class="muted small">Calculated Total Assets</div>
-            <div id="companyTotalAssetsPreview" style="font-size:28px;font-weight:700">${money(totalAssets)}</div>
-            <div class="muted small">Current Cash + Other Assets</div>
-          </div>
-          <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
-            <button class="btn btn-dark" type="submit">Save Financials</button>
-          </div>
-        </form>
-      </div>`;
-    const updatePreview=()=>{
-      const c=Math.max(0,Number($("#companyCash")?.value||0));
-      const a=Math.max(0,Number($("#companyOtherAssets")?.value||0));
-      if($("#companyTotalAssetsPreview")) $("#companyTotalAssetsPreview").textContent=money(c+a);
-    };
-    ["companyCash","companyOtherAssets"].forEach(id=>$("#"+id)?.addEventListener("input",updatePreview));
-    $("#companyFinancialForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const payload={user_id:uid,cash:Math.max(0,Number($("#companyCash").value||0)),other_assets:Math.max(0,Number($("#companyOtherAssets").value||0)),liabilities:Math.max(0,Number($("#companyLiabilities").value||0)),updated_at:new Date().toISOString()};
-      const {error}=await sb.from("company_financials").upsert(payload,{onConflict:"user_id"});
-      if(error)return toast(errText(error));
-      toast("Company financials saved.");
-      await render.financials();
-    });
   },
 
   async expenses(){
@@ -1814,8 +1689,8 @@ function renderMenuCategories(){
 
   $("#page").innerHTML=`
     <div class="rpt-head">
-      <div><h3>${channelLabel(activeChannel)} Menu</h3><p class="muted">${esc(channelDesc(activeChannel))}. Products and categories are separated by channel.</p></div>
-      <div class="actions"><select class="channel-select" onchange="setActiveChannel(this.value)"><option value="pistache" ${activeChannel==="pistache"?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${activeChannel==="nuonuo"?"selected":""}>NuoNuo · Local</option></select>
+      <div><h3>Categories</h3><p class="muted">Your menu is grouped by category.</p></div>
+      <div class="actions">
         <button class="btn" type="button" onclick="openAddonModal()">+ Add-on</button>
         <button class="btn btn-dark" type="button" onclick="openCategoryModal()">+ Category</button>
         <button class="btn btn-dark" type="button" onclick="openProductModal()">+ Product</button>
@@ -1890,7 +1765,7 @@ function orderTable(data,full=false,pending=false,itemCounts={},remainingByOrder
     const paymentLabel=paymentStatus==="paid"?"Paid":paymentStatus==="partial"?"Partial":"Unpaid";
     const details=remainingByOrder[o.id]||[];
     const type=orderTypeOf(o), scheduleDate=orderScheduleDate(o);
-    const detailsHtml=pending?`<tr class="pending-order-details-row"><td colspan="${full?9:pending?7:6}"><div class="pending-order-details"><div class="pending-order-details-title">Not completed yet</div>${details.length?details.map(x=>`<div class="pending-order-detail"><strong class="pending-order-detail-qty">${x.qty} ×</strong><span class="pending-item-category">${esc(x.category||"Uncategorized")}</span><span class="pending-item-name">${esc(x.name)}</span></div>`).join(""):`<div class="muted small">No remaining items.</div>`}</div></td></tr>`:"";
+    const detailsHtml=pending?`<tr class="pending-order-details-row"><td colspan="${full?9:pending?7:6}"><div class="pending-order-details"><div class="pending-order-details-title">Not completed yet</div>${details.length?details.map(x=>`<div class="pending-order-detail"><strong class="pending-order-detail-qty">${x.qty} ×</strong><span>${esc(x.name)}</span></div>`).join(""):`<div class="muted small">No remaining items.</div>`}</div></td></tr>`:"";
     const row=`<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customers?.name||"Walk-in")}</td><td><span class="order-type-badge order-type-${type}">${orderTypeLabel(o)}</span></td>${pending?`<td><span class="remaining-items-badge">${remaining} item${remaining===1?"":"s"}</span></td>`:''}<td><span class="badge status-badge status-${esc(String(o.status||"").toLowerCase())}">${esc(o.status)}</span></td>${full?`<td><span class="badge payment-status-badge payment-${paymentStatus}">${paymentLabel}</span></td>`:''}<td>${money(o.total)}</td><td>${esc(scheduleDate)}</td>${full?`<td class="row-actions"><button class="btn" onclick="openOrderEditModal('${o.id}')">Edit</button>${pending&&o.status!=="completed"?`<button class="btn btn-dark" onclick="printKitchenOrder('${o.id}')">Print Kitchen</button><button class="btn btn-dark" onclick="completeOrder('${o.id}')">Complete</button>`:""}${isOwner()?` <button class="btn btn-danger" onclick="deleteOrder('${o.id}')">Delete</button>`:""}</td>`:""}</tr>`;
     return row+detailsHtml;
   }).join("")||`<tr><td colspan="${full?(pending?9:8):(pending?7:6)}" class="empty">No orders yet.</td></tr>`;
@@ -2298,7 +2173,7 @@ async function printKitchenOrder(id){
 
 async function printAllPendingKitchen(){
   try{
-    const {data,error}=await sb.from("orders").select("id").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true});
+    const {data,error}=await sb.from("orders").select("id").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true});
     if(error)throw error;
     if(!data?.length)return toast("No pending orders to print.");
     const packs=await Promise.all(data.map(o=>fetchKitchenOrder(o.id)));
@@ -2313,7 +2188,7 @@ async function printAllPendingKitchen(){
 }
 
 async function syncPaidOrdersToSales(){
-  const {data:orders,error:oe}=await sb.from("orders").select("id,status,total,payment_status,payment_method,created_at,order_date,sales_channel").eq("user_id",dataUserId()).ilike("payment_status","paid").order("created_at",{ascending:true});
+  const {data:orders,error:oe}=await sb.from("orders").select("id,status,total,payment_status,payment_method,created_at,order_date").eq("user_id",dataUserId()).ilike("payment_status","paid").order("created_at",{ascending:true});
   if(oe)throw oe;
   if(!orders?.length)return;
 
@@ -2339,7 +2214,7 @@ async function syncPaidOrdersToSales(){
 async function createSaleForPaidOrder(orderId, requestedSaleDate=null){
   // Payment is the source of truth for sales. Pending/pre-orders count as sales
   // immediately once paid. Completion is only a fulfillment/inventory event.
-  const {data:order,error:oe}=await sb.from("orders").select("id,user_id,status,total,payment_status,payment_method,created_at,order_date,sales_channel").eq("id",orderId).eq("user_id",dataUserId()).single();
+  const {data:order,error:oe}=await sb.from("orders").select("id,user_id,status,total,payment_status,payment_method,created_at,order_date").eq("id",orderId).eq("user_id",dataUserId()).single();
   if(oe)throw oe;
   if(!order)throw new Error("Order not found.");
   if(String(order.payment_status||"").toLowerCase()!=="paid")return {created:false,reason:"not_paid"};
@@ -2368,7 +2243,7 @@ async function createSaleForPaidOrder(orderId, requestedSaleDate=null){
   // pre-order scheduled date or order_date for sales recognition.
   const requestedDate=String(requestedSaleDate||"").trim();
   const saleDate=/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)?requestedDate:localDate();
-  const payload={user_id:dataUserId(),sale_date:saleDate,amount:Number(amount.toFixed(2)),cost:Number(cost.toFixed(2)),profit:Number((amount-cost).toFixed(2)),payment_method:order.payment_method||null,sales_channel:order.sales_channel||"nuonuo"};
+  const payload={user_id:dataUserId(),sale_date:saleDate,amount:Number(amount.toFixed(2)),cost:Number(cost.toFixed(2)),profit:Number((amount-cost).toFixed(2)),payment_method:order.payment_method||null};
   const insertWithOrder=await sb.from("sales").insert({...payload,order_id:orderId}).select("id").single();
   if(!insertWithOrder.error)return {created:true,saleId:insertWithOrder.data?.id};
   const msg=String(insertWithOrder.error.message||"").toLowerCase();
@@ -2855,18 +2730,7 @@ async function completeOrder(id){
 
 function purchaseLineHtml(idx, item={}){
   const ingredients=window.__purchaseIngredients||[];
-  const selectedId=String(item.ingredient_id||ingredients[0]?.id||'');
-  const selectedIngredient=ingredients.find(i=>String(i.id)===selectedId);
-  const defaultCost=item.unit_cost!=null && item.unit_cost!=='' ? Number(item.unit_cost) : Number(selectedIngredient?.cost_per_unit||0);
-  return `<div class="purchase-line" data-purchase-line="${idx}"><div style="display:flex;gap:8px;align-items:center;flex:1"><select class="purchase-ing" style="flex:1" onchange="syncPurchaseLineCost(this)">${ingredients.map(i=>`<option value="${i.id}" ${String(i.id)===selectedId?'selected':''}>${esc(i.name)} · ${esc(inventoryTypeLabel(i.item_type))} · ${esc(i.item_type==='ingredient'?(i.unit||'unit'):'pcs')}</option>`).join('')}</select><button type="button" class="btn" onclick="openQuickPurchaseItemModal()">+ New Item</button></div><input class="purchase-qty" type="number" min="0.001" step="0.001" value="${Number(item.quantity||1)}" placeholder="Qty"><input class="purchase-cost" type="number" min="0" step="0.0001" value="${defaultCost}" placeholder="Unit cost"><label class="inline-check"><input class="purchase-update-cost" type="checkbox" ${item.update_current_cost!==false?'checked':''}> Update current cost</label><button type="button" class="btn btn-danger" onclick="this.closest('.purchase-line').remove();updatePurchaseTotal()">×</button></div>`;
-}
-function syncPurchaseLineCost(select){
-  const row=select?.closest('.purchase-line');
-  if(!row)return;
-  const item=(window.__purchaseIngredients||[]).find(i=>String(i.id)===String(select.value));
-  const costInput=row.querySelector('.purchase-cost');
-  if(costInput)costInput.value=Number(item?.cost_per_unit||0);
-  updatePurchaseTotal();
+  return `<div class="purchase-line" data-purchase-line="${idx}"><div style="display:flex;gap:8px;align-items:center;flex:1"><select class="purchase-ing" style="flex:1">${ingredients.map(i=>`<option value="${i.id}" ${String(i.id)===String(item.ingredient_id||'')?'selected':''}>${esc(i.name)} · ${esc(inventoryTypeLabel(i.item_type))} · ${esc(i.item_type==='ingredient'?(i.unit||'unit'):'pcs')}</option>`).join('')}</select><button type="button" class="btn" onclick="openQuickPurchaseItemModal()">+ New Item</button></div><input class="purchase-qty" type="number" min="0.001" step="0.001" value="${Number(item.quantity||1)}" placeholder="Qty"><input class="purchase-cost" type="number" min="0" step="0.0001" value="${Number(item.unit_cost||0)}" placeholder="Unit cost"><label class="inline-check"><input class="purchase-update-cost" type="checkbox" ${item.update_current_cost!==false?'checked':''}> Update current cost</label><button type="button" class="btn btn-danger" onclick="this.closest('.purchase-line').remove();updatePurchaseTotal()">×</button></div>`;
 }
 function updatePurchaseTotal(){const rows=[...document.querySelectorAll('.purchase-line')];const total=rows.reduce((a,r)=>a+Number(r.querySelector('.purchase-qty')?.value||0)*Number(r.querySelector('.purchase-cost')?.value||0),0);const el=document.getElementById('purchaseTotal');if(el)el.textContent=money(total);}
 function bindPurchaseInputs(){document.querySelectorAll('.purchase-qty,.purchase-cost').forEach(x=>x.addEventListener('input',updatePurchaseTotal));initEnglishDateField('pDate');}
@@ -2935,8 +2799,7 @@ async function openPurchaseModal(draft=null){
 function addPurchaseLine(){const host=document.getElementById('purchaseLines');if(!host)return;host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{}));bindPurchaseInputs();}
 function addQuickPurchaseLineWithItem(id){
   const host=document.getElementById('purchaseLines');if(!host)return;
-  const item=(window.__purchaseIngredients||[]).find(i=>String(i.id)===String(id));
-  host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{ingredient_id:id,quantity:1,unit_cost:Number(item?.cost_per_unit||0),update_current_cost:true}));
+  host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{ingredient_id:id,quantity:1,unit_cost:0,update_current_cost:true}));
   bindPurchaseInputs();
   const rows=document.querySelectorAll('.purchase-line');rows[rows.length-1]?.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -3318,7 +3181,7 @@ function updateProductRecipePreview(){
 }
 
 async function openProductModal(item=null){
-  const {data:cats}=await sb.from("categories").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("name");
+  const {data:cats}=await sb.from("categories").select("*").eq("user_id",dataUserId()).order("name");
   let costing={ingredients:[],subrecipes:[],recipes:[]};
   if(item?.id){
     try{costing=await loadProductCosting(item.id);}catch(e){return toast("Unable to load recipe costing: "+errText(e));}
@@ -3340,7 +3203,6 @@ async function openProductModal(item=null){
     <form id="productForm" class="form-grid">
       <label>Name<input id="pName" required value="${esc(item?.name||"")}"></label>
       <label>Selling price<input id="pPrice" type="number" step="0.01" required value="${item?.selling_price??""}" oninput="updateProductRecipePreview()"></label>
-      <label>Channel<select id="pChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label>
       <label>Category<select id="pCat"><option value="">Uncategorized</option>${(cats||[]).map(c=>`<option value="${c.id}" ${item?.category_id===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>
       <label>Calculated cost<input id="pCost" type="number" step="0.01" value="${item?.calculated_cost??0}" readonly></label>
       <label class="wide">Description<textarea id="pDesc">${esc(item?.description||"")}</textarea></label>
@@ -3356,9 +3218,8 @@ async function openProductModal(item=null){
       if(file){try{imageUrl=await uploadCompressed(file,"product-images");}catch(e){return toast("Photo upload failed: "+errText(e));}}
       let productId=item?.id;
       const selectedCategory=$("#pCat").value||null;
-      const selectedChannel=$("#pChannel").value||activeChannel;
       const existingSort=item?.sort_order;
-      const payload={user_id:dataUserId(),name,description:$("#pDesc").value,category_id:selectedCategory,sales_channel:selectedChannel,selling_price:price,calculated_cost:Number(cost.toFixed(2)),image_url:imageUrl,sort_order:item?Number(existingSort||0):Number((window.__menuProducts||[]).filter(x=>(x.category_id||null)===selectedCategory).length)};
+      const payload={user_id:dataUserId(),name,description:$("#pDesc").value,category_id:selectedCategory,selling_price:price,calculated_cost:Number(cost.toFixed(2)),image_url:imageUrl,sort_order:item?Number(existingSort||0):Number((window.__menuProducts||[]).filter(x=>(x.category_id||null)===selectedCategory).length)};
       const q=item?sb.from("products").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("products").insert(payload).select("id").single();
       const {data,error}=await q;if(error)return toast(errText(error));
       if(!productId)productId=data.id;
@@ -3415,8 +3276,8 @@ function compressImage(file,maxW,maxH,quality){
   });
 }
 async function openCategoryModal(item=null){
-  openModal(item?"Edit Category":"Add Category",`<form id="categoryForm" class="form-grid"><label>Channel<select id="catChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label><label>Name<input id="catName" required value="${esc(item?.name||"")}"></label><label>Sort order<input id="catSort" type="number" value="${item?.sort_order??0}"></label><label class="wide">Description<textarea id="catDesc">${esc(item?.description||"")}</textarea></label></form>`,async()=>{
-    const payload={user_id:dataUserId(),name:$("#catName").value.trim(),description:$("#catDesc").value,sort_order:Number($("#catSort").value||0),sales_channel:$("#catChannel").value||activeChannel};
+  openModal(item?"Edit Category":"Add Category",`<form id="categoryForm" class="form-grid"><label>Name<input id="catName" required value="${esc(item?.name||"")}"></label><label>Sort order<input id="catSort" type="number" value="${item?.sort_order??0}"></label><label class="wide">Description<textarea id="catDesc">${esc(item?.description||"")}</textarea></label></form>`,async()=>{
+    const payload={user_id:dataUserId(),name:$("#catName").value.trim(),description:$("#catDesc").value,sort_order:Number($("#catSort").value||0)};
     const q=item?sb.from("categories").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("categories").insert(payload); const {error}=await q; if(error)return toast(errText(error)); closeModal(); toast("Category saved."); await render.menu();
   });
 }
@@ -3459,13 +3320,13 @@ async function openAddonModal(item=null){
   window.__editingAddonCost=Number(item?.cost||0);
   const recipeRows=rows.length?rows:[{ingredient_id:'',quantity:1}];
   const recipeHtml=`<div class="wide recipe-section"><div class="recipe-head"><div><strong>Inventory usage</strong><div class="muted small">Set how much inventory is used for <b>1 add-on</b>. Stock will be deducted automatically when an order is completed.</div></div><button type="button" class="btn" onclick="addAddonRecipeRow()">+ Component</button></div><div id="addonRecipeRows">${recipeRows.map(r=>`<div class="recipe-row addon-recipe-row"><select class="addon-recipe-component" onchange="updateAddonRecipePreview()"><option value="">Select inventory item</option>${(ingredients||[]).filter(x=>x.item_type==='ingredient'||x.item_type==='packaging').map(x=>`<option value="${x.id}" ${x.id===r.ingredient_id?'selected':''}>${esc(x.name)} · ${esc(x.item_type==='packaging'?'pcs':(x.unit||'unit'))} · ${money(x.cost_per_unit)}/unit</option>`).join('')}</select><div class="recipe-qty-wrap"><input class="addon-recipe-qty" type="number" min="0.0001" step="0.001" value="${Number(r.quantity||1)}" oninput="updateAddonRecipePreview()" placeholder="Qty"><span class="recipe-qty-unit">per add-on</span></div><button type="button" class="recipe-remove" onclick="this.closest('.addon-recipe-row').remove();updateAddonRecipePreview()">×</button></div>`).join('')}</div><div class="recipe-summary"><span>Calculated cost <strong id="addonRecipeCostSummary">${money(item?.cost||0)}</strong></span></div></div>`;
-  openModal(item?"Edit Add-on":"Add Add-on",`<form id="addonForm" class="form-grid"><label>Channel<select id="aChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label><label>Name<input id="aName" required value="${esc(item?.name||"")}"></label><label>Price<input id="aPrice" type="number" step="0.01" value="${item?.price??0}"></label><label>Cost<input id="aCost" type="number" step="0.01" value="${item?.cost??0}" readonly></label><label>Active<select id="aActive"><option value="true" ${item?.active!==false?"selected":""}>Active</option><option value="false" ${item?.active===false?"selected":""}>Inactive</option></select></label>${recipeHtml}</form>`,async()=>{
+  openModal(item?"Edit Add-on":"Add Add-on",`<form id="addonForm" class="form-grid"><label>Name<input id="aName" required value="${esc(item?.name||"")}"></label><label>Price<input id="aPrice" type="number" step="0.01" value="${item?.price??0}"></label><label>Cost<input id="aCost" type="number" step="0.01" value="${item?.cost??0}" readonly></label><label>Active<select id="aActive"><option value="true" ${item?.active!==false?"selected":""}>Active</option><option value="false" ${item?.active===false?"selected":""}>Inactive</option></select></label>${recipeHtml}</form>`,async()=>{
     const name=$("#aName").value.trim();
     if(!name)return toast("Add-on name is required.");
     const rows=readAddonRecipeRows();
     const recipeCost=rows.reduce((sum,r)=>sum+r.quantity*ingredientBaseCost(window.__addonIngredients.find(x=>x.id===r.ingredient_id)),0);
     const cost=rows.length?recipeCost:Number(item?.cost||0);
-    const payload={user_id:dataUserId(),name,price:Number($("#aPrice").value||0),cost:Number(cost.toFixed(2)),active:$("#aActive").value==="true",sales_channel:$("#aChannel").value||activeChannel};
+    const payload={user_id:dataUserId(),name,price:Number($("#aPrice").value||0),cost:Number(cost.toFixed(2)),active:$("#aActive").value==="true"};
     let addonId=item?.id;
     const q=item?sb.from("addons").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("addons").insert(payload).select('id').single();
     const {data,error}=await q; if(error)return toast(errText(error));
@@ -3603,101 +3464,66 @@ async function openInventoryItemModal(options={}){
     containsAmount=packAmount; containsUnit=baseUnit;
   }
   const whole=['pcs','unit','box','pack'].includes(baseUnit);
-  const unitSummary=ingredientType
-    ? (parsed.compound?`${Number(parsed.amount).toLocaleString()} ${parsed.unit}/${parsed.purchaseUnit||'box'}`:`${Number(parsed.amount).toLocaleString()} ${parsed.unit}/${parsed.purchaseUnit||'unit'}`)
-    : `${Number(parsed.amount||1).toLocaleString()} ${parsed.unit||baseUnit}`;
-  const editPurchaseUnit=ingredientType ? (parsed.purchaseUnit&&['box','unit','pack','bottle'].includes(parsed.purchaseUnit)?parsed.purchaseUnit:'unit') : (defaultType==='packaging'?'pcs':'unit');
-  const editContainsAmount=ingredientType ? Number(parsed.amount||1) : 1;
-  const editContainsUnit=ingredientType ? (parsed.unit||baseUnit||'g') : (defaultType==='packaging'?'pcs':baseUnit);
-  const editStockUnit=ingredientType ? editContainsUnit : baseUnit;
-
-  // Edit mode is intentionally an inventory-data editor only. It must NOT contain
-  // purchase quantity / quantity-per-purchase-unit controls. The unit definition is
-  // preserved from the existing item and Current Stock is the only stock value edited here.
   const body=`<form id="inventoryItemForm" class="form-grid">
     <label>Name<input id="invName" required value="${esc(item?.name||'')}"></label>
     <label>Category<select id="invType" onchange="updateInventoryItemFields()">${typeOptions.map(([v,l])=>`<option value="${v}" ${defaultType===v?'selected':''}>${l}</option>`).join('')}</select></label>
-    ${item ? (ingredientType ? `<div class="wide notice"><strong>Purchase unit definition</strong><div style="display:grid;grid-template-columns:1fr 180px;gap:10px;margin-top:10px"><label>Quantity per Purchase Unit<div style="display:flex;gap:8px"><input id="invEditContainsAmount" type="number" min="0.000001" step="0.001" value="${editContainsAmount}" oninput="updateInventoryItemFields()"><select id="invEditContainsUnit" onchange="updateInventoryItemFields()"><option value="g" ${editContainsUnit==='g'?'selected':''}>g</option><option value="kg" ${editContainsUnit==='kg'?'selected':''}>kg</option><option value="ml" ${editContainsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${editContainsUnit==='pcs'?'selected':''}>pcs</option><option value="unit" ${editContainsUnit==='unit'?'selected':''}>unit</option></select></div></label><label>Purchase Unit<select id="invEditPurchaseUnit" onchange="updateInventoryItemFields()"><option value="box" ${editPurchaseUnit==='box'?'selected':''}>Box</option><option value="unit" ${editPurchaseUnit==='unit'?'selected':''}>Unit</option><option value="pack" ${editPurchaseUnit==='pack'?'selected':''}>Pack</option><option value="bottle" ${editPurchaseUnit==='bottle'?'selected':''}>Bottle</option></select></label></div><div class="muted small" style="margin-top:8px">Example: 9 pcs / box means 1 box contains 9 pcs.</div></div>` : '') : `<label id="invUnitWrap">Purchase Quantity<div style="display:flex;gap:8px;align-items:center"><input id="invUnitAmount" type="number" min="0" step="1" value="0" oninput="updateInventoryItemFields()" style="flex:1"><select id="invUnitType" onchange="updateInventoryItemFields()" style="width:120px">${ingredientPurchaseUnits.map(([v,l])=>`<option value="${v}" ${purchaseUnit===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="muted small" style="margin-top:6px">Enter how many purchase units you are adding. Example: 2 Unit.</div></label>
-    <label id="invContainsWrap">Quantity per Purchase Unit<div style="display:flex;gap:8px;align-items:center"><input id="invContainsAmount" type="number" min="0.000001" step="0.001" value="${containsAmount}" oninput="updateInventoryItemFields()" style="flex:1"><select id="invContainsUnit" onchange="updateInventoryItemFields()" style="width:120px"><option value="g" ${containsUnit==='g'?'selected':''}>g</option><option value="kg" ${containsUnit==='kg'?'selected':''}>kg</option><option value="ml" ${containsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${containsUnit==='pcs'?'selected':''}>pcs</option></select></div><div class="muted small" style="margin-top:6px">Example: 1 Unit contains 1000 g.</div></label>`}
+    ${item?'':`<label id="invUnitWrap">Purchase Quantity<div style="display:flex;gap:8px;align-items:center"><input id="invUnitAmount" type="number" min="0" step="1" value="0" oninput="updateInventoryItemFields()" style="flex:1"><select id="invUnitType" onchange="updateInventoryItemFields()" style="width:120px">${ingredientPurchaseUnits.map(([v,l])=>`<option value="${v}" ${purchaseUnit===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="muted small" style="margin-top:6px">Enter how many purchase units you are adding. Example: 2 Unit.</div></label>`}
+    <label id="invContainsWrap">Quantity per Purchase Unit<div style="display:flex;gap:8px;align-items:center"><input id="invContainsAmount" type="number" min="0.000001" step="0.001" value="${containsAmount}" oninput="updateInventoryItemFields()" style="flex:1"><select id="invContainsUnit" onchange="updateInventoryItemFields()" style="width:120px"><option value="g" ${containsUnit==='g'?'selected':''}>g</option><option value="kg" ${containsUnit==='g'&&containsAmount>=1000?'selected':''}>kg</option><option value="ml" ${containsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${containsUnit==='pcs'?'selected':''}>pcs</option></select></div><div class="muted small" style="margin-top:6px">Example: 1 Unit contains 1000 g.</div></label>
     <input id="invUnit" type="hidden" value="${esc(unit)}">
     <label>Cost / Purchase Unit<input id="invCost" type="number" min="0" step="0.0001" value="${item?.cost_per_unit??0}"></label>
-    <label>Current Stock <span id="invStockUnit">(${esc(baseUnit)})</span><input id="invStock" type="number" min="0" step="${whole?'1':'0.01'}" value="${currentBase.toFixed(whole?0:2)}"></label>
+    <label>Current Stock <span id="invStockUnit">(${esc(baseUnit)})</span><input id="invStock" type="number" min="0" step="${whole?'1':'0.01'}" value="${currentBase.toFixed(whole?0:2)}" ${item?'':'readonly'}></label>
     ${item?'':`<label id="invAddStockWrap">Add Purchase Quantity <span id="invAddStockUnit">(${esc(baseUnit)})</span><input id="invAddStock" type="number" min="0" step="${whole?'1':'0.01'}" value="0" readonly></label>`}
     <label>Low Stock Threshold <span id="invLowUnit">(${esc(baseUnit)})</span><input id="invLow" type="number" min="0" step="${whole?'1':'0.01'}" value="${lowBase.toFixed(whole?0:2)}"></label>
     <label>Supplier<input id="invSupplier" value="${esc(item?.supplier||'')}"></label>
-    ${item?`<div class="wide muted small">Current Stock is editable directly in ${esc(baseUnit)}. Saving this form does not add or remove a purchase.</div>`:`<div id="invUnitPreview" class="wide notice"></div>`}
+    <div id="invUnitPreview" class="wide notice"></div>
   </form>`;
   openModal(item?'Edit Inventory Item':'Add Inventory Item',body,async()=>{
-    const type=$('#invType').value, name=$('#invName').value.trim();
-    if(!name)return toast('Item name is required.');
-
-    // EDIT: preserve the existing unit definition. Never treat Edit as a purchase.
-    if(item){
-      const editedBase=Math.max(Number($('#invStock').value||0),0);
-      const lowBaseEdited=Math.max(Number($('#invLow').value||0),0);
-      const existingIngredient=item.item_type==='ingredient';
-      let saveUnit=item.unit;
-      let newPackAmount=1;
-      if(existingIngredient){
-        const amount=Math.max(Number($('#invEditContainsAmount')?.value||0),0.000001);
-        const rawUnit=String($('#invEditContainsUnit')?.value||'g');
-        const purchase=String($('#invEditPurchaseUnit')?.value||'unit');
-        let normalizedAmount=amount, normalizedUnit=rawUnit;
-        if(rawUnit==='kg'){ normalizedAmount=amount*1000; normalizedUnit='g'; }
-        if(rawUnit==='ml'){ normalizedAmount=amount; normalizedUnit='ml'; }
-        if(rawUnit==='pcs' || rawUnit==='unit'){ normalizedUnit=rawUnit; }
-        saveUnit=`${normalizedAmount}${normalizedUnit}/${purchase}`;
-        newPackAmount=Math.max(Number(parseMeasureUnit(saveUnit).amount)||normalizedAmount,0.000001);
-      }
-      const storedStock=editedBase;
-      const storedLow=lowBaseEdited;
-      const payload={
-        name,
-        item_type:type,
-        unit:saveUnit,
-        cost_per_unit:Number($('#invCost').value||0),
-        current_stock:Number(storedStock.toFixed(6)),
-        low_stock_threshold:Number(storedLow.toFixed(6)),
-        supplier:$('#invSupplier').value.trim()||''
-      };
-      const {error}=await sb.from('ingredients').update(payload).eq('id',item.id).eq('user_id',dataUserId());
-      if(error)return toast(`Save failed: ${errText(error)}`);
-      closeModal();toast('Inventory item updated.');
-      if(options.returnToPurchase){
-        const {data:ings,error:ie}=await sb.from('ingredients').select('id,name,unit,cost_per_unit,item_type,current_stock').eq('user_id',dataUserId()).order('name');
-        if(ie)return toast(errText(ie));window.__purchaseIngredients=ings||[];
-        await openPurchaseModal(options.purchaseDraft||null);
-        addQuickPurchaseLineWithItem(item.id);
-      }else{await navigate('inventory');}
-      return;
-    }
-
-    // ADD: purchase quantity controls are only for creating a brand-new inventory item.
-    const purchaseQty=Math.max(Number($('#invUnitAmount').value||0),0);
+    const type=$('#invType').value, name=$('#invName').value.trim();if(!name)return toast('Item name is required.');
+    const purchaseQty=item?0:Math.max(Number($('#invUnitAmount').value||0),0);
     let low=Number($('#invLow').value||0);
     const purchaseUnit=String($('#invUnitType').value||'unit');
-    let saveUnit,purchaseBaseAmount;
+    let saveUnit, purchaseBaseAmount;
     if(type==='ingredient'){
       const containsAmount=Math.max(Number($('#invContainsAmount').value||0),0.000001);
       const containsUnit=String($('#invContainsUnit').value||'g');
       let baseAmount=containsAmount, baseUnit2=containsUnit;
-      if(containsUnit==='kg')baseAmount*=1000,baseUnit2='g';
-      saveUnit=`${baseAmount}${baseUnit2}/${purchaseUnit}`;
-      purchaseBaseAmount=baseAmount;
-      low=low/Math.max(baseAmount,0.000001);
+      if(containsUnit==='kg') baseAmount*=1000,baseUnit2='g';
+      if(purchaseUnit==='box'||purchaseUnit==='pack'||purchaseUnit==='unit'){
+        saveUnit=`${baseAmount}${baseUnit2}/${purchaseUnit}`;
+        purchaseBaseAmount=baseAmount;
+        low=low/Math.max(baseAmount,0.000001);
+      }else{
+        saveUnit=`${baseAmount}${baseUnit2}/unit`;
+        purchaseBaseAmount=baseAmount;
+        low=low/Math.max(baseAmount,0.000001);
+      }
     }else{
-      const allowedPhysical=type==='packaging'?['pcs']:['pcs','unit'];
+      const allowedPhysical=type==='packaging'?['pcs'] : ['pcs','unit'];
       const actualUnit=allowedPhysical.includes(purchaseUnit)?purchaseUnit:allowedPhysical[0];
       saveUnit=actualUnit;
       purchaseBaseAmount=1;
+      low=low;
     }
-    const newBase=purchaseQty*purchaseBaseAmount;
-    const storedStock=newBase;
-    const payload={user_id:dataUserId(),name,item_type:type,unit:saveUnit,cost_per_unit:Number($('#invCost').value||0),current_stock:Number(storedStock.toFixed(6)),low_stock_threshold:Number(low.toFixed(6)),supplier:$('#invSupplier').value.trim()||''};
-    const {data,error}=await sb.from('ingredients').insert(payload).select('id,*').single();
-    if(error)return toast(`Save failed: ${errText(error)}`);
-    const newItem=data;
-    closeModal();toast('Inventory item added.');
+    const existingStored=Number(item?.current_stock||0);
+    const existingBase=ingredientType?existingStored*packAmount:existingStored;
+    let newStoredStock;
+    if(type==='ingredient'){
+      const storedPackAmount=Math.max(Number(parseMeasureUnit(saveUnit).amount)||1,0.000001);
+      if(item){
+        const editedBase=Math.max(Number($('#invStock').value||0),0);
+        newStoredStock=editedBase/storedPackAmount;
+      }else{
+        const newBase=existingBase + purchaseQty*purchaseBaseAmount;
+        newStoredStock=newBase/storedPackAmount;
+      }
+    }else{
+      newStoredStock=item?Math.max(Number($('#invStock').value||0),0):existingStored+purchaseQty;
+    }
+    const payload={user_id:dataUserId(),name,item_type:type,unit:saveUnit,cost_per_unit:Number($('#invCost').value||0),current_stock:Number(newStoredStock.toFixed(6)),low_stock_threshold:Number(low.toFixed(6)),supplier:$('#invSupplier').value.trim()||''};
+    const q=item?sb.from('ingredients').update(payload).eq('id',item.id).eq('user_id',dataUserId()):sb.from('ingredients').insert(payload).select('id,*').single();
+    const {data,error}=await q;if(error)return toast(errText(error));
+    const newItem=item?{...item,...payload}:data;
+    closeModal();toast(item?'Inventory item updated.':'Inventory item added.');
     if(options.returnToPurchase){
       const {data:ings,error:ie}=await sb.from('ingredients').select('id,name,unit,cost_per_unit,item_type,current_stock').eq('user_id',dataUserId()).order('name');
       if(ie)return toast(errText(ie));window.__purchaseIngredients=ings||[];
@@ -3716,16 +3542,8 @@ function updateInventoryItemFields(){
     [...unitTypeEl.options].forEach(o=>o.hidden=!allowed.includes(o.value));
     if(!allowed.includes(unitTypeEl.value))unitTypeEl.value=allowed[0];
   }
-  const isEdit=!amountEl;
-  if(isEdit && isIng){
-    const editUnit=String($('#invEditContainsUnit')?.value||'g');
-    if(stockUnit)stockUnit.textContent=`(${editUnit})`;
-    if(lowUnit)lowUnit.textContent=`(${editUnit})`;
-    if(stock)stock.step=['pcs','unit'].includes(editUnit)?'1':'0.01';
-    if(low)low.step=['pcs','unit'].includes(editUnit)?'1':'0.01';
-    return;
-  }
   const selectedUnit=String(unitTypeEl?.value||(isIng?'unit':type==='packaging'?'pcs':'unit'));
+  const isEdit=!amountEl;
   const purchaseQty=Math.max(Number(amountEl?.value||0),0);
   if(!isIng){
     if(containsWrap)containsWrap.hidden=true;
@@ -3957,15 +3775,11 @@ function renderOrderMenu(){
   const term=($("#orderSearch")?.value||"").toLowerCase();
   const category=$("#orderCategory")?.value||"";
   const rows=(window.__orderProducts||[]).filter(p=>(p.name||"").toLowerCase().includes(term)&&(!category||p.category_id===category));
-  const categoryMap=window.__orderCategoryMap||{};
-  root.innerHTML=rows.map(p=>{
-    const categoryName=categoryMap[p.category_id]||"Uncategorized";
-    return `<div class="order-product-card">
+  root.innerHTML=rows.map(p=>`<div class="order-product-card">
       ${p.image_url?`<img src="${esc(p.image_url)}" alt="" class="order-product-image" loading="lazy" decoding="async">`:`<div class="order-product-image order-product-placeholder"></div>`}
-      <div class="order-product-info"><div class="order-product-copy"><div class="order-product-category">${esc(categoryName)}</div><h4>${esc(p.name)}</h4><div class="muted small">${money(p.selling_price)}</div></div><div class="order-product-actions"><button type="button" class="order-add-btn" onclick="addOrderProduct('${p.id}')">+1</button><button type="button" class="order-addon-btn" onclick="toggleOrderAddonPanel('${p.id}')">Add-ons</button></div></div>
+      <div class="order-product-info"><div class="order-product-copy"><h4>${esc(p.name)}</h4><div class="muted small">${money(p.selling_price)}</div></div><div class="order-product-actions"><button type="button" class="order-add-btn" onclick="addOrderProduct('${p.id}')">+1</button><button type="button" class="order-addon-btn" onclick="toggleOrderAddonPanel('${p.id}')">Add-ons</button></div></div>
       <div id="addonPanel-${p.id}" class="addon-picker-inline hidden"></div>
-    </div>`;
-  }).join("") || `<div class="order-empty">No products found.</div>`;
+    </div>`).join("") || `<div class="order-empty">No products found.</div>`;
 }
 function renderOrderCart(){
   const root=$("#orderCart"); if(!root)return;
@@ -4034,15 +3848,13 @@ async function saveQuickCustomer(){
 async function openOrderModal(){
   const [{data:customers,error:ce},{data:products,error:pe},{data:categories,error:cate},{data:addons,error:ae},{data:links,error:le}]=await Promise.all([
     sb.from("customers").select("id,name").eq("user_id",dataUserId()).order("name"),
-    sb.from("products").select("id,name,selling_price,calculated_cost,image_url,category_id,sales_channel").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).eq("active",true).order("name"),
-    sb.from("categories").select("id,name").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order").order("name"),
-    sb.from("addons").select("id,name,price,cost,active,sales_channel").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).eq("active",true).order("name"),
+    sb.from("products").select("id,name,selling_price,calculated_cost,image_url,category_id").eq("user_id",dataUserId()).eq("active",true).order("name"),
+    sb.from("categories").select("id,name").eq("user_id",dataUserId()).order("sort_order").order("name"),
+    sb.from("addons").select("id,name,price,cost,active").eq("user_id",dataUserId()).eq("active",true).order("name"),
     sb.from("product_addons").select("product_id,addon_id").eq("user_id",dataUserId())
   ]);
   for(const e of [ce,pe,cate,ae,le]) if(e) throw e;
   window.__orderProducts=products||[];
-  window.__orderCategories=categories||[];
-  window.__orderCategoryMap=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
   window.__orderAddons=addons||[];
   window.__orderAddonLinks=links||[];
   orderCart=[];
@@ -4097,7 +3909,7 @@ async function openOrderModal(){
     const scheduledDate=String($("#oScheduledDate")?.value||"").trim();
     if(orderType==="pre_order" && !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) return toast("Please enter the pre-order date as YYYY-MM-DD.");
     const orderDate=orderType==="walk_in"?localDate():scheduledDate;
-    const {data:order,error}=await sb.from("orders").insert({user_id:dataUserId(),customer_id:$("#oCustomer").value||null,order_number:`ORD-${Date.now().toString().slice(-6)}`,sales_channel:activeChannel,order_type:orderType,scheduled_date:orderType==="pre_order"?scheduledDate:null,order_date:orderDate,status:String($("#oStatus").value||"pending")==="completed"?"pending":$("#oStatus").value,subtotal,discount,delivery_fee:delivery,total,payment_status:$("#oPaymentStatus").value||"unpaid",payment_method:$("#oPayment").value||null,notes:notes||null}).select().single();
+    const {data:order,error}=await sb.from("orders").insert({user_id:dataUserId(),customer_id:$("#oCustomer").value||null,order_number:`ORD-${Date.now().toString().slice(-6)}`,order_type:orderType,scheduled_date:orderType==="pre_order"?scheduledDate:null,order_date:orderDate,status:String($("#oStatus").value||"pending")==="completed"?"pending":$("#oStatus").value,subtotal,discount,delivery_fee:delivery,total,payment_status:$("#oPaymentStatus").value||"unpaid",payment_method:$("#oPayment").value||null,notes:notes||null}).select().single();
     if(error)return toast(errText(error));
     for(const item of orderCart){
       const addonUnit=orderAddonTotal(item), lineTotal=item.qty*(item.price+addonUnit);
@@ -4159,7 +3971,7 @@ const englishDateObserver=new MutationObserver(()=>{
       input.setAttribute("autocomplete","off");
       input.setAttribute("placeholder","YYYY-MM-DD");
     }
-  },"order-modal");
+  });
 });
 englishDateObserver.observe(document.body,{childList:true,subtree:true});
 init();

@@ -8,25 +8,7 @@
 */
 const SUPABASE_URL = window.NUONUO_SUPABASE_URL || "PASTE_SUPABASE_URL_HERE";
 const SUPABASE_ANON_KEY = window.NUONUO_SUPABASE_ANON_KEY || "PASTE_SUPABASE_ANON_KEY_HERE";
-const NUONUO_BUILD = "2026-08-26-pistache-corner-company-brand-v108";
-const CHANNELS = { pistache:{label:"Pistaché",desc:"Nationwide · Shipping available"}, nuonuo:{label:"NuoNuo",desc:"Local · No shipping"} };
-let activeChannel = localStorage.getItem("nuonuo_active_channel") || "nuonuo";
-const channelLabel = ch => CHANNELS[ch]?.label || ch || "NuoNuo";
-const channelDesc = ch => CHANNELS[ch]?.desc || "";
-function channelHeaderHtml(){ return `<div class="channel-context"><span class="channel-context-dot"></span><strong>${esc(channelLabel(activeChannel))}</strong><span>${esc(channelDesc(activeChannel))}</span></div>`; }
-async function getChannelSalesRows(){
-  let {data,error}=await sb.from("sales").select("*").eq("user_id",dataUserId()).order("sale_date",{ascending:false});
-  if(error)throw error;
-  const rows=data||[];
-  const orderIds=[...new Set(rows.map(s=>s.order_id).filter(Boolean))];
-  if(!orderIds.length)return rows.filter(s=>(s.sales_channel||"nuonuo")===activeChannel);
-  const {data:orders,error:oe}=await sb.from("orders").select("id,sales_channel").eq("user_id",dataUserId()).in("id",orderIds);
-  if(oe)throw oe;
-  const orderChannel=Object.fromEntries((orders||[]).map(o=>[o.id,o.sales_channel||"nuonuo"]));
-  return rows.filter(s=>(s.sales_channel||orderChannel[s.order_id]||"nuonuo")===activeChannel);
-}
-function setActiveChannel(ch){ activeChannel = CHANNELS[ch]?ch:"nuonuo"; localStorage.setItem("nuonuo_active_channel",activeChannel); updateChannelUI(); if(session && ["menu","orders","pending","dashboard","sales","reports"].includes(currentPage)) navigate(currentPage); }
-function updateChannelUI(){ const s=$("#channelSwitcher"); if(s) s.value=activeChannel; const n=$("#activeChannelName"); if(n) n.textContent=channelLabel(activeChannel); }
+const NUONUO_BUILD = "2026-08-25-daily-total-order-v61";
 let sb = null;
 
 let session = null;
@@ -161,42 +143,35 @@ function parseMeasureUnit(unit){
   // plus a compound box definition such as 63pcs/box. In the compound form,
   // `amount` is the number of base units contained in one purchase unit.
   const raw=String(unit??'').trim().toLowerCase().replace(/\s+/g,'');
-  const compound=raw.match(/^([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|unit|個|件|包|瓶|盒)\/(box|boxes|pack|packs|bottle|bottles|unit|units)$/i);
+  const compound=raw.match(/^([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|個|件|包|瓶|盒)\/(box|boxes|pack|packs)$/i);
   if(compound){
     const amount=Number(compound[1]);
     const baseRaw=compound[2].toLowerCase();
-    const purchaseRaw=compound[3].toLowerCase();
-    const purchaseUnit=(purchaseRaw==='pack'||purchaseRaw==='packs')?'pack':(purchaseRaw==='bottle'||purchaseRaw==='bottles'?'bottle':(purchaseRaw==='unit'||purchaseRaw==='units'?'unit':'box'));
     let baseUnit=baseRaw;
-    if(baseRaw==='kg') return {amount:amount*1000,unit:'g',purchaseUnit,valid:true,compound:true};
-    if(baseRaw==='l') return {amount:amount*1000,unit:'ml',purchaseUnit,valid:true,compound:true};
+    if(baseRaw==='kg') return {amount:amount*1000,unit:'g',purchaseUnit:'box',valid:true,compound:true};
+    if(baseRaw==='l') return {amount:amount*1000,unit:'ml',purchaseUnit:'box',valid:true,compound:true};
     if(['pcs','pc','個','件','包','瓶','盒'].includes(baseRaw)) baseUnit='pcs';
-    if(baseRaw==='unit') baseUnit='unit';
-    return {amount,unit:baseUnit,purchaseUnit,valid:true,compound:true};
+    return {amount,unit:baseUnit,purchaseUnit:'box',valid:true,compound:true};
   }
-  const m=raw.match(/([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|unit|box|boxes|個|件|包|瓶|盒)$/i);
+  const m=raw.match(/([0-9]+(?:\.[0-9]+)?)(kg|g|l|ml|pcs|pc|box|boxes|個|件|包|瓶|盒)$/i);
   if(!m) return {amount:1, unit:raw || 'unit', purchaseUnit:null, valid:false};
   const amount=Number(m[1]);
   const u=m[2].toLowerCase();
   if(u==='kg') return {amount:amount*1000, unit:'g', purchaseUnit:'kg', valid:true};
   if(u==='l') return {amount:amount*1000, unit:'ml', purchaseUnit:'l', valid:true};
   if(['pcs','pc','個','件','包','瓶','盒'].includes(u)) return {amount,unit:'pcs',purchaseUnit:'pcs',valid:true};
-  if(u==='unit') return {amount,unit:'unit',purchaseUnit:'unit',valid:true};
   if(['box','boxes'].includes(u)) return {amount,unit:'box',purchaseUnit:'box',valid:true};
   return {amount,unit:u,purchaseUnit:u,valid:true};
 }
 function inventoryPurchaseUnit(item){
   const p=parseMeasureUnit(item?.unit);
-  // For compound definitions such as 5000g/unit, 1000g/pack,
-  // or 500ml/bottle, show the actual purchase unit instead of
-  // incorrectly defaulting every compound item to Box.
-  if(p.compound && p.purchaseUnit) return p.purchaseUnit;
+  if(p.compound) return 'box';
   if(p.purchaseUnit) return p.purchaseUnit;
   return String(item?.unit||'unit');
 }
 function inventoryUnitSummary(item){
   const p=parseMeasureUnit(item?.unit);
-  if(p.compound) return `${p.amount}${p.unit}/${p.purchaseUnit||'box'}`;
+  if(p.compound) return `${p.amount}${p.unit}/box`;
   return String(item?.unit||'unit');
 }
 
@@ -218,9 +193,11 @@ function recipeIngredientUnit(item){
   return ingredientBaseUnit(item);
 }
 function inventoryBaseAmount(item){
-  // Inventory current_stock is ALWAYS stored in the item's base unit (g, ml, pcs, unit).
-  // The purchase-unit definition is only a conversion for purchasing/costing.
-  return Number(item?.current_stock||0);
+  if(!item) return 0;
+  const stock=Number(item.current_stock||0);
+  if(item.item_type==='packaging') return stock;
+  const parsed=parseMeasureUnit(item.unit);
+  return stock*Math.max(Number(parsed.amount)||1,0.000001);
 }
 function inventoryBaseUnit(item){
   return item?.item_type==='packaging' ? 'pcs' : ingredientBaseUnit(item);
@@ -228,22 +205,14 @@ function inventoryBaseUnit(item){
 function inventoryDisplayStock(item, decimals=2){
   const amount=inventoryBaseAmount(item);
   const unit=inventoryBaseUnit(item);
-  const digits=['pcs','unit','box'].includes(unit) ? 0 : decimals;
+  const digits=['pcs','box'].includes(unit) ? 0 : decimals;
   return `${amount.toFixed(digits)} ${unit}`;
 }
 function inventoryDisplayThreshold(item, decimals=2){
-  const amount=Number(item?.low_stock_threshold||0);
+  const amount=Number(item?.low_stock_threshold||0)*(item?.item_type==='packaging'?1:Math.max(Number(parseMeasureUnit(item?.unit).amount)||1,0.000001));
   const unit=inventoryBaseUnit(item);
-  const digits=['pcs','unit','box'].includes(unit) ? 0 : decimals;
+  const digits=['pcs','box'].includes(unit) ? 0 : decimals;
   return `${amount.toFixed(digits)} ${unit}`;
-}
-function inventoryValue(item){
-  if(!item) return 0;
-  const stockBase=Number(item.current_stock||0);
-  const costPerPurchaseUnit=Number(item.cost_per_unit||0);
-  if(item.item_type==='packaging') return stockBase*costPerPurchaseUnit;
-  const packAmount=Math.max(Number(parseMeasureUnit(item.unit).amount)||1,0.000001);
-  return (stockBase/packAmount)*costPerPurchaseUnit;
 }
 function inventoryPackLabel(item){
   if(item?.item_type==='packaging') return 'pcs';
@@ -297,12 +266,10 @@ function errText(e){ return e?.message || "Something went wrong."; }
 function pageTitle(name){ $("#pageTitle").textContent=name; }
 function isOwner(){ return String(profile?.role||"").toLowerCase()==="owner"; }
 function isStaff(){ return String(profile?.role||"").toLowerCase()==="staff"; }
-// All business data belongs to one shared business owner id. Every Owner
-// account and every Staff account keeps its own Auth/profile id, but uses the
-// same owner_id for Orders, Customers, Menu, Inventory, Sales, Purchasing, etc.
-// This is what makes multiple Owners see and edit the exact same database.
+// All business data belongs to the Owner account. Staff accounts use the
+// Owner's user_id for shared business data while keeping their own Auth/profile id.
 function dataUserId(){
-  return profile?.owner_id || session?.user?.id;
+  return isStaff() && profile?.owner_id ? profile.owner_id : session?.user?.id;
 }
 
 async function getUser(){
@@ -393,7 +360,6 @@ async function showApp(s){
   $("#app").classList.toggle("staff-mode", isStaff());
   $("#userEmail").textContent=s.user.email || "";
   updateLiveClock();
-  updateChannelUI();
   await navigate(currentPage);
 }
 function showLogin(){
@@ -446,7 +412,7 @@ function bindCoreEvents(){
 const pages = {
   dashboard:"Dashboard", orders:"Orders", pending:"Pending Orders", menu:"Menu",
   ingredients:"Ingredients", inventory:"Inventory", wastage:"Wastage", customers:"Customers",
-  sales:"Sales", expenses:"Expenses", invoices:"Invoices", purchasing:"Purchasing", suppliers:"Suppliers", movements:"Inventory Movements", audit:"Audit Log", reports:"Reports", partners:"Partners & Profit", financials:"Company Finances", settings:"Account Settings", staff:"Staff"
+  sales:"Sales", expenses:"Expenses", invoices:"Invoices", purchasing:"Purchasing", suppliers:"Suppliers", movements:"Inventory Movements", audit:"Audit Log", reports:"Reports", settings:"Account Settings", staff:"Staff"
 };
 async function navigate(name){
   currentPage=name;
@@ -578,51 +544,36 @@ function renderReportProductChart(){
   if(otherRow&&otherDetails){otherRow.addEventListener('click',toggleOther);otherRow.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleOther();}});host.querySelectorAll('.report-pie-other').forEach(el=>el.addEventListener('click',toggleOther));}
 }
 
-function inventoryStatus(item){
-  const stock=Number(item?.current_stock||0);
-  const threshold=Number(item?.low_stock_threshold||0);
-  if(stock<=0) return {label:'Out of Stock',className:'inventory-status-out',style:'background-color:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;'};
-  if(stock<=threshold) return {label:'Low Stock',className:'inventory-status-low',style:'background-color:#ffedd5;color:#c2410c;border:1px solid #fdba74;'};
-  return {label:'In Stock',className:'inventory-status-in',style:'background-color:#dcfce7;color:#15803d;border:1px solid #86efac;'};
-}
-
-function inventoryStatusBadge(item){
-  const status=inventoryStatus(item);
-  return `<span class=\"badge inventory-status-badge ${status.className}\" style=\"${status.style}\">${status.label}</span>`;
-}
-
 function renderInventoryTable(){
   const items=window.__inventoryItems||[];
   const filter=window.__inventoryFilter||'ingredient';
   const labels={ingredient:'Ingredients',packaging:'Packaging',kitchenware:'Kitchenware / Utensils',electronic:'Electronic Equipment',equipment:'Equipment',other:'Other'};
   const filtered=items.filter(i=>(i.item_type||'other')===filter);
   const rows=filtered.map(i=>{
-    const status=inventoryStatus(i);
-    const purchaseUnit=inventoryUnitSummary(i);
+    const low=Number(i.current_stock||0)<=Number(i.low_stock_threshold||0);
+    const isIngredient=i.item_type==='ingredient';
     const stockLabel=inventoryDisplayStock(i);
-    const value=inventoryValue(i);
-    return `<tr><td><strong>${esc(i.name)}</strong></td><td>${esc(purchaseUnit)}</td><td>${money(Number(i.cost_per_unit||0))}</td><td>${esc(stockLabel)}</td><td>${money(value)}</td><td>${inventoryStatusBadge(i)}</td><td><div class="inventory-actions"><button class="btn" type="button" onclick="openInventoryItemModalById('${i.id}')">Edit</button><button class="btn btn-danger" type="button" onclick="deleteInventoryItem('${i.id}')">Delete</button></div></td></tr>`;
+    const purchaseUnit=isIngredient?inventoryPackLabel(i):'pcs';
+    const value=Number(i.current_stock||0)*Number(i.cost_per_unit||0);
+    return `<tr><td><strong>${esc(i.name)}</strong></td><td>${esc(stockLabel)}</td><td>${esc(purchaseUnit)}</td><td>${money(Number(i.cost_per_unit||0))}</td><td>${money(value)}</td><td>${low?'<span class="badge inventory-status-low">Low stock</span>':'<span class="badge inventory-status-ok">OK</span>'}</td><td><button class="btn" type="button" onclick="openInventoryItemModalById('${i.id}')">Edit</button> <button class="btn btn-danger" type="button" onclick="deleteInventoryItem('${i.id}')">Delete</button></td></tr>`;
   }).join('');
   const counts={ingredient:0,packaging:0,kitchenware:0,electronic:0,equipment:0,other:0};
   items.forEach(i=>{const t=counts[i.item_type]!=null?i.item_type:'other';counts[t]++;});
-  const totalValue=items.reduce((sum,i)=>sum+(inventoryValue(i)),0);
-  const categoryValues={ingredient:0,packaging:0,kitchenware:0,electronic:0,equipment:0,other:0};
-  items.forEach(i=>{const t=categoryValues[i.item_type]!=null?i.item_type:'other'; categoryValues[t]+=inventoryValue(i);});
+  const totalValue=items.reduce((sum,i)=>sum+(Number(i.current_stock||0)*Number(i.cost_per_unit||0)),0);
   const lowCount=items.filter(i=>Number(i.current_stock||0)<=Number(i.low_stock_threshold||0)).length;
   const tabs=['ingredient','packaging','kitchenware','electronic','equipment','other'].map(k=>`<button type="button" class="inventory-tab ${filter===k?'active':''}" onclick="setInventoryFilter('${k}')">${esc(labels[k])} <span>${counts[k]}</span></button>`).join('');
   $("#page").innerHTML=`<div class="rpt-head"><div><h3>Inventory</h3><p class="muted">Inventory is separated by category so ingredients, packaging, kitchenware and equipment are easy to manage.</p></div><button class="btn btn-dark" onclick="openInventoryItemModal()">+ Inventory Item</button></div>
     <div class="stats">
       <div class="stat"><div class="label">Total Inventory Value</div><div class="value">${money(totalValue)}</div></div>
-      <div class="stat"><div class="label">Ingredients Value</div><div class="value">${money(categoryValues.ingredient)}</div><div class="muted">${counts.ingredient} items</div></div>
-      <div class="stat"><div class="label">Packaging Value</div><div class="value">${money(categoryValues.packaging)}</div><div class="muted">${counts.packaging} items</div></div>
-      <div class="stat"><div class="label">Kitchenware Value</div><div class="value">${money(categoryValues.kitchenware)}</div><div class="muted">${counts.kitchenware} items</div></div>
-      <div class="stat"><div class="label">Electronic Equipment Value</div><div class="value">${money(categoryValues.electronic)}</div><div class="muted">${counts.electronic} items</div></div>
-      <div class="stat"><div class="label">Equipment Value</div><div class="value">${money(categoryValues.equipment)}</div><div class="muted">${counts.equipment} items</div></div>
-      <div class="stat"><div class="label">Other Value</div><div class="value">${money(categoryValues.other)}</div><div class="muted">${counts.other} items</div></div>
+      <div class="stat"><div class="label">Ingredients</div><div class="value">${counts.ingredient}</div></div>
+      <div class="stat"><div class="label">Packaging</div><div class="value">${counts.packaging}</div></div>
+      <div class="stat"><div class="label">Kitchenware</div><div class="value">${counts.kitchenware}</div></div>
+      <div class="stat"><div class="label">Electronic Equipment</div><div class="value">${counts.electronic}</div></div>
+      <div class="stat"><div class="label">Equipment</div><div class="value">${counts.equipment}</div></div>
       <div class="stat"><div class="label">Low Stock</div><div class="value">${lowCount}</div></div>
     </div>
     <div class="inventory-tabs">${tabs}</div>
-    <div class="card"><div class="rpt-head" style="margin:0 0 14px;padding:0;border:0"><div><h4 style="margin:0">${esc(labels[filter])}</h4><p class="muted" style="margin:5px 0 0">${filtered.length} item${filtered.length===1?'':'s'} in this category.</p></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Purchase Unit</th><th>Cost / Unit</th><th>Current Stock</th><th>Current Value</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">No ${esc(labels[filter]).toLowerCase()} yet.</td></tr>`}</tbody></table></div></div>`;
+    <div class="card"><div class="rpt-head" style="margin:0 0 14px;padding:0;border:0"><div><h4 style="margin:0">${esc(labels[filter])}</h4><p class="muted" style="margin:5px 0 0">${filtered.length} item${filtered.length===1?'':'s'} in this category.</p></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Stock</th><th>Purchase Unit</th><th>Cost / Pack</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">No ${esc(labels[filter]).toLowerCase()} yet.</td></tr>`}</tbody></table></div></div>`;
   installPageSearch("inventory");
 }
 function setInventoryFilter(type){window.__inventoryFilter=type;renderInventoryTable();}
@@ -630,54 +581,21 @@ function setInventoryFilter(type){window.__inventoryFilter=type;renderInventoryT
 const render = {
   async dashboard(){
     const today=localDate();
-    // Daily Sales is based on PAYMENT DATE. It does not care whether an order is
-    // pending, pre-order, preparing, ready, or completed. A paid pre-order is
-    // sales on the day the payment was recorded, not on its scheduled date.
-    try{ await syncPaidOrdersToSales(); }catch(e){ console.error("Dashboard paid-sales sync failed:",e); }
-    const [{data:todaySalesRows,error:toError},{data:pendingOrders,error:poError},{data:inventory,error:invError}]=await Promise.all([
-      sb.from("sales").select("*").eq("user_id",dataUserId()).eq("sale_date",today),
-      sb.from("orders").select("id,order_number,status,total,payment_status,payment_method,created_at,order_date,scheduled_date,order_type,customer_id,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true}),
+    // Dashboard Daily Sales uses paid orders as the source of truth and
+    // uses Malaysia time for the business day.
+    const [{data:todayOrders,error:toError},{data:pendingOrders,error:poError},{data:inventory,error:invError}]=await Promise.all([
+      sb.from("orders").select("id,total").eq("user_id",dataUserId()).ilike("payment_status","paid").eq("order_date",today),
+      sb.from("orders").select("id,order_number,status,total,payment_status,payment_method,created_at,order_date,customer_id,customers(name)").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]).order("order_date",{ascending:true}).order("created_at",{ascending:true}),
       sb.from("ingredients").select("*").eq("user_id",dataUserId()).order("item_type",{ascending:true}).order("name")
     ]);
     if(toError)throw toError;
     if(poError)throw poError;
     if(invError)throw invError;
-    let channelTodaySales=todaySalesRows||[];
-    const todaySaleOrderIds=[...new Set(channelTodaySales.map(r=>r.order_id).filter(Boolean))];
-    if(todaySaleOrderIds.length && channelTodaySales.some(r=>!r.sales_channel)){
-      const {data:todayOrders,error:todayOrderError}=await sb.from("orders").select("id,sales_channel").eq("user_id",dataUserId()).in("id",todaySaleOrderIds);
-      if(todayOrderError)throw todayOrderError;
-      const oc=Object.fromEntries((todayOrders||[]).map(o=>[o.id,o.sales_channel||"nuonuo"]));
-      channelTodaySales=channelTodaySales.filter(r=>(r.sales_channel||oc[r.order_id]||"nuonuo")===activeChannel);
-    }else{ channelTodaySales=channelTodaySales.filter(r=>(r.sales_channel||activeChannel)===activeChannel); }
-    const dailySales=channelTodaySales.reduce((sum,row)=>sum+Number(row.amount||0),0);
+
+    const dailySales=(todayOrders||[]).reduce((sum,row)=>sum+Number(row.total||0),0);
     const lowStockItems=(inventory||[]).filter(i=>Number(i.current_stock||0)<=Number(i.low_stock_threshold||0));
-    let financialSnapshot={cash:0,other_assets:0,liabilities:0};
-    try{
-      const {data:financialRow,error:financialError}=await sb.from("company_financials").select("cash,other_assets,liabilities").eq("user_id",dataUserId()).maybeSingle();
-      if(financialError && !String(financialError.message||"").toLowerCase().includes("company_financials")) throw financialError;
-      financialSnapshot=financialRow||financialSnapshot;
-    }catch(e){ console.error("Financial snapshot load failed:",e); }
-    const financialCash=Number(financialSnapshot.cash||0);
-    const financialAssets=financialCash+Number(financialSnapshot.other_assets||0);
-    const financialNet=financialAssets-Number(financialSnapshot.liabilities||0);
 
-    // Dashboard Pending Orders must use the exact same type/date rules as the
-    // Pending Orders page. Never infer type from customer name or order_date.
-    // Walk-ins are only today's orders; pre-orders follow scheduled_date.
-    const dashboardWalkIns=(pendingOrders||[])
-      .filter(o=>orderTypeOf(o)==="walk_in")
-      .map(o=>({...o,order_date:today,scheduled_date:null}))
-      .sort((a,b)=>String(a.created_at||"").localeCompare(String(b.created_at||"")));
-    const dashboardPreOrders=(pendingOrders||[])
-      .filter(o=>orderTypeOf(o)==="pre_order")
-      .sort((a,b)=>{
-        const da=orderScheduleDate(a), db=orderScheduleDate(b);
-        return da.localeCompare(db)||String(a.created_at||"").localeCompare(String(b.created_at||""));
-      });
-    const dashboardPendingOrders=[...dashboardWalkIns,...dashboardPreOrders];
-
-    const pendingIds=dashboardPendingOrders.map(o=>o.id).filter(Boolean);
+    const pendingIds=(pendingOrders||[]).map(o=>o.id).filter(Boolean);
     let itemCounts={};
     if(pendingIds.length){
       const {data:items,error:itemError}=await sb.from("order_items").select("order_id,quantity").eq("user_id",dataUserId()).in("order_id",pendingIds);
@@ -687,24 +605,13 @@ const render = {
         itemCounts[item.order_id]=(itemCounts[item.order_id]||0)+qty;
       }
     }
-    const pendingCount=dashboardPendingOrders.length;
+    const pendingCount=(pendingOrders||[]).length;
 
     $("#page").innerHTML=`
-      ${channelHeaderHtml()}<div class="stats dashboard-stats">
+      <div class="stats dashboard-stats">
         <div class="stat"><div class="label">Daily Sales</div><div class="value">${money(dailySales)}</div></div>
         <div class="stat"><div class="label">Pending Orders</div><div class="value">${pendingCount}</div></div>
         <div class="stat"><div class="label">Low Stock</div><div class="value">${lowStockItems.length}</div></div>
-      </div>
-      <div class="card" style="margin-bottom:18px">
-        <div class="page-head compact">
-          <div><h4>Company Financial Snapshot</h4><p class="muted">Cash, other assets, liabilities and net assets.</p></div>
-          <button class="btn" onclick="navigate('financials')">Manage</button>
-        </div>
-        <div class="stats" id="dashboardFinancialSnapshot">
-          <div class="stat"><div class="label">Current Cash</div><div class="value">${money(financialCash)}</div></div>
-          <div class="stat"><div class="label">Total Assets</div><div class="value">${money(financialAssets)}</div></div>
-          <div class="stat"><div class="label">Net Assets</div><div class="value">${money(financialNet)}</div></div>
-        </div>
       </div>
       <div class="grid-2">
         <div class="card"><h4>Quick actions</h4><div class="actions">
@@ -717,11 +624,11 @@ const render = {
       </div>
       <div class="grid-2 dashboard-details">
         <div class="card"><div class="page-head compact"><div><h4>Pending Orders</h4><p class="muted">Orders waiting to be completed.</p></div><span class="pending-total-badge">${Object.values(itemCounts).reduce((a,b)=>a+b,0)} items</span></div>
-          ${orderTable(dashboardPendingOrders,true,false,itemCounts)}
+          ${orderTable(pendingOrders||[],true,false,itemCounts)}
         </div>
         <div class="card"><div class="page-head compact"><div><h4>Low Stock Details</h4><p class="muted">Items at or below their stock threshold.</p></div><span class="pending-total-badge">${lowStockItems.length} item${lowStockItems.length===1?"":"s"}</span></div>
           <div class="table-wrap"><table><thead><tr><th>Name</th><th>Stock</th><th>Threshold</th><th>Status</th></tr></thead><tbody>
-          ${lowStockItems.map(i=>{const status=inventoryStatus(i);return `<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayThreshold(i)}</td><td>${inventoryStatusBadge(i)}</td></tr>`}).join("")||`<tr><td colspan="4" class="empty">No low-stock items.</td></tr>`}
+          ${lowStockItems.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayThreshold(i)}</td><td><span class="badge inventory-status-low">Low stock</span></td></tr>`).join("")||`<tr><td colspan="4" class="empty">No low-stock items.</td></tr>`}
           </tbody></table></div>
         </div>
       </div>`;
@@ -729,9 +636,9 @@ const render = {
 
   async menu(){
     const [{data:products,error:pe},{data:categories,error:ce},{data:addons,error:ae}]=await Promise.all([
-      sb.from("products").select("*,categories(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order",{ascending:true}).order("created_at",{ascending:false}),
-      sb.from("categories").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order").order("name"),
-      sb.from("addons").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("name")
+      sb.from("products").select("*,categories(name)").eq("user_id",dataUserId()).order("sort_order",{ascending:true}).order("created_at",{ascending:false}),
+      sb.from("categories").select("*").eq("user_id",dataUserId()).order("sort_order").order("name"),
+      sb.from("addons").select("*").eq("user_id",dataUserId()).order("name")
     ]);
     if(pe)throw pe; if(ce)throw ce; if(ae)throw ae;
 
@@ -799,7 +706,7 @@ const render = {
     const {data,error}=await sb.from("ingredients").select("*").eq("user_id",dataUserId()).order("item_type",{ascending:true}).order("name");
     if(error)throw error;
     const items=data||[];
-    const totalValue=items.reduce((sum,i)=>sum+(inventoryValue(i)),0);
+    const totalValue=items.reduce((sum,i)=>sum+(Number(i.current_stock||0)*Number(i.cost_per_unit||0)),0);
     const lowCount=items.filter(i=>Number(i.current_stock||0)<=Number(i.low_stock_threshold||0)).length;
     const counts={ingredient:0,packaging:0,kitchenware:0,electronic:0,equipment:0,other:0};
     items.forEach(i=>{const t=counts[i.item_type]!=null?i.item_type:'other';counts[t]++;});
@@ -887,14 +794,14 @@ const render = {
   },
 
   async orders(){
-    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("order_date",{ascending:false}).order("created_at",{ascending:false});
+    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).order("order_date",{ascending:false}).order("created_at",{ascending:false});
     if(error)throw error;
-    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Orders</h3><p class="muted">${esc(channelLabel(activeChannel))} · ${esc(channelDesc(activeChannel))}</p></div><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div>
+    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Orders</h3><p class="muted">Completed and active orders.</p></div><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div>
       ${orderTable(data||[],true)}`;
   },
 
   async pending(){
-    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]);
+    const {data,error}=await sb.from("orders").select("*,customers(name)").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]);
     if(error)throw error;
     const today=localDate();
     const allPending=(data||[]);
@@ -927,18 +834,10 @@ const render = {
 
     const productIds=[...new Set(pendingItems.map(i=>i.product_id).filter(Boolean))];
     let productMap={};
-    let categoryMapById={};
     if(productIds.length){
-      const {data:products,error:productError}=await sb.from("products").select("id,name,category_id").eq("user_id",dataUserId()).in("id",productIds);
+      const {data:products,error:productError}=await sb.from("products").select("id,name").eq("user_id",dataUserId()).in("id",productIds);
       if(productError)throw productError;
-      const productRows=products||[];
-      const categoryIds=[...new Set(productRows.map(p=>p.category_id).filter(Boolean))];
-      if(categoryIds.length){
-        const {data:categories,error:categoryError}=await sb.from("categories").select("id,name").eq("user_id",dataUserId()).in("id",categoryIds);
-        if(categoryError)throw categoryError;
-        categoryMapById=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
-      }
-      productMap=Object.fromEntries(productRows.map(p=>[p.id,{name:p.name,category:categoryMapById[p.category_id]||"Uncategorized"}]));
+      productMap=Object.fromEntries((products||[]).map(p=>[p.id,p.name]));
     }
 
     const addonIds=[...new Set(addonRows.map(a=>a.addon_id).filter(Boolean))];
@@ -989,9 +888,7 @@ const render = {
     for(const item of pendingItems){
       const itemQty=Math.max(0,Number(item.quantity||0));
       if(!itemQty)continue;
-      const productInfo=productMap[item.product_id]||{name:'Deleted product',category:'Uncategorized'};
-      const productName=productInfo.name;
-      const productCategory=productInfo.category||'Uncategorized';
+      const productName=productMap[item.product_id]||'Deleted product';
       const orderForItem=(orders||[]).find(o=>o.id===item.order_id);
 
       // Only use saved addon rows when this order item actually has addon
@@ -1027,19 +924,19 @@ const render = {
           const q=Number(qText);
           const unique=[...new Set(names.map(n=>String(n).trim()).filter(Boolean))];
           if(!unique.length)continue;
-          variants.push({name:`${productName} Add ${unique.join(' + ')}`,qty:q,category:productCategory});
+          variants.push({name:`${productName} Add ${unique.join(' + ')}`,qty:q});
           addonQtyTotal+=q;
         }
         const baseQty=Math.max(0,itemQty-addonQtyTotal);
-        if(baseQty)variants.unshift({name:productName,qty:baseQty,category:productCategory});
+        if(baseQty)variants.unshift({name:productName,qty:baseQty});
       }else{
-        variants.push({name:productName,qty:itemQty,category:productCategory});
+        variants.push({name:productName,qty:itemQty});
       }
 
       itemCounts[item.order_id]=(itemCounts[item.order_id]||0)+itemQty;
       const list=remainingByOrder[item.order_id]||(remainingByOrder[item.order_id]=[]);
       for(const v of variants){
-        const existing=list.find(x=>x.name===v.name && x.category===v.category);
+        const existing=list.find(x=>x.name===v.name);
         if(existing)existing.qty+=v.qty;
         else list.push({...v});
       }
@@ -1047,74 +944,61 @@ const render = {
 
     window.__pendingItemCounts=itemCounts;
     window.__pendingRemainingByOrder=remainingByOrder;
-    // PRE-ORDER DAILY GROUPS
-    // Each scheduled date owns its own orders and its own unfinished-product total.
-    // There is intentionally NO separate global "Daily Total Order" card.
-    const preOrderGroups=new Map();
-    for(const order of preOrders){
-      const date=orderScheduleDate(order)||"";
-      if(!preOrderGroups.has(date)) preOrderGroups.set(date,[]);
-      preOrderGroups.get(date).push(order);
+    // DAILY TOTAL ORDER
+    // Build a completely separate daily production summary.
+    // IMPORTANT: group only by the actual production / collection date.
+    // Walk-ins use today; pre-orders use scheduled_date.
+    // The summary never decides whether a date is "Today" from the
+    // presence of another order. It always shows the actual calendar date.
+    const dailyGroups={};
+    for(const order of orders){
+      const date=orderTypeOf(order)==="walk_in" ? today : orderScheduleDate(order);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const variants=remainingByOrder[order.id]||[];
+      if(!variants.length) continue;
+      const group=dailyGroups[date]||(dailyGroups[date]={orders:0,total:0,variants:new Map()});
+      group.orders+=1;
+      for(const v of variants){
+        const name=String(v.name||'').trim();
+        const qty=Math.max(0,Number(v.qty||0));
+        if(!name||!qty) continue;
+        group.total+=qty;
+        group.variants.set(name,(group.variants.get(name)||0)+qty);
+      }
     }
 
-    const preOrderDailyHtml=[...preOrderGroups.entries()]
-      .sort(([a],[b])=>{
-        if(!a) return 1;
-        if(!b) return -1;
-        return a.localeCompare(b);
-      })
-      .map(([date,dayOrders])=>{
-        const dayVariants=new Map();
-        let dayTotal=0;
-        for(const order of dayOrders){
-          const details=remainingByOrder[order.id]||[];
-          for(const item of details){
-            const name=String(item.name||"").trim();
-            const qty=Math.max(0,Number(item.qty||0));
-            if(!name||qty<=0) continue;
-            dayTotal+=qty;
-            const category=String(item.category||"Uncategorized").trim()||"Uncategorized";
-            const key=`${category}\u0000${name}`;
-            dayVariants.set(key,{name,category,qty:(dayVariants.get(key)?.qty||0)+qty});
-          }
-        }
-
-        const dateTitle=date ? formatBusinessDate(date) : "Pre-order date not set";
-        const totalRows=[...dayVariants.values()]
-          .map(item=>`<div class="pending-total-row"><strong>${item.qty} ×</strong><span class="pending-item-category">${esc(item.category)}</span><span>${esc(item.name)}</span></div>`)
-          .join("");
-        const totalHtml=dayTotal>0
-          ? `<div class="pending-day-total">
-              <div class="pending-day-total-head">
-                <strong>Total for ${esc(dateTitle)}</strong>
-                <span class="pending-total-badge">${dayTotal} item${dayTotal===1?"":"s"} remaining</span>
-              </div>
-              <div class="pending-day-total-list">${totalRows}</div>
-            </div>`
-          : `<div class="pending-day-total pending-day-total-empty"><span class="muted small">No unfinished products for this date.</span></div>`;
-
-        return `<section class="pending-group pending-preorder-day">
-          <div class="pending-group-head">
-            <div><h4>${esc(dateTitle)}</h4><span class="muted small">${dayOrders.length} order${dayOrders.length===1?"":"s"}</span></div>
+    const dailyTotalHtml=Object.entries(dailyGroups)
+      .filter(([,group])=>group.total>0)
+      .sort(([a],[b])=>a.localeCompare(b))
+      .map(([date,group])=>{
+        const x=new Date(`${date}T00:00:00`);
+        const label=Number.isNaN(x.getTime())?date:x.toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'});
+        const rows=[...group.variants.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+        return `<section class="pending-total-day">
+          <div class="pending-total-date-head">
+            <h4>${esc(label)}</h4>
+            <span class="pending-total-badge">${group.orders} order${group.orders===1?'':'s'} · ${group.total} item${group.total===1?'':'s'} remaining</span>
           </div>
-          ${orderTable(dayOrders,true,true,itemCounts,remainingByOrder)}
-          ${totalHtml}
+          <div class="pending-total-list">${rows.map(([name,qty])=>`<div class="pending-total-row"><strong>${qty} ×</strong><span>${esc(name)}</span></div>`).join('')}</div>
         </section>`;
-      }).join("") || `<div class="empty">No pre-orders yet.</div>`;
+      }).join('') || `<div class="empty">No unfinished products.</div>`;
 
-    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Pending Orders</h3><p class="muted">${esc(channelLabel(activeChannel))} · Walk-ins show today's orders. Pre-orders are grouped by scheduled date.</p></div><div class="page-actions"><button class="btn btn-dark" onclick="printAllPendingKitchen()">Print Kitchen List</button><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div></div>
+    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Pending Orders</h3><p class="muted">Walk-ins show today's orders. Pre-orders are sorted by their scheduled date.</p></div><div class="page-actions"><button class="btn btn-dark" onclick="printAllPendingKitchen()">Print Kitchen List</button><button class="btn btn-dark" onclick="openOrderModal()">+ Order</button></div></div>
       <section class="pending-group"><div class="pending-group-head"><div><h4>Walk-in · Today</h4><span class="muted small">${walkInOrders.length} order${walkInOrders.length===1?'':'s'}</span></div></div>${orderTable(walkInOrders,true,true,itemCounts,remainingByOrder)}</section>
-      <div class="pending-preorders-wrap"><div class="pending-group-head"><div><h4>Pre-orders</h4><span class="muted small">Grouped by scheduled date</span></div></div>${preOrderDailyHtml}</div>`;
-
+      <section class="pending-group"><div class="pending-group-head"><div><h4>Pre-orders</h4><span class="muted small">Sorted by scheduled date</span></div></div>${orderTable(preOrders,true,true,itemCounts,remainingByOrder)}</section>
+      <div class="card pending-total-card"><div class="page-head compact"><div><h4>Daily Total Order</h4><p class="muted">Unfinished products grouped by each production / collection date.</p></div></div><div class="pending-total-days">${dailyTotalHtml}</div></div>`;
   },
 
   async sales(){
     try{await syncCompletedOrdersToSales();}catch(e){console.error("Sales sync failed:",e);}
-    const salesRows=await getChannelSalesRows();
+    const {data,error}=await sb.from("sales").select("*").eq("user_id",dataUserId()).order("sale_date",{ascending:false});
+    if(error)throw error;
+
+    const salesRows=data||[];
     const orderIds=[...new Set(salesRows.map(s=>s.order_id).filter(Boolean))];
     let orderMap={};
     if(orderIds.length){
-      const {data:orders,error:oe}=await sb.from("orders").select("id,order_number,customer_id,sales_channel").eq("user_id",dataUserId()).in("id",orderIds);
+      const {data:orders,error:oe}=await sb.from("orders").select("id,order_number,customer_id").eq("user_id",dataUserId()).in("id",orderIds);
       if(oe)throw oe;
       const customerIds=[...new Set((orders||[]).map(o=>o.customer_id).filter(Boolean))];
       let customerMap={};
@@ -1146,7 +1030,7 @@ const render = {
     const monthLabel=k=>{const [y,m]=String(k).split("-");return new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-MY",{month:"long",year:"numeric"});};
 
     $("#page").innerHTML=`
-      <div class="rpt-head"><div><h3>Sales</h3><p class="muted">${esc(channelLabel(activeChannel))} · Track sales by customer, day, and month.</p></div></div>
+      <div class="rpt-head"><div><h3>Sales</h3><p class="muted">Track sales by customer, day, and month.</p></div></div>
       <div class="stats sales-summary-stats">
         <div class="stat"><div class="label">Total Sales</div><div class="value">${money(totalSales)}</div></div>
         <div class="stat"><div class="label">Today</div><div class="value">${money(todaySales)}</div></div>
@@ -1172,61 +1056,6 @@ const render = {
           ${salesRows.map(s=>{const link=orderMap[s.order_id]||{};return `<tr><td>${esc(s.sale_date)}</td><td><strong>${esc(link.customer||"Walk-in")}</strong></td><td>${esc(link.orderNumber||"")}</td><td>${money(s.amount)}</td><td>${money(s.cost)}</td><td>${money(s.profit)}</td><td>${esc(s.payment_method||"")}</td><td><button class="btn btn-danger" onclick="deleteSale('${s.id}')">Delete</button></td></tr>`;}).join("")||`<tr><td colspan="8" class="empty">No sales yet.</td></tr>`}
         </tbody></table></div>
       </div>`;
-  },
-
-  async financials(){
-    const uid=dataUserId();
-    const {data,error}=await sb.from("company_financials").select("*").eq("user_id",uid).maybeSingle();
-    if(error)throw error;
-    const row=data||{cash:0,other_assets:0,liabilities:0};
-    const cash=Number(row.cash||0), otherAssets=Number(row.other_assets||0), liabilities=Number(row.liabilities||0);
-    const totalAssets=cash+otherAssets, netAssets=totalAssets-liabilities;
-    $("#page").innerHTML=`
-      <div class="rpt-head">
-        <div><h3>Company Finances</h3><p class="muted">Keep a simple current snapshot of company cash, assets and liabilities.</p></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="label">Current Cash</div><div class="value">${money(cash)}</div></div>
-        <div class="stat"><div class="label">Total Assets</div><div class="value">${money(totalAssets)}</div><div class="muted">Cash + other assets</div></div>
-        <div class="stat"><div class="label">Liabilities</div><div class="value">${money(liabilities)}</div></div>
-        <div class="stat"><div class="label">Net Assets</div><div class="value">${money(netAssets)}</div><div class="muted">Total assets − liabilities</div></div>
-      </div>
-      <div class="card" style="max-width:720px">
-        <div class="page-head"><div><h4>Company Balance Snapshot</h4><p class="muted">Enter amounts that are not already recorded elsewhere. Do not add cash twice.</p></div></div>
-        <form id="companyFinancialForm" class="form-grid">
-          <label>Current Company Cash
-            <input id="companyCash" type="number" min="0" step="0.01" value="${cash.toFixed(2)}" placeholder="0.00">
-          </label>
-          <label>Other Assets <span class="muted small">(excluding cash)</span>
-            <input id="companyOtherAssets" type="number" min="0" step="0.01" value="${otherAssets.toFixed(2)}" placeholder="0.00">
-          </label>
-          <label>Liabilities / Debt
-            <input id="companyLiabilities" type="number" min="0" step="0.01" value="${liabilities.toFixed(2)}" placeholder="0.00">
-          </label>
-          <div class="card" style="grid-column:1/-1;background:var(--surface-2,#f7f7f7)">
-            <div class="muted small">Calculated Total Assets</div>
-            <div id="companyTotalAssetsPreview" style="font-size:28px;font-weight:700">${money(totalAssets)}</div>
-            <div class="muted small">Current Cash + Other Assets</div>
-          </div>
-          <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
-            <button class="btn btn-dark" type="submit">Save Financials</button>
-          </div>
-        </form>
-      </div>`;
-    const updatePreview=()=>{
-      const c=Math.max(0,Number($("#companyCash")?.value||0));
-      const a=Math.max(0,Number($("#companyOtherAssets")?.value||0));
-      if($("#companyTotalAssetsPreview")) $("#companyTotalAssetsPreview").textContent=money(c+a);
-    };
-    ["companyCash","companyOtherAssets"].forEach(id=>$("#"+id)?.addEventListener("input",updatePreview));
-    $("#companyFinancialForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const payload={user_id:uid,cash:Math.max(0,Number($("#companyCash").value||0)),other_assets:Math.max(0,Number($("#companyOtherAssets").value||0)),liabilities:Math.max(0,Number($("#companyLiabilities").value||0)),updated_at:new Date().toISOString()};
-      const {error}=await sb.from("company_financials").upsert(payload,{onConflict:"user_id"});
-      if(error)return toast(errText(error));
-      toast("Company financials saved.");
-      await render.financials();
-    });
   },
 
   async expenses(){
@@ -1282,7 +1111,7 @@ const render = {
     }));
   },
   async reports(){
-    try{await syncPaidOrdersToSales();}catch(e){console.error("Reports sales sync failed:",e);}
+    try{await syncCompletedOrdersToSales();}catch(e){console.error("Reports sales sync failed:",e);}
     const uid=dataUserId(), today=localDate();
     const period=reportPeriodState(), {start:periodStart,end:periodEnd,label:periodLabel}=period;
     const inPeriod=d=>reportDateInRange(d,periodStart,periodEnd);
@@ -1297,8 +1126,7 @@ const render = {
 
     const expensesData=expenseRows||[], allOrders=orders||[], inv=ingredients||[], wastes=wastageRows||[];
     const allPaid=allOrders.filter(o=>String(o.payment_status||'').toLowerCase()==='paid');
-    const completedOrders=allPaid.filter(o=>String(o.status||'').toLowerCase()==='completed');
-    const completed=completedOrders.filter(o=>inPeriod(o.order_date||String(o.created_at||'').slice(0,10)));
+    const completed=allPaid.filter(o=>inPeriod(o.order_date||String(o.created_at||'').slice(0,10)));
     const completedIds=completed.map(o=>o.id).filter(Boolean);
     let orderItems=[], addonRows=[];
     if(completedIds.length){
@@ -1331,8 +1159,8 @@ const render = {
     const productList=Object.entries(productStats).map(([name,v])=>({name,...v,margin:v.sales? v.profit/v.sales*100:0})).sort((a,b)=>b.sales-a.sales);
     window.__reportProductMix=productList.map(x=>({name:x.name,quantity:x.qty}));
 
-    // Reports use paid + completed Orders as the source of truth. A paid but
-    // unfinished pre-order is a receivable/cash event, not a completed sale yet.
+    // Reports use paid Orders as the source of truth. The Sales table remains a ledger,
+    // but duplicates or stale rows cannot inflate company-level reports anymore.
     const orderSalesRows=completed.map(o=>({amount:Number(o.total||0),cost:Number(orderCostMap[o.id]||0),profit:Number(o.total||0)-Number(orderCostMap[o.id]||0),sale_date:String(o.order_date||String(o.created_at||'').slice(0,10)),payment_method:o.payment_method,payment_status:o.payment_status,order_id:o.id}));
     const salesData=orderSalesRows;
     const expenses=expensesData.reduce((a,r)=>a+Number(r.amount||0),0);
@@ -1350,7 +1178,7 @@ const render = {
     const expenseBy={}; expensesData.filter(r=>inPeriod(r.expense_date)).forEach(r=>{const c=expenseTopCategory(r.category);expenseBy[c]=(expenseBy[c]||0)+Number(r.amount||0);});
     const expenseSorted=Object.entries(expenseBy).sort((a,b)=>b[1]-a[1]);
 
-    const invValue=inv.reduce((a,i)=>a+inventoryValue(i),0);
+    const invValue=inv.reduce((a,i)=>a+Number(i.current_stock||0)*Number(i.cost_per_unit||0),0);
     const lowStock=inv.filter(i=>Number(i.current_stock||0)<=Number(i.low_stock_threshold||0));
     const outStock=inv.filter(i=>Number(i.current_stock||0)<=0);
     const monthWastes=wastes.filter(r=>inPeriod(r.wastage_date));
@@ -1359,7 +1187,7 @@ const render = {
 
     const customerMap={}; completed.forEach(o=>{if(!o.customer_id)return;const k=o.customer_id;if(!customerMap[k])customerMap[k]={name:o.customers?.name||'Walk-in',orders:0,spending:0};customerMap[k].orders++;customerMap[k].spending+=Number(o.total||0);});
     const customerList=Object.values(customerMap).sort((a,b)=>b.spending-a.spending), returning=customerList.filter(x=>x.orders>1).length, customerCount=customerList.length;
-    const firstCompletedByCustomer={}; completedOrders.forEach(o=>{if(!o.customer_id)return;const d=String(o.order_date||String(o.created_at||'').slice(0,10));if(!firstCompletedByCustomer[o.customer_id]||d<firstCompletedByCustomer[o.customer_id])firstCompletedByCustomer[o.customer_id]=d;});
+    const firstCompletedByCustomer={}; allPaid.forEach(o=>{if(!o.customer_id)return;const d=String(o.order_date||String(o.created_at||'').slice(0,10));if(!firstCompletedByCustomer[o.customer_id]||d<firstCompletedByCustomer[o.customer_id])firstCompletedByCustomer[o.customer_id]=d;});
     const newCustomersThisPeriod=Object.values(firstCompletedByCustomer).filter(d=>inPeriod(d)).length;
     const deliveryRevenue=completed.filter(o=>inPeriod(o.order_date)).reduce((a,o)=>a+Number(o.delivery_fee||0),0);
 
@@ -1403,7 +1231,7 @@ const render = {
     const productRows=topProducts.map(p=>`<tr><td><strong>${esc(p.name)}</strong></td><td>${p.qty.toFixed(p.qty%1?1:0)} pcs</td><td>${money(p.sales)}</td><td>${money(p.cost)}</td><td>${money(p.profit)}</td><td>${p.margin.toFixed(1)}%</td></tr>`).join('');
     const marginRows=lowMarginProducts.map(p=>`<tr><td>${esc(p.name)}</td><td>${money(p.sales)}</td><td>${money(p.profit)}</td><td><span class="report-margin ${p.margin<40?'bad':''}">${p.margin.toFixed(1)}%</span></td></tr>`).join('');
     const customerRows=topCustomers.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${c.orders}</td><td>${money(c.spending)}</td><td>${money(c.orders?c.spending/c.orders:0)}</td></tr>`).join('');
-    const inventoryRows=lowRows.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayStock({...i,current_stock:i.low_stock_threshold})}</td><td>${money(inventoryValue(i))}</td></tr>`).join('');
+    const inventoryRows=lowRows.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td>${inventoryDisplayStock(i)}</td><td>${inventoryDisplayStock({...i,current_stock:i.low_stock_threshold})}</td><td>${money(Number(i.current_stock||0)*Number(i.cost_per_unit||0))}</td></tr>`).join('');
     const wasteRows=topWastes.map(([n,v])=>`<tr><td>${esc(n)}</td><td>${money(v)}</td><td>${totalWaste?((v/totalWaste)*100).toFixed(1):'0.0'}%</td></tr>`).join('');
     const deliveryRowsHtml=Object.entries(deliveryBy).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)}</td><td>${money(v)}</td><td>${monthSales?(v/monthSales*100).toFixed(1):'0.0'}%</td></tr>`).join('');
 
@@ -1563,80 +1391,6 @@ const render = {
     };
 
     $("#page").innerHTML=`<div class="rpt-head"><div><h3>Audit Log</h3><p class="muted">See what was added, edited or deleted, by whom and when.</p></div></div><div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Action</th><th>Table</th><th>What Changed</th><th>Edited / Changed By</th></tr></thead><tbody>${logs.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString('en-MY',{timeZone:SHOP_TIMEZONE})}</td><td><span class="badge">${esc(actionLabel(r.action))}</span></td><td>${esc(r.table_name)}</td><td>${recordLabel(r)}</td><td>${actorLabel(r)}</td></tr>`).join('')||`<tr><td colspan="5" class="empty">No audit events yet.</td></tr>`}</tbody></table></div></div>`;
-  },
-
-
-  async partners(){
-    if(!isOwner()){
-      $("#page").innerHTML=`<div class="card"><h3>Partners & Profit</h3><p class="error">Only Owners can view and manage partner profit settings.</p></div>`;
-      return;
-    }
-    try{ await syncCompletedOrdersToSales(); }catch(e){ console.error("Partner profit sales sync failed:",e); }
-    const uid=dataUserId();
-    const now=localDate();
-    const defaultMonth=String(now).slice(0,7);
-    const savedMonth=String(window.__partnerProfitMonth||defaultMonth);
-    const month=/^\d{4}-\d{2}$/.test(savedMonth)?savedMonth:defaultMonth;
-    window.__partnerProfitMonth=month;
-    const start=`${month}-01`;
-    const endDate=new Date(`${month}-01T00:00:00`);
-    endDate.setMonth(endDate.getMonth()+1);
-    const end=endDate.toISOString().slice(0,10);
-    const [{data:owners,error:oe},{data:salesRows,error:se},{data:expenseRows,error:ee},{data:setting,error:ce}]=await Promise.all([
-      sb.from('profiles').select('id,email,full_name,role,owner_id,created_at').eq('owner_id',uid).eq('role','owner').order('created_at',{ascending:true}),
-      sb.from('sales').select('sale_date,amount,cost').eq('user_id',uid).gte('sale_date',start).lt('sale_date',end).order('sale_date',{ascending:true}),
-      sb.from('expenses').select('expense_date,amount').eq('user_id',uid).gte('expense_date',start).lt('expense_date',end),
-      sb.from('company_partner_settings').select('*').eq('owner_id',uid).maybeSingle()
-    ]);
-    if(oe)throw oe;if(se)throw se;if(ee)throw ee;
-    if(ce && !String(ce.message||'').toLowerCase().includes('company_partner_settings')) throw ce;
-    const sales=(salesRows||[]).reduce((a,r)=>a+Number(r.amount||0),0);
-    const cogs=(salesRows||[]).reduce((a,r)=>a+Number(r.cost||0),0);
-    const expenses=(expenseRows||[]).reduce((a,r)=>a+Number(r.amount||0),0);
-    const gross=sales-cogs;
-    const net=gross-expenses;
-    const cfg=setting||{};
-    const defaultMembers=(owners||[]).slice(0,3).map((o,i)=>({id:o.id,name:o.full_name||`Owner ${i+1}`,email:o.email||'',role:['Marketing','R&D / Product Development','Production / Operations'][i]||'Partner',share:[33.33,33.33,33.34][i]||0,monthly_pay:0}));
-    let members=Array.isArray(cfg.members)?cfg.members:defaultMembers;
-    members=(owners||[]).slice(0,3).map((o,i)=>{
-      const found=members.find(m=>m.id===o.id)||{};
-      return {id:o.id,name:o.full_name||found.name||`Owner ${i+1}`,email:o.email||found.email||'',role:found.role||['Marketing','R&D / Product Development','Production / Operations'][i]||'Partner',share:Number(found.share ?? ([33.33,33.33,33.34][i] ?? 0)),monthly_pay:Number(found.monthly_pay||0)};
-    });
-    while(members.length<3) members.push({id:'',name:`Owner ${members.length+1}`,email:'',role:['Marketing','R&D / Product Development','Production / Operations'][members.length],share:[33.33,33.33,33.34][members.length],monthly_pay:0});
-    const reservePct=Math.min(100,Math.max(0,Number(cfg.reserve_percent??70)));
-    const targetMonths=Math.max(1,Number(cfg.target_reserve_months??3));
-    const currentCash=Math.max(0,Number(cfg.current_cash??0));
-    const targetReserve=expenses*targetMonths;
-    const reserveGap=Math.max(0,targetReserve-currentCash);
-    const suggestedRetainPct=net>0?Math.min(100,Math.max(reservePct,reserveGap/net*100)):100;
-    const retained=Math.max(0,net)*suggestedRetainPct/100;
-    const dividendPool=Math.max(0,net)-retained;
-    const totalShares=members.reduce((a,m)=>a+Math.max(0,Number(m.share||0)),0)||100;
-    const rows=members.map((m,i)=>{
-      const share=Number(m.share||0);
-      const dividend=dividendPool*(share/totalShares);
-      return `<div class="partner-profit-row"><div><strong>${esc(m.name||`Owner ${i+1}`)}</strong><div class="muted small">${esc(m.email||'')} · ${esc(m.role||'Partner')}</div></div><div class="partner-share">${share.toFixed(2)}%</div><div class="partner-dividend">${money(dividend)}</div></div>`;
-    }).join('');
-    const memberForm=members.map((m,i)=>`<div class="partner-edit-card"><div class="partner-edit-head"><strong>Partner ${i+1}</strong><span class="badge">Owner</span></div><label>Name<input class="partner-name" data-index="${i}" value="${esc(m.name||'')}"></label><label>Role<select class="partner-role" data-index="${i}"><option ${m.role==='Marketing'?'selected':''}>Marketing</option><option ${m.role==='R&D / Product Development'?'selected':''}>R&D / Product Development</option><option ${m.role==='Production / Operations'?'selected':''}>Production / Operations</option><option ${m.role==='Partner'?'selected':''}>Partner</option></select></label><label>Share %<input class="partner-share-input" data-index="${i}" type="number" min="0" step="0.01" value="${Number(m.share||0)}"></label><label>Monthly working pay <input class="partner-pay" data-index="${i}" type="number" min="0" step="0.01" value="${Number(m.monthly_pay||0)}"></label></div>`).join('');
-    const tableExists=!(ce && String(ce.message||'').toLowerCase().includes('company_partner_settings'));
-    $("#page").innerHTML=`<div class="rpt-head"><div><h3>Partners & Profit</h3><p class="muted">Separate partner working pay from shareholding and dividends. Company money stays in the business before profit is distributed.</p></div><button class="btn btn-dark" id="savePartnerSettings" ${tableExists?'':'disabled'}>Save Settings</button></div>
-      ${tableExists?'':`<div class="notice" style="margin:0 0 16px;padding:12px 14px;border:1px solid #e5c9a8;border-radius:10px;background:#fffaf3;color:#7a4a00"><strong>One-time database setup needed.</strong><div class="small" style="margin-top:4px">Run <b>NUONUO_PARTNERS_PROFIT_MIGRATION.sql</b> in your Supabase SQL Editor, then refresh this page.</div></div>`}
-      <div class="card partner-controls"><label>Profit month<input id="partnerMonth" type="month" value="${esc(month)}"></label><label>Default retain in company %<input id="partnerReservePct" type="number" min="0" max="100" step="1" value="${reservePct}"></label><label>Target reserve (months)<input id="partnerReserveMonths" type="number" min="1" max="24" step="1" value="${targetMonths}"></label><label>Current company cash<input id="partnerCurrentCash" type="number" min="0" step="0.01" value="${currentCash}"></label></div>
-      <div class="stats"><div class="stat"><div class="label">Sales</div><div class="value">${money(sales)}</div></div><div class="stat"><div class="label">COGS</div><div class="value">${money(cogs)}</div></div><div class="stat"><div class="label">Operating Expenses</div><div class="value">${money(expenses)}</div></div><div class="stat"><div class="label">Net Profit</div><div class="value">${money(net)}</div></div></div>
-      <div class="grid-2"><div class="card"><div class="report-card-head"><h4>Recommended Profit Allocation</h4><p class="muted">The suggested retention rate increases automatically if your current cash is below the target reserve.</p></div><div class="partner-allocation"><div><span>Target company reserve</span><strong>${money(targetReserve)}</strong><small>${targetMonths} × current month's operating expenses</small></div><div><span>Reserve gap</span><strong>${money(reserveGap)}</strong><small>Current cash: ${money(currentCash)}</small></div><div><span>Suggested retain rate</span><strong>${suggestedRetainPct.toFixed(1)}%</strong><small>Default floor: ${reservePct.toFixed(0)}%</small></div><div><span>Keep in company</span><strong>${money(retained)}</strong><small>From this month's net profit</small></div><div><span>Dividend pool</span><strong>${money(dividendPool)}</strong><small>Distributed by shareholding</small></div></div></div><div class="card"><div class="report-card-head"><h4>Partner Dividends</h4><p class="muted">Shareholding determines dividends. Working pay is separate.</p></div><div class="partner-profit-table"><div class="partner-profit-row header"><div>Partner</div><div>Share</div><div>Dividend</div></div>${rows}</div></div></div>
-      <div class="card"><div class="report-card-head"><h4>Partner Structure</h4><p class="muted">Your three Owners can have equal shares while their working pay reflects their actual responsibilities.</p></div><div class="partner-edit-grid">${memberForm}</div><div class="muted small" style="margin-top:12px">Working pay shown here is for planning. Enter actual partner remuneration as a company expense if you want it deducted from accounting profit.</div></div>`;
-    $("#partnerMonth").addEventListener('change',e=>{window.__partnerProfitMonth=e.target.value;render.partners();});
-    const saveBtn=$("#savePartnerSettings");
-    if(saveBtn) saveBtn.addEventListener('click',async()=>{
-      const nextMembers=members.map((m,i)=>({id:m.id,name:document.querySelector(`.partner-name[data-index="${i}"]`)?.value.trim()||m.name,email:m.email,role:document.querySelector(`.partner-role[data-index="${i}"]`)?.value||m.role,share:Number(document.querySelector(`.partner-share-input[data-index="${i}"]`)?.value||0),monthly_pay:Number(document.querySelector(`.partner-pay[data-index="${i}"]`)?.value||0)}));
-      const shareTotal=nextMembers.reduce((a,m)=>a+Math.max(0,m.share),0);
-      if(Math.abs(shareTotal-100)>0.01)return toast(`Partner shares must total 100%. Current total: ${shareTotal.toFixed(2)}%.`);
-      const payload={owner_id:uid,reserve_percent:Number($("#partnerReservePct").value||70),target_reserve_months:Number($("#partnerReserveMonths").value||3),current_cash:Number($("#partnerCurrentCash").value||0),members:nextMembers,updated_at:new Date().toISOString()};
-      const {error}=await sb.from('company_partner_settings').upsert(payload,{onConflict:'owner_id'});
-      if(error)return toast(errText(error));
-      toast('Partner settings saved.');
-      await render.partners();
-    });
   },
 
   async settings(){
@@ -1814,8 +1568,8 @@ function renderMenuCategories(){
 
   $("#page").innerHTML=`
     <div class="rpt-head">
-      <div><h3>${channelLabel(activeChannel)} Menu</h3><p class="muted">${esc(channelDesc(activeChannel))}. Products and categories are separated by channel.</p></div>
-      <div class="actions"><select class="channel-select" onchange="setActiveChannel(this.value)"><option value="pistache" ${activeChannel==="pistache"?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${activeChannel==="nuonuo"?"selected":""}>NuoNuo · Local</option></select>
+      <div><h3>Categories</h3><p class="muted">Your menu is grouped by category.</p></div>
+      <div class="actions">
         <button class="btn" type="button" onclick="openAddonModal()">+ Add-on</button>
         <button class="btn btn-dark" type="button" onclick="openCategoryModal()">+ Category</button>
         <button class="btn btn-dark" type="button" onclick="openProductModal()">+ Product</button>
@@ -1868,18 +1622,9 @@ function orderTypeOf(order){
   return normalized==="pre_order" || normalized==="preorder" ? "pre_order" : "walk_in";
 }
 function orderScheduleDate(order){
-  // STRICT SOURCE OF TRUTH FOR PENDING / DAILY TOTALS:
-  // Walk-in = today's Malaysia business date.
-  // Pre-order = scheduled_date ONLY. Never fall back to order_date or created_at.
-  if(orderTypeOf(order)==="walk_in") return localDate();
-  const d=String(order?.scheduled_date||"").slice(0,10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
-}
-function formatBusinessDate(iso){
-  const m={"01":"Jan","02":"Feb","03":"Mar","04":"Apr","05":"May","06":"Jun","07":"Jul","08":"Aug","09":"Sep","10":"Oct","11":"Nov","12":"Dec"};
-  const x=String(iso||"").slice(0,10);
-  const hit=/^(\d{4})-(\d{2})-(\d{2})$/.exec(x);
-  return hit ? `${hit[3]} ${m[hit[2]]||hit[2]} ${hit[1]}` : "Date not set";
+  return orderTypeOf(order)==="pre_order"
+    ? String(order?.scheduled_date||order?.order_date||String(order?.created_at||"").slice(0,10))
+    : String(order?.order_date||String(order?.created_at||"").slice(0,10));
 }
 function orderTypeLabel(order){ return orderTypeOf(order)==="pre_order"?"Pre-order":"Walk-in"; }
 
@@ -1890,7 +1635,7 @@ function orderTable(data,full=false,pending=false,itemCounts={},remainingByOrder
     const paymentLabel=paymentStatus==="paid"?"Paid":paymentStatus==="partial"?"Partial":"Unpaid";
     const details=remainingByOrder[o.id]||[];
     const type=orderTypeOf(o), scheduleDate=orderScheduleDate(o);
-    const detailsHtml=pending?`<tr class="pending-order-details-row"><td colspan="${full?9:pending?7:6}"><div class="pending-order-details"><div class="pending-order-details-title">Not completed yet</div>${details.length?details.map(x=>`<div class="pending-order-detail"><strong class="pending-order-detail-qty">${x.qty} ×</strong><span class="pending-item-category">${esc(x.category||"Uncategorized")}</span><span class="pending-item-name">${esc(x.name)}</span></div>`).join(""):`<div class="muted small">No remaining items.</div>`}</div></td></tr>`:"";
+    const detailsHtml=pending?`<tr class="pending-order-details-row"><td colspan="${full?9:pending?7:6}"><div class="pending-order-details"><div class="pending-order-details-title">Not completed yet</div>${details.length?details.map(x=>`<div class="pending-order-detail"><strong class="pending-order-detail-qty">${x.qty} ×</strong><span>${esc(x.name)}</span></div>`).join(""):`<div class="muted small">No remaining items.</div>`}</div></td></tr>`:"";
     const row=`<tr><td><strong>${esc(o.order_number)}</strong></td><td>${esc(o.customers?.name||"Walk-in")}</td><td><span class="order-type-badge order-type-${type}">${orderTypeLabel(o)}</span></td>${pending?`<td><span class="remaining-items-badge">${remaining} item${remaining===1?"":"s"}</span></td>`:''}<td><span class="badge status-badge status-${esc(String(o.status||"").toLowerCase())}">${esc(o.status)}</span></td>${full?`<td><span class="badge payment-status-badge payment-${paymentStatus}">${paymentLabel}</span></td>`:''}<td>${money(o.total)}</td><td>${esc(scheduleDate)}</td>${full?`<td class="row-actions"><button class="btn" onclick="openOrderEditModal('${o.id}')">Edit</button>${pending&&o.status!=="completed"?`<button class="btn btn-dark" onclick="printKitchenOrder('${o.id}')">Print Kitchen</button><button class="btn btn-dark" onclick="completeOrder('${o.id}')">Complete</button>`:""}${isOwner()?` <button class="btn btn-danger" onclick="deleteOrder('${o.id}')">Delete</button>`:""}</td>`:""}</tr>`;
     return row+detailsHtml;
   }).join("")||`<tr><td colspan="${full?(pending?9:8):(pending?7:6)}" class="empty">No orders yet.</td></tr>`;
@@ -2136,8 +1881,8 @@ function openWastageModal(){
     const select=$("#wItem"),opt=select?.selectedOptions?.[0];
     const qty=Number($("#wQty")?.value||0),packAmount=Number(opt?.dataset.packAmount||1),baseCost=Number(opt?.dataset.baseCost||0),stock=Number(opt?.dataset.stock||0);
     if(!opt||qty<=0)return toast("Enter a wastage quantity greater than 0.");
-    const stockDelta=qty;
-    const stockBase=stock;
+    const stockDelta=qty/Math.max(packAmount,0.000001);
+    const stockBase=stock*Math.max(packAmount,0.000001);
     if(qty>stockBase+0.0000001)return toast(`Not enough stock. Available stock is ${stockBase.toFixed(opt.dataset.baseUnit==='pcs'?0:2)} ${opt.dataset.baseUnit||'unit'}.`);
     const {error}=await sb.rpc("record_wastage",{p_ingredient_id:opt.value,p_quantity_base:qty,p_base_unit:opt.dataset.baseUnit||"unit",p_stock_delta:stockDelta,p_waste_cost:qty*baseCost,p_reason:$("#wReason").value,p_note:$("#wNote").value.trim(),p_wastage_date:$("#wDate").value||today,p_user_id:dataUserId()});
     if(error)return toast(errText(error));
@@ -2147,7 +1892,7 @@ function openWastageModal(){
 }
 function updateWastagePreview(){
   const select=$("#wItem"),opt=select?.selectedOptions?.[0],qty=Number($("#wQty")?.value||0); if(!opt)return;
-  const unit=opt.dataset.baseUnit||"unit",packAmount=Number(opt.dataset.packAmount||1),baseCost=Number(opt.dataset.baseCost||0),stock=Number(opt.dataset.stock||0); const delta=qty,remainingBase=stock-delta;
+  const unit=opt.dataset.baseUnit||"unit",packAmount=Number(opt.dataset.packAmount||1),baseCost=Number(opt.dataset.baseCost||0),stock=Number(opt.dataset.stock||0); const delta=qty/Math.max(packAmount,0.000001),remainingBase=(stock-delta)*Math.max(packAmount,0.000001);
   const hint=$("#wUnitHint"); if(hint)hint.textContent=`Enter amount in ${unit}.`;
   const preview=$("#wPreview"); if(preview)preview.innerHTML=`<div><span>Wastage cost</span><strong>${money(qty*baseCost)}</strong></div><div><span>Stock deduction</span><strong>${qty.toFixed(unit==='pcs'?0:2)} ${unit}</strong></div><div><span>Estimated remaining</span><strong class="${remainingBase<0?'wastage-negative':''}">${remainingBase.toFixed(unit==='pcs'?0:2)} ${unit}</strong></div>`;
 }
@@ -2298,7 +2043,7 @@ async function printKitchenOrder(id){
 
 async function printAllPendingKitchen(){
   try{
-    const {data,error}=await sb.from("orders").select("id").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true});
+    const {data,error}=await sb.from("orders").select("id").eq("user_id",dataUserId()).in("status",["pending","preparing","ready"]).order("created_at",{ascending:true});
     if(error)throw error;
     if(!data?.length)return toast("No pending orders to print.");
     const packs=await Promise.all(data.map(o=>fetchKitchenOrder(o.id)));
@@ -2312,47 +2057,61 @@ async function printAllPendingKitchen(){
   }catch(e){toast(errText(e));}
 }
 
-async function syncPaidOrdersToSales(){
-  const {data:orders,error:oe}=await sb.from("orders").select("id,status,total,payment_status,payment_method,created_at,order_date,sales_channel").eq("user_id",dataUserId()).ilike("payment_status","paid").order("created_at",{ascending:true});
+async function syncCompletedOrdersToSales(){
+  const {data:orders,error:oe}=await sb.from("orders").select("id,status,total,payment_status,payment_method,created_at,order_date").eq("user_id",dataUserId()).ilike("payment_status","paid").order("created_at",{ascending:true});
   if(oe)throw oe;
   if(!orders?.length)return;
 
+  // Prefer exact order_id matching when the migration is installed.
   const probe=await sb.from("sales").select("id,order_id,amount,sale_date,payment_method").eq("user_id",dataUserId());
   if(probe.error){
     const msg=String(probe.error.message||"").toLowerCase();
     if(!(msg.includes("order_id")&&(msg.includes("column")||msg.includes("schema cache"))))throw probe.error;
   }
-  const sales=probe.data||[], hasOrderId=!probe.error;
+  const sales=probe.data||[];
+  const hasOrderId=!probe.error;
+  const used=new Set();
   const exactIds=new Set(hasOrderId?sales.map(x=>x.order_id).filter(Boolean):[]);
+
   for(const order of orders){
-    if(hasOrderId && exactIds.has(order.id))continue;
-    if(!hasOrderId){
-      // Legacy sales table without order_id. Only use this as a duplicate guard.
-      const date=String(order.created_at||order.order_date||"").slice(0,10),amount=Number(order.total||0),payment=String(order.payment_method||"");
-      const match=sales.find(x=>String(x.sale_date||"")===date&&Math.abs(Number(x.amount||0)-amount)<0.0001&&String(x.payment_method||"")===payment);
-      if(match)continue;
+    if(hasOrderId && exactIds.has(order.id)){
+      const existing=sales.find(x=>x.order_id===order.id);
+      const desired=String(order.order_date||String(order.created_at||"").slice(0,10));
+      if(existing && desired && String(existing.sale_date||"")!==desired){
+        const {error:updateError}=await sb.from("sales").update({sale_date:desired}).eq("id",existing.id).eq("user_id",dataUserId());
+        if(updateError)console.error("Could not update Sales date for order",order.id,updateError);
+      }
+      continue;
     }
-    try{await createSaleForPaidOrder(order.id);}catch(e){console.error("Could not sync paid order to Sales",order.id,e);}
+    if(!hasOrderId){
+      const date=String(order.order_date||String(order.created_at||"").slice(0,10)),amount=Number(order.total||0),payment=String(order.payment_method||"");
+      const match=sales.find((x,i)=>!used.has(i)&&String(x.sale_date||"")===date&&Math.abs(Number(x.amount||0)-amount)<0.0001&&String(x.payment_method||"")===payment);
+      if(match){used.add(sales.indexOf(match));continue;}
+    }
+    try{await createSaleForCompletedOrder(order.id);}catch(e){console.error("Could not sync completed order to Sales",order.id,e);}
   }
 }
 
-async function createSaleForPaidOrder(orderId, requestedSaleDate=null){
-  // Payment is the source of truth for sales. Pending/pre-orders count as sales
-  // immediately once paid. Completion is only a fulfillment/inventory event.
-  const {data:order,error:oe}=await sb.from("orders").select("id,user_id,status,total,payment_status,payment_method,created_at,order_date,sales_channel").eq("id",orderId).eq("user_id",dataUserId()).single();
+async function createSaleForCompletedOrder(orderId){
+  // Sales are generated from paid orders. Payment is the source of truth for sales recognition.
+  const {data:order,error:oe}=await sb.from("orders").select("id,user_id,status,total,payment_status,payment_method,created_at,order_date").eq("id",orderId).eq("user_id",dataUserId()).single();
   if(oe)throw oe;
   if(!order)throw new Error("Order not found.");
   if(String(order.payment_status||"").toLowerCase()!=="paid")return {created:false,reason:"not_paid"};
 
+  // Avoid duplicate sales when Complete is clicked more than once.
+  // Newer databases may have order_id on sales; older ones are handled without it.
   let existing=null;
-  const byOrder=await sb.from("sales").select("id,order_id,sale_date").eq("user_id",dataUserId()).eq("order_id",orderId).maybeSingle();
+  const byOrder=await sb.from("sales").select("id,order_id").eq("user_id",dataUserId()).eq("order_id",orderId).maybeSingle();
   if(!byOrder.error){
     existing=byOrder.data;
   }else{
     const msg=String(byOrder.error.message||"").toLowerCase();
     const missingOrderId=msg.includes("order_id")&&(msg.includes("column")||msg.includes("schema cache"));
     if(!missingOrderId)throw byOrder.error;
-    const saleDate=String(order.created_at||order.order_date||"").slice(0,10);
+    // Backward-compatible fallback for databases that do not yet have sales.order_id.
+    // A matching sale created for the same completed order amount/date is treated as existing.
+    const saleDate=String(order.order_date||String(order.created_at||"").slice(0,10));
     const {data:possible,error:pe}=await sb.from("sales").select("id,amount,sale_date").eq("user_id",dataUserId()).eq("sale_date",saleDate);
     if(pe)throw pe;
     existing=(possible||[]).find(x=>Math.abs(Number(x.amount||0)-Number(order.total||0))<0.0001)||null;
@@ -2363,12 +2122,8 @@ async function createSaleForPaidOrder(orderId, requestedSaleDate=null){
   if(ie)throw ie;
   const cost=(items||[]).reduce((sum,x)=>sum+Number(x.quantity||0)*Number(x.unit_cost||0),0);
   const amount=Number(order.total||0);
-  // This function runs at the moment the order is created/updated to Paid.
-  // Therefore localDate() is the payment business date. We never use the
-  // pre-order scheduled date or order_date for sales recognition.
-  const requestedDate=String(requestedSaleDate||"").trim();
-  const saleDate=/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)?requestedDate:localDate();
-  const payload={user_id:dataUserId(),sale_date:saleDate,amount:Number(amount.toFixed(2)),cost:Number(cost.toFixed(2)),profit:Number((amount-cost).toFixed(2)),payment_method:order.payment_method||null,sales_channel:order.sales_channel||"nuonuo"};
+  const saleDate=String(order.order_date||String(order.created_at||new Date().toISOString()).slice(0,10));
+  const payload={user_id:dataUserId(),sale_date:saleDate,amount:Number(amount.toFixed(2)),cost:Number(cost.toFixed(2)),profit:Number((amount-cost).toFixed(2)),payment_method:order.payment_method||null};
   const insertWithOrder=await sb.from("sales").insert({...payload,order_id:orderId}).select("id").single();
   if(!insertWithOrder.error)return {created:true,saleId:insertWithOrder.data?.id};
   const msg=String(insertWithOrder.error.message||"").toLowerCase();
@@ -2379,21 +2134,14 @@ async function createSaleForPaidOrder(orderId, requestedSaleDate=null){
   return {created:true,saleId:fallback.data?.id};
 }
 
-// Backward-compatible aliases for older code paths.
-async function syncCompletedOrdersToSales(){ return syncPaidOrdersToSales(); }
-async function createSaleForCompletedOrder(orderId){ return createSaleForPaidOrder(orderId); }
-
 async function openOrderEditModal(orderId){
-  const [{data:order,error:oe},{data:customers,error:ce},{data:items,error:ie},{data:allProducts,error:pe},{data:paymentSale,error:se}]=await Promise.all([
+  const [{data:order,error:oe},{data:customers,error:ce},{data:items,error:ie},{data:allProducts,error:pe}]=await Promise.all([
     sb.from("orders").select("*").eq("id",orderId).eq("user_id",dataUserId()).single(),
     sb.from("customers").select("id,name").eq("user_id",dataUserId()).order("name"),
     sb.from("order_items").select("id,order_id,product_id,quantity,unit_price,unit_cost,addons_total,line_total").eq("order_id",orderId).eq("user_id",dataUserId()),
-    sb.from("products").select("id,name,selling_price,calculated_cost,active").eq("user_id",dataUserId()).eq("active",true).order("name"),
-    sb.from("sales").select("sale_date,payment_method").eq("order_id",orderId).eq("user_id",dataUserId()).order("sale_date",{ascending:true}).limit(1).maybeSingle()
+    sb.from("products").select("id,name,selling_price,calculated_cost,active").eq("user_id",dataUserId()).eq("active",true).order("name")
   ]);
   if(oe)return toast(errText(oe)); if(ce)return toast(errText(ce)); if(ie)return toast(errText(ie)); if(pe)return toast(errText(pe));
-  if(se && !String(se.message||'').toLowerCase().includes('no rows')) console.warn('Could not read payment date:',se);
-  const paymentDate=paymentSale?.sale_date||'';
   const products=allProducts||[];
   const productMap=Object.fromEntries(products.map(p=>[p.id,p.name]));
   window.__orderEditNewItems=[];
@@ -2414,7 +2162,6 @@ async function openOrderEditModal(orderId){
     <label>Status<select id="eoStatus" ${completed?'disabled title="Completed orders cannot be moved back because inventory has already been deducted."':''}><option value="pending" ${status==="pending"?"selected":""}>Pending</option><option value="preparing" ${status==="preparing"?"selected":""}>Preparing</option><option value="ready" ${status==="ready"?"selected":""}>Ready</option><option value="completed" ${status==="completed"?"selected":""}>Completed</option></select></label>
     <label>Payment method<select id="eoPayment"><option value="">Not set</option><option ${order.payment_method==="Cash"?"selected":""}>Cash</option><option ${order.payment_method==="Bank transfer"?"selected":""}>Bank transfer</option><option ${order.payment_method==="Card"?"selected":""}>Card</option></select></label>
     <label>Payment status<select id="eoPaymentStatus"><option value="unpaid" ${String(order.payment_status||"unpaid").toLowerCase()==="unpaid"?"selected":""}>Unpaid</option><option value="paid" ${String(order.payment_status||"").toLowerCase()==="paid"?"selected":""}>Paid</option><option value="partial" ${String(order.payment_status||"")==="partial"?"selected":""}>Partial</option></select></label>
-    <label>Payment date<div class="english-date-field"><input id="eoPaymentDate" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="YYYY-MM-DD" value="${esc(paymentDate||"")}" title="Editable payment date. This is the Sales date and does not follow the pre-order date."><button type="button" class="date-picker-btn" data-date-target="eoPaymentDate" aria-label="Choose payment date" title="Choose payment date">▣</button></div><span class="muted small">Sales will be recorded on this date.</span></label>
     <label>Discount<input id="eoDiscount" type="number" step="0.01" min="${isStaff()?Number(order.discount||0):0}" value="${Number(order.discount||0)}" ${isStaff()?'disabled title="Staff cannot reduce an order discount"':''}></label>
     <label>Delivery<input id="eoDelivery" type="number" step="0.01" min="${isStaff()?Number(order.delivery_fee||0):0}" value="${Number(order.delivery_fee||0)}" ${isStaff()?'title="Staff cannot reduce the delivery fee"':''}></label>
     <label class="wide">Note<textarea id="eoNote">${esc(order.notes||"")}</textarea></label>
@@ -2493,30 +2240,25 @@ async function openOrderEditModal(orderId){
     const safeOrderId=saveOrderId;
     const safeUserId=saveUserId;
     const editOrderType=orderTypeOf({order_type:String($("#eoOrderType")?.value||orderTypeOf(order))});
-    const editScheduledDate=String($("#eoScheduledDate")?.value||"").trim();
+    const editScheduledDate=String($("#eoScheduledDate")?.value||order.scheduled_date||order.order_date||localDate()).trim();
     if(editOrderType==="pre_order" && !/^\d{4}-\d{2}-\d{2}$/.test(editScheduledDate)) return toast("Please enter the pre-order date as YYYY-MM-DD.");
-    // Walk-in always belongs to today's Malaysia business date.
-    // Pre-order uses ONLY the explicitly entered scheduled_date.
+    // Walk-in always belongs to today's business date. Never preserve an old
+    // order_date when the order is saved as Walk-in.
     const rawDate=editOrderType==="walk_in"?localDate():editScheduledDate;
-    const editPaymentStatus=String($("#eoPaymentStatus").value||"unpaid").toLowerCase();
-    const editPaymentDate=String($("#eoPaymentDate")?.value||"").trim();
-    if(editPaymentStatus==="paid" && !/^\d{4}-\d{2}-\d{2}$/.test(editPaymentDate)) return toast("Please enter the payment date as YYYY-MM-DD.");
-    const payload={customer_id:safeCustomerId,order_type:editOrderType,scheduled_date:editOrderType==="pre_order"?editScheduledDate:null,order_date:rawDate,status:shouldComplete?status:newStatus,payment_method:$("#eoPayment").value||null,payment_status:editPaymentStatus,discount,delivery_fee:delivery,subtotal,total,notes:$("#eoNote").value.trim()||null};
+    const payload={customer_id:safeCustomerId,order_type:editOrderType,scheduled_date:editOrderType==="pre_order"?editScheduledDate:null,order_date:rawDate,status:shouldComplete?status:newStatus,payment_method:$("#eoPayment").value||null,payment_status:$("#eoPaymentStatus").value||"unpaid",discount,delivery_fee:delivery,subtotal,total,notes:$("#eoNote").value.trim()||null};
     const {data:updated,error}=await sb.from("orders").update(payload).eq("id",safeOrderId).eq("user_id",safeUserId).select().single();
     if(error)return toast(errText(error));
     if(shouldComplete){
-      try{ await completeOrderWithCorrectInventory(orderId); }
-      catch(e){ return toast("Order updated, but completion failed: "+errText(e)); }
-    }
+      const {error:completeError}=await sb.rpc("complete_order_and_deduct_inventory",{p_order_id:orderId,p_user_id:dataUserId()});
+      if(completeError)return toast("Order updated, but completion failed: "+errText(completeError));
+          }
     if(String(payload.payment_status||"").toLowerCase()==="paid"){
-      try{await createSaleForPaidOrder(orderId,editPaymentDate);}catch(e){console.error(e);toast("Order saved, but Sales sync failed: "+errText(e));}
-      const linked=await sb.from("sales").select("id,sale_date").eq("user_id",dataUserId()).eq("order_id",orderId);
+      try{await createSaleForCompletedOrder(orderId);}catch(e){console.error(e);toast("Order saved, but Sales sync failed: "+errText(e));}
+      const linked=await sb.from("sales").select("id").eq("user_id",dataUserId()).eq("order_id",orderId);
       if(!linked.error && linked.data?.length){
         const {data:oi}=await sb.from("order_items").select("quantity,unit_cost").eq("order_id",orderId).eq("user_id",dataUserId());
         const cost=(oi||[]).reduce((sum,x)=>sum+Number(x.quantity||0)*Number(x.unit_cost||0),0);
-        // Keep the original payment/sale date. Never replace it with the
-        // pre-order scheduled date or the fulfillment/order date.
-        await sb.from("sales").update({sale_date:editPaymentDate,amount:total,cost:Number(cost.toFixed(2)),profit:Number((total-cost).toFixed(2)),payment_method:payload.payment_method||null}).eq("order_id",orderId).eq("user_id",dataUserId());
+        await sb.from("sales").update({sale_date:payload.order_date,amount:total,cost:Number(cost.toFixed(2)),profit:Number((total-cost).toFixed(2)),payment_method:payload.payment_method||null}).eq("order_id",orderId).eq("user_id",dataUserId());
       }
     }
     closeModal();toast("Order updated.");await navigate(currentPage);
@@ -2626,7 +2368,7 @@ async function deductInventoryForAddedProduct(orderId,productId,quantity){
     for(const [id,baseQty] of expanded){
       const ing=byId[id];
       if(!ing) throw new Error('Inventory item not found for this product recipe.');
-      const stockDelta=Number(baseQty);
+      const stockDelta=ing.item_type==='packaging' ? Number(baseQty) : Number(baseQty)/Math.max(Number(parseMeasureUnit(ing.unit).amount)||1,0.000001);
       if(!Number.isFinite(stockDelta)||stockDelta<0) throw new Error(`Invalid inventory quantity for ${ing.name}.`);
       const stock=Number(ing.current_stock||0);
       if(stock+1e-9<stockDelta) throw new Error(`Not enough inventory for ${ing.name}. Required ${stockDelta.toFixed(3)} pack/unit, available ${stock.toFixed(3)}.`);
@@ -2654,26 +2396,8 @@ async function deductInventoryForAddedProduct(orderId,productId,quantity){
         await sb.from('product_inventory_deductions').insert({user_id:uid,order_id:oid,ingredient_id:d.ingredientId,stock_delta:d.stockDelta});
       }catch(e){ console.warn('Optional inventory deduction ledger unavailable:',e); }
     }
-    return {ok:true,deductions};
+    return {ok:true};
   }catch(error){return {ok:false,error};}
-}
-
-async function rollbackInventoryDeductions(deductions,orderId){
-  const uid=dataUserId();
-  const oid=String(orderId||'').trim();
-  for(const d of (deductions||[])){
-    const {data:ing,error:readError}=await sb.from('ingredients').select('current_stock').eq('id',d.ingredientId).eq('user_id',uid).single();
-    if(readError) throw new Error('Inventory rollback lookup failed: '+errText(readError));
-    const current=Number(ing?.current_stock||0);
-    const restored=Number((current+Number(d.stockDelta||0)).toFixed(6));
-    const {error:updateError}=await sb.from('ingredients').update({current_stock:restored}).eq('id',d.ingredientId).eq('user_id',uid);
-    if(updateError) throw new Error('Inventory rollback failed: '+errText(updateError));
-  }
-  if(oid){
-    try{
-      await sb.from('product_inventory_deductions').delete().eq('order_id',oid).eq('user_id',uid);
-    }catch(e){ console.warn('Optional inventory deduction ledger rollback unavailable:',e); }
-  }
 }
 async function openOrderDateEditor(orderId,currentDate){
   const current=String(currentDate||localDate()).slice(0,10);
@@ -2682,191 +2406,40 @@ async function openOrderDateEditor(orderId,currentDate){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return toast("Please enter the date as YYYY-MM-DD.");
   const {error}=await sb.from("orders").update({order_date:value}).eq("id",orderId).eq("user_id",dataUserId());
   if(error)return toast(errText(error));
-  // Order/pre-order date is a fulfillment/scheduling date. It must NEVER move
-  // the Sales date. Sales are dated by the day payment was recorded as Paid.
-  toast("Order date updated. Payment/Sales date stays unchanged.");
+  // Keep Sales aligned with the business/order date immediately.
+  const linked=await sb.from("sales").select("id").eq("user_id",dataUserId()).eq("order_id",orderId);
+  if(!linked.error && linked.data?.length){
+    const {error:saleError}=await sb.from("sales").update({sale_date:value}).eq("order_id",orderId).eq("user_id",dataUserId());
+    if(saleError)console.error("Could not update linked Sales date:",saleError);
+  }
+  toast("Order date updated. Sales will use this date.");
   await navigate(currentPage);
 }
 
 async function deductAddonInventoryForOrder(orderId){
-  const uid=dataUserId();
-  const oid=String(orderId||'').trim();
-  if(!uid||!oid) throw new Error('Invalid order or session.');
-
-  // Do add-on inventory deduction directly from the add-on recipe instead of
-  // relying on the old deduct_addon_inventory RPC. The old RPC could attempt
-  // to write an invalid current_stock value and trigger the database
-  // ingredients_current_stock_check constraint.
-  const {data:orderItems,error:itemError}=await sb.from('order_items')
-    .select('id,quantity').eq('order_id',oid).eq('user_id',uid);
-  if(itemError) throw new Error('Order item lookup failed: '+errText(itemError));
-  const itemIds=(orderItems||[]).map(x=>x.id).filter(Boolean);
-  if(!itemIds.length) return {ok:true,deductions:[]};
-
-  const {data:addonRows,error:addonError}=await sb.from('order_item_addons')
-    .select('order_item_id,addon_id,quantity').eq('user_id',uid).in('order_item_id',itemIds);
-  if(addonError) throw new Error('Add-on lookup failed: '+errText(addonError));
-  if(!addonRows?.length) return {ok:true,deductions:[]};
-
-  const addonIds=[...new Set(addonRows.map(x=>x.addon_id).filter(Boolean))];
-  const {data:recipes,error:recipeError}=await sb.from('addon_recipe_items')
-    .select('addon_id,ingredient_id,quantity').eq('user_id',uid).in('addon_id',addonIds);
-  if(recipeError){
-    if(isMissingSupabaseTable(recipeError,'addon_recipe_items')) return {ok:true,deductions:[]};
-    throw new Error('Add-on recipe lookup failed: '+errText(recipeError));
-  }
-  if(!recipes?.length) return {ok:true,deductions:[]};
-
-  const qtyByItem=Object.fromEntries((orderItems||[]).map(x=>[String(x.id),Number(x.quantity||0)]));
-  const required=new Map();
-  for(const row of addonRows){
-    const orderQty=Math.max(0,Number(qtyByItem[String(row.order_item_id)]||0));
-    const addonQty=Math.max(0,Number(row.quantity||0));
-    if(orderQty<=0||addonQty<=0) continue;
-    for(const r of recipes.filter(x=>String(x.addon_id)===String(row.addon_id))){
-      const iid=String(r.ingredient_id||'').trim();
-      const perAddon=Number(r.quantity||0);
-      if(iid&&perAddon>0) required.set(iid,(required.get(iid)||0)+perAddon*addonQty*orderQty);
-    }
-  }
-  if(!required.size) return {ok:true,deductions:[]};
-
-  const ids=[...required.keys()];
-  const {data:ingredients,error:ingError}=await sb.from('ingredients')
-    .select('id,name,unit,item_type,current_stock').eq('user_id',uid).in('id',ids);
-  if(ingError) throw new Error('Add-on inventory lookup failed: '+errText(ingError));
-  const byId=Object.fromEntries((ingredients||[]).map(x=>[String(x.id),x]));
-  const deductions=[];
-  for(const [id,baseQty] of required){
-    const ing=byId[id];
-    if(!ing) throw new Error('Inventory item not found for an add-on recipe.');
-    const parsed=ing.item_type==='packaging' ? null : parseMeasureUnit(ing.unit);
-    const packSize=ing.item_type==='packaging' ? 1 : Math.max(Number(parsed?.amount)||1,0.000001);
-    const stockDelta=Number(baseQty);
-    const stock=Number(ing.current_stock||0);
-    if(!Number.isFinite(stockDelta)||stockDelta<0) throw new Error(`Invalid add-on inventory quantity for ${ing.name}.`);
-    if(stock+1e-9<stockDelta){
-      const displayUnit=ing.item_type==='packaging'?'pcs':(parsed?.unit||'unit');
-      throw new Error(`Not enough inventory for add-on ${ing.name}. Required ${baseQty.toFixed(3)} ${displayUnit}, available ${stock.toFixed(3)} ${displayUnit}.`);
-    }
-    deductions.push({ingredientId:id,stockDelta:Number(stockDelta.toFixed(6)),oldStock:stock});
-  }
-
-  const changed=[];
-  try{
-    for(const d of deductions){
-      const next=Number((d.oldStock-d.stockDelta).toFixed(6));
-      if(next < -1e-9) throw new Error('Inventory cannot become negative.');
-      const {error}=await sb.from('ingredients').update({current_stock:Math.max(0,next)})
-        .eq('id',d.ingredientId).eq('user_id',uid);
-      if(error) throw new Error('Add-on inventory update failed: '+errText(error));
-      changed.push(d);
-    }
-  }catch(error){
-    for(const c of changed){
-      await sb.from('ingredients').update({current_stock:c.oldStock}).eq('id',c.ingredientId).eq('user_id',uid);
-    }
-    throw error;
-  }
-
-  for(const d of deductions){
-    try{
-      await sb.from('addon_inventory_deductions').insert({user_id:uid,order_id:oid,ingredient_id:d.ingredientId,quantity_used:d.stockDelta});
-    }catch(e){ console.warn('Optional add-on inventory ledger unavailable:',e); }
-  }
-  return {ok:true,deductions};
+  const {data,error}=await sb.rpc("deduct_addon_inventory",{p_order_id:orderId,p_user_id:dataUserId()});
+  if(error)throw error;
+  return data;
 }
 
-
-async function completeOrderWithCorrectInventory(orderId, options={}){
-  const uid=dataUserId();
-  const oid=String(orderId||'').trim();
-  if(!uid||!oid) throw new Error('Invalid order or session.');
-  const {data:order,error:orderError}=await sb.from('orders').select('id,status').eq('id',oid).eq('user_id',uid).single();
-  if(orderError) throw orderError;
-  if(String(order.status||'').toLowerCase()==='completed' && !options.force){
-    return {components_deducted:0,already_completed:true};
-  }
-  const {data:items,error:itemError}=await sb.from('order_items').select('id,product_id,quantity').eq('order_id',oid).eq('user_id',uid);
-  if(itemError) throw itemError;
-  let components=0;
-  const allDeductions=[];
-  const allAddonDeductions=[];
-  try{
-    for(const item of (items||[])){
-      const result=await deductInventoryForAddedProduct(oid,item.product_id,Number(item.quantity||0));
-      if(result?.ok===false) throw result.error||new Error('Inventory deduction failed.');
-      if(Array.isArray(result?.deductions)) allDeductions.push(...result.deductions);
-      if(result?.ok!==false) components++;
-    }
-
-    // The add-on RPC validates that the order is already completed. Mark the
-    // order completed only after product deductions succeed, then run the
-    // add-on deduction. If the add-on step fails, restore product stock and
-    // return the order to its original status so a retry is safe.
-    // Preflight and deduct add-on inventory before changing order status.
-    // This guarantees that a stock/check-constraint error cannot leave the
-    // order completed while its product inventory was already deducted.
-    const addonResult=await deductAddonInventoryForOrder(oid);
-    const addonDeductions=Array.isArray(addonResult?.deductions)?addonResult.deductions:[];
-    allAddonDeductions.push(...addonDeductions);
-    const originalStatus=String(order.status||'pending');
-    const {error:updateError}=await sb.from('orders').update({status:'completed'}).eq('id',oid).eq('user_id',uid);
-    if(updateError){
-      // Restore both product and add-on stock if the status update itself fails.
-      if(addonDeductions.length){ await rollbackInventoryDeductions(addonDeductions,oid); allAddonDeductions.length=0; }
-      throw updateError;
-    }
-    return {components_deducted:components,addon_deductions:addonDeductions};
-  }catch(error){
-    // If the order was not successfully completed, do not leave product stock
-    // partially deducted.
-    try{
-      const {data:current}=await sb.from('orders').select('status').eq('id',oid).eq('user_id',uid).single();
-      if(String(current?.status||'').toLowerCase()!=='completed'){
-        if(allAddonDeductions.length){ await rollbackInventoryDeductions(allAddonDeductions,oid); allAddonDeductions.length=0; }
-        if(allDeductions.length){ await rollbackInventoryDeductions(allDeductions,oid); allDeductions.length=0; }
-      }
-    }catch(rollbackError){
-      console.error('Inventory rollback after completion failure failed:',rollbackError);
-    }
-    throw error;
-  }
-}
 async function completeOrder(id){
   if(!confirm("Complete this order? Inventory will be deducted."))return;
-  try{
-    const completion=await completeOrderWithCorrectInventory(id);
-    if(completion?.already_completed)return toast("This order is already completed.");
+  const {data:completion,error}=await sb.rpc("complete_order_and_deduct_inventory",{p_order_id:id,p_user_id:dataUserId()});
+  if(error)return toast(errText(error));
     try{
-      await createSaleForCompletedOrder(id);
-    }catch(e){
-      console.error("Sale creation failed after completing order:",e);
-      return toast("Order completed, but Sales could not be created: "+errText(e));
-    }
-    toast(completion?.components_deducted ? `Order completed. ${completion.components_deducted} product recipe item${completion.components_deducted===1?"":"s"} deducted.` : "Order completed. No inventory recipe was found.");
-    await navigate(currentPage);
+    await createSaleForCompletedOrder(id);
   }catch(e){
-    console.error("Order completion failed:",e);
-    return toast(errText(e));
+    console.error("Sale creation failed after completing order:",e);
+    return toast("Order completed, but Sales could not be created: "+errText(e));
   }
+  toast(completion?.components_deducted ? `Order completed. ${completion.components_deducted} inventory item${completion.components_deducted===1?"":"s"} deducted.` : "Order completed. No inventory recipe was found.");
+  await navigate(currentPage);
 }
 
 
 function purchaseLineHtml(idx, item={}){
   const ingredients=window.__purchaseIngredients||[];
-  const selectedId=String(item.ingredient_id||ingredients[0]?.id||'');
-  const selectedIngredient=ingredients.find(i=>String(i.id)===selectedId);
-  const defaultCost=item.unit_cost!=null && item.unit_cost!=='' ? Number(item.unit_cost) : Number(selectedIngredient?.cost_per_unit||0);
-  return `<div class="purchase-line" data-purchase-line="${idx}"><div style="display:flex;gap:8px;align-items:center;flex:1"><select class="purchase-ing" style="flex:1" onchange="syncPurchaseLineCost(this)">${ingredients.map(i=>`<option value="${i.id}" ${String(i.id)===selectedId?'selected':''}>${esc(i.name)} · ${esc(inventoryTypeLabel(i.item_type))} · ${esc(i.item_type==='ingredient'?(i.unit||'unit'):'pcs')}</option>`).join('')}</select><button type="button" class="btn" onclick="openQuickPurchaseItemModal()">+ New Item</button></div><input class="purchase-qty" type="number" min="0.001" step="0.001" value="${Number(item.quantity||1)}" placeholder="Qty"><input class="purchase-cost" type="number" min="0" step="0.0001" value="${defaultCost}" placeholder="Unit cost"><label class="inline-check"><input class="purchase-update-cost" type="checkbox" ${item.update_current_cost!==false?'checked':''}> Update current cost</label><button type="button" class="btn btn-danger" onclick="this.closest('.purchase-line').remove();updatePurchaseTotal()">×</button></div>`;
-}
-function syncPurchaseLineCost(select){
-  const row=select?.closest('.purchase-line');
-  if(!row)return;
-  const item=(window.__purchaseIngredients||[]).find(i=>String(i.id)===String(select.value));
-  const costInput=row.querySelector('.purchase-cost');
-  if(costInput)costInput.value=Number(item?.cost_per_unit||0);
-  updatePurchaseTotal();
+  return `<div class="purchase-line" data-purchase-line="${idx}"><div style="display:flex;gap:8px;align-items:center;flex:1"><select class="purchase-ing" style="flex:1">${ingredients.map(i=>`<option value="${i.id}" ${String(i.id)===String(item.ingredient_id||'')?'selected':''}>${esc(i.name)} · ${esc(inventoryTypeLabel(i.item_type))} · ${esc(i.item_type==='ingredient'?(i.unit||'unit'):'pcs')}</option>`).join('')}</select><button type="button" class="btn" onclick="openQuickPurchaseItemModal()">+ New Item</button></div><input class="purchase-qty" type="number" min="0.001" step="0.001" value="${Number(item.quantity||1)}" placeholder="Qty"><input class="purchase-cost" type="number" min="0" step="0.0001" value="${Number(item.unit_cost||0)}" placeholder="Unit cost"><label class="inline-check"><input class="purchase-update-cost" type="checkbox" ${item.update_current_cost!==false?'checked':''}> Update current cost</label><button type="button" class="btn btn-danger" onclick="this.closest('.purchase-line').remove();updatePurchaseTotal()">×</button></div>`;
 }
 function updatePurchaseTotal(){const rows=[...document.querySelectorAll('.purchase-line')];const total=rows.reduce((a,r)=>a+Number(r.querySelector('.purchase-qty')?.value||0)*Number(r.querySelector('.purchase-cost')?.value||0),0);const el=document.getElementById('purchaseTotal');if(el)el.textContent=money(total);}
 function bindPurchaseInputs(){document.querySelectorAll('.purchase-qty,.purchase-cost').forEach(x=>x.addEventListener('input',updatePurchaseTotal));initEnglishDateField('pDate');}
@@ -2893,50 +2466,23 @@ async function openPurchaseModal(draft=null){
     const total=Number(lines.reduce((a,x)=>a+x.quantity*x.unit_cost,0).toFixed(2));
     const payload={user_id:dataUserId(),supplier_id:$('#pSupplier').value||null,purchase_number:$('#pNumber').value.trim(),purchase_date:$('#pDate').value,status:$('#pStatus').value,payment_status:$('#pPayment').value,subtotal:total,notes:$('#pNotes').value.trim()||null,updated_at:new Date().toISOString()};
     if(d.editId){
-      const {data:oldPurchase,error:oe}=await sb.from('purchase_orders').select('id,status').eq('id',d.editId).eq('user_id',dataUserId()).single();
-      if(oe)return toast(errText(oe));
-      const wasReceived=String(oldPurchase?.status||'').toLowerCase()==='received';
-      const willBeReceived=String(payload.status||'').toLowerCase()==='received';
       const {error:pe}=await sb.from('purchase_orders').update(payload).eq('id',d.editId).eq('user_id',dataUserId());
       if(pe)return toast(errText(pe));
       const {error:de}=await sb.from('purchase_items').delete().eq('purchase_id',d.editId).eq('user_id',dataUserId());
       if(de)return toast(errText(de));
       const {error:ie}=await sb.from('purchase_items').insert(lines.map(x=>({...x,user_id:dataUserId(),purchase_id:d.editId})));if(ie)return toast(errText(ie));
-      // Only a purchase that was NOT previously received should trigger stock receiving here.
-      // Editing an already-received purchase must never add the same stock again.
-      if(willBeReceived && !wasReceived){
-        const {data:recv,error:re}=await sb.rpc('nuonuo_purchase_receive',{p_purchase_id:d.editId});
-        if(re){
-          return toast(`Purchase saved, but inventory was not updated: ${errText(re)}. Use Receive to retry.`);
-        }
-        // Keep the purchase record explicitly marked as received so the Receive button disappears.
-        const {error:se}=await sb.from('purchase_orders').update({status:'received',updated_at:new Date().toISOString()}).eq('id',d.editId).eq('user_id',dataUserId());
-        if(se)return toast(`Inventory was received, but the purchase status could not be updated: ${errText(se)}`);
-        closeModal();toast(`Purchase updated and inventory increased by ${money(recv?.received_cost||total)}.`);await navigate('purchasing');return;
-      }
-      closeModal();toast(wasReceived ? 'Purchase updated. Existing received stock was not changed.' : 'Purchase updated. Inventory will be added when you Receive it.');await navigate('purchasing');return;
+      closeModal();toast('Purchase updated.');await navigate('purchasing');return;
     }
     const {data:po,error:pe}=await sb.from('purchase_orders').insert(payload).select().single();
     if(pe)return toast(errText(pe));
     const {error:ie}=await sb.from('purchase_items').insert(lines.map(x=>({...x,user_id:dataUserId(),purchase_id:po.id})));if(ie){await sb.from('purchase_orders').delete().eq('id',po.id).eq('user_id',dataUserId());return toast(errText(ie));}
-    if(String(payload.status||'').toLowerCase()==='received'){
-      const {data:recv,error:re}=await sb.rpc('nuonuo_purchase_receive',{p_purchase_id:po.id});
-      if(re){
-        return toast(`Purchase saved, but inventory was not updated: ${errText(re)}. Use Receive to retry.`);
-      }
-      // Explicitly persist received status so the Receive button is removed on refresh.
-      const {error:se}=await sb.from('purchase_orders').update({status:'received',updated_at:new Date().toISOString()}).eq('id',po.id).eq('user_id',dataUserId());
-      if(se)return toast(`Inventory was received, but the purchase status could not be updated: ${errText(se)}`);
-      closeModal();toast(`Purchase saved and inventory increased by ${money(recv?.received_cost||total)}.`);await navigate('purchasing');return;
-    }
     closeModal();toast('Purchase saved. Receive it when the stock arrives.');await navigate('purchasing');
   },'purchase-modal');bindPurchaseInputs();updatePurchaseTotal();
 }
 function addPurchaseLine(){const host=document.getElementById('purchaseLines');if(!host)return;host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{}));bindPurchaseInputs();}
 function addQuickPurchaseLineWithItem(id){
   const host=document.getElementById('purchaseLines');if(!host)return;
-  const item=(window.__purchaseIngredients||[]).find(i=>String(i.id)===String(id));
-  host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{ingredient_id:id,quantity:1,unit_cost:Number(item?.cost_per_unit||0),update_current_cost:true}));
+  host.insertAdjacentHTML('beforeend',purchaseLineHtml(document.querySelectorAll('.purchase-line').length,{ingredient_id:id,quantity:1,unit_cost:0,update_current_cost:true}));
   bindPurchaseInputs();
   const rows=document.querySelectorAll('.purchase-line');rows[rows.length-1]?.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -2960,12 +2506,7 @@ async function viewPurchase(id){
 }
 async function receivePurchase(id){
   if(!confirm('Receive this purchase? Inventory will increase by the outstanding quantities.'))return;
-  const {data,error}=await sb.rpc('nuonuo_purchase_receive',{p_purchase_id:id});
-  if(error)return toast(errText(error));
-  // The RPC may update stock/received quantities without persisting the order status.
-  // Explicitly mark it received so the Receive button disappears immediately and after refresh.
-  const {error:se}=await sb.from('purchase_orders').update({status:'received',updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',dataUserId());
-  if(se)return toast(`Inventory was received, but the purchase status could not be updated: ${errText(se)}`);
+  const {data,error}=await sb.rpc('nuonuo_purchase_receive',{p_purchase_id:id});if(error)return toast(errText(error));
   toast(`Purchase received. Inventory increased by ${money(data?.received_cost||0)} of stock cost.`);await navigate('purchasing');
 }
 async function deletePurchase(id){if(!isOwner())return toast('Only the owner can delete purchases.');if(!confirm('Delete this purchase? Received inventory will not be reversed automatically.'))return;const {error}=await sb.from('purchase_orders').delete().eq('id',id).eq('user_id',dataUserId());if(error)return toast(errText(error));toast('Purchase deleted.');await navigate('purchasing');}
@@ -3240,7 +2781,7 @@ function recipeCostValue(type,id,qty,ingredients,subrecipes){
 }
 
 function renderRecipeRows(ingredients,subrecipes,recipes){
-  const rows=recipes.length?recipes:[{ingredient_id:ingredients.find(x=>x.item_type==='ingredient')?.id||"",sub_recipe_id:null,quantity:1}];
+  const rows=recipes.length?recipes:[{ingredient_id:ingredients.find(x=>x.item_type!=='packaging')?.id||"",sub_recipe_id:null,quantity:1}];
   return rows.map((r,i)=>{
     const selectedId=r.subrecipe_id||r.sub_recipe_id||r.ingredient_id||'';
     const selectedIngredient=ingredients.find(x=>x.id===selectedId);
@@ -3254,7 +2795,7 @@ function renderRecipeRows(ingredients,subrecipes,recipes){
       </select>
       <select class="recipe-component" onchange="updateProductRecipeComponent(this)">
         ${type==='ingredient'
-          ? `<option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type==='ingredient').map(x=>`<option value="${x.id}" ${x.id===selectedId?'selected':''}>${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`
+          ? `<option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type!=='packaging').map(x=>`<option value="${x.id}" ${x.id===selectedId?'selected':''}>${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`
           : type==='packaging'
           ? `<option value="">Select packaging</option>${ingredients.filter(x=>x.item_type==='packaging').map(x=>`<option value="${x.id}" ${x.id===selectedId?'selected':''}>${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`
           : `<option value="">Select sub-recipe</option>${subrecipes.map(x=>`<option value="${x.id}" ${x.id===selectedId?'selected':''}>${esc(x.name)} · ${componentCostLabel(x,'subrecipe')}</option>`).join('')}`}
@@ -3271,7 +2812,7 @@ function changeRecipeType(select){
   const type=select.value;
   const component=row.querySelector('.recipe-component');
   if(type==='ingredient'){
-    component.innerHTML=`<option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type==='ingredient').map(x=>`<option value="${x.id}">${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`;
+    component.innerHTML=`<option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type!=='packaging').map(x=>`<option value="${x.id}">${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`;
   }else if(type==='packaging'){
     component.innerHTML=`<option value="">Select packaging</option>${ingredients.filter(x=>x.item_type==='packaging').map(x=>`<option value="${x.id}">${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}`;
   }else{
@@ -3318,7 +2859,7 @@ function updateProductRecipePreview(){
 }
 
 async function openProductModal(item=null){
-  const {data:cats}=await sb.from("categories").select("*").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("name");
+  const {data:cats}=await sb.from("categories").select("*").eq("user_id",dataUserId()).order("name");
   let costing={ingredients:[],subrecipes:[],recipes:[]};
   if(item?.id){
     try{costing=await loadProductCosting(item.id);}catch(e){return toast("Unable to load recipe costing: "+errText(e));}
@@ -3340,7 +2881,6 @@ async function openProductModal(item=null){
     <form id="productForm" class="form-grid">
       <label>Name<input id="pName" required value="${esc(item?.name||"")}"></label>
       <label>Selling price<input id="pPrice" type="number" step="0.01" required value="${item?.selling_price??""}" oninput="updateProductRecipePreview()"></label>
-      <label>Channel<select id="pChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label>
       <label>Category<select id="pCat"><option value="">Uncategorized</option>${(cats||[]).map(c=>`<option value="${c.id}" ${item?.category_id===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>
       <label>Calculated cost<input id="pCost" type="number" step="0.01" value="${item?.calculated_cost??0}" readonly></label>
       <label class="wide">Description<textarea id="pDesc">${esc(item?.description||"")}</textarea></label>
@@ -3356,9 +2896,8 @@ async function openProductModal(item=null){
       if(file){try{imageUrl=await uploadCompressed(file,"product-images");}catch(e){return toast("Photo upload failed: "+errText(e));}}
       let productId=item?.id;
       const selectedCategory=$("#pCat").value||null;
-      const selectedChannel=$("#pChannel").value||activeChannel;
       const existingSort=item?.sort_order;
-      const payload={user_id:dataUserId(),name,description:$("#pDesc").value,category_id:selectedCategory,sales_channel:selectedChannel,selling_price:price,calculated_cost:Number(cost.toFixed(2)),image_url:imageUrl,sort_order:item?Number(existingSort||0):Number((window.__menuProducts||[]).filter(x=>(x.category_id||null)===selectedCategory).length)};
+      const payload={user_id:dataUserId(),name,description:$("#pDesc").value,category_id:selectedCategory,selling_price:price,calculated_cost:Number(cost.toFixed(2)),image_url:imageUrl,sort_order:item?Number(existingSort||0):Number((window.__menuProducts||[]).filter(x=>(x.category_id||null)===selectedCategory).length)};
       const q=item?sb.from("products").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("products").insert(payload).select("id").single();
       const {data,error}=await q;if(error)return toast(errText(error));
       if(!productId)productId=data.id;
@@ -3392,7 +2931,7 @@ function addProductRecipeRow(){
   const wrap=$("#productRecipeRows"); if(!wrap)return;
   const row=document.createElement("div"); row.className="recipe-row";
   const ingredients=window.__productIngredients||[];
-  row.innerHTML=`<select class="recipe-type" onchange="changeRecipeType(this)"><option value="ingredient">Ingredient</option><option value="subrecipe">Sub-recipe</option><option value="packaging">Packaging</option></select><select class="recipe-component" onchange="updateProductRecipeComponent(this)"><option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type==='ingredient').map(x=>`<option value="${x.id}">${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}</select><div class="recipe-qty-wrap"><input class="recipe-qty" type="number" min="0.0001" step="0.001" value="1" oninput="updateProductRecipePreview()" placeholder="Qty"><span class="recipe-qty-unit">${esc(recipeIngredientUnit(ingredients.find(x=>x.item_type==='ingredient'))||'unit')}</span></div><button type="button" class="recipe-remove" onclick="this.closest('.recipe-row').remove();updateProductRecipePreview()">×</button>`;
+  row.innerHTML=`<select class="recipe-type" onchange="changeRecipeType(this)"><option value="ingredient">Ingredient</option><option value="subrecipe">Sub-recipe</option><option value="packaging">Packaging</option></select><select class="recipe-component" onchange="updateProductRecipeComponent(this)"><option value="">Select ingredient</option>${ingredients.filter(x=>x.item_type!=='packaging').map(x=>`<option value="${x.id}">${esc(x.name)} · ${componentCostLabel(x,'ingredient')}</option>`).join('')}</select><div class="recipe-qty-wrap"><input class="recipe-qty" type="number" min="0.0001" step="0.001" value="1" oninput="updateProductRecipePreview()" placeholder="Qty"><span class="recipe-qty-unit">${esc(recipeIngredientUnit(ingredients.find(x=>x.item_type!=='packaging'))||'unit')}</span></div><button type="button" class="recipe-remove" onclick="this.closest('.recipe-row').remove();updateProductRecipePreview()">×</button>`;
   wrap.appendChild(row);updateProductRecipePreview();
 }
 
@@ -3415,8 +2954,8 @@ function compressImage(file,maxW,maxH,quality){
   });
 }
 async function openCategoryModal(item=null){
-  openModal(item?"Edit Category":"Add Category",`<form id="categoryForm" class="form-grid"><label>Channel<select id="catChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label><label>Name<input id="catName" required value="${esc(item?.name||"")}"></label><label>Sort order<input id="catSort" type="number" value="${item?.sort_order??0}"></label><label class="wide">Description<textarea id="catDesc">${esc(item?.description||"")}</textarea></label></form>`,async()=>{
-    const payload={user_id:dataUserId(),name:$("#catName").value.trim(),description:$("#catDesc").value,sort_order:Number($("#catSort").value||0),sales_channel:$("#catChannel").value||activeChannel};
+  openModal(item?"Edit Category":"Add Category",`<form id="categoryForm" class="form-grid"><label>Name<input id="catName" required value="${esc(item?.name||"")}"></label><label>Sort order<input id="catSort" type="number" value="${item?.sort_order??0}"></label><label class="wide">Description<textarea id="catDesc">${esc(item?.description||"")}</textarea></label></form>`,async()=>{
+    const payload={user_id:dataUserId(),name:$("#catName").value.trim(),description:$("#catDesc").value,sort_order:Number($("#catSort").value||0)};
     const q=item?sb.from("categories").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("categories").insert(payload); const {error}=await q; if(error)return toast(errText(error)); closeModal(); toast("Category saved."); await render.menu();
   });
 }
@@ -3459,13 +2998,13 @@ async function openAddonModal(item=null){
   window.__editingAddonCost=Number(item?.cost||0);
   const recipeRows=rows.length?rows:[{ingredient_id:'',quantity:1}];
   const recipeHtml=`<div class="wide recipe-section"><div class="recipe-head"><div><strong>Inventory usage</strong><div class="muted small">Set how much inventory is used for <b>1 add-on</b>. Stock will be deducted automatically when an order is completed.</div></div><button type="button" class="btn" onclick="addAddonRecipeRow()">+ Component</button></div><div id="addonRecipeRows">${recipeRows.map(r=>`<div class="recipe-row addon-recipe-row"><select class="addon-recipe-component" onchange="updateAddonRecipePreview()"><option value="">Select inventory item</option>${(ingredients||[]).filter(x=>x.item_type==='ingredient'||x.item_type==='packaging').map(x=>`<option value="${x.id}" ${x.id===r.ingredient_id?'selected':''}>${esc(x.name)} · ${esc(x.item_type==='packaging'?'pcs':(x.unit||'unit'))} · ${money(x.cost_per_unit)}/unit</option>`).join('')}</select><div class="recipe-qty-wrap"><input class="addon-recipe-qty" type="number" min="0.0001" step="0.001" value="${Number(r.quantity||1)}" oninput="updateAddonRecipePreview()" placeholder="Qty"><span class="recipe-qty-unit">per add-on</span></div><button type="button" class="recipe-remove" onclick="this.closest('.addon-recipe-row').remove();updateAddonRecipePreview()">×</button></div>`).join('')}</div><div class="recipe-summary"><span>Calculated cost <strong id="addonRecipeCostSummary">${money(item?.cost||0)}</strong></span></div></div>`;
-  openModal(item?"Edit Add-on":"Add Add-on",`<form id="addonForm" class="form-grid"><label>Channel<select id="aChannel"><option value="pistache" ${((item?.sales_channel||activeChannel)==="pistache")?"selected":""}>Pistaché · Nationwide</option><option value="nuonuo" ${((item?.sales_channel||activeChannel)==="nuonuo")?"selected":""}>NuoNuo · Local</option></select></label><label>Name<input id="aName" required value="${esc(item?.name||"")}"></label><label>Price<input id="aPrice" type="number" step="0.01" value="${item?.price??0}"></label><label>Cost<input id="aCost" type="number" step="0.01" value="${item?.cost??0}" readonly></label><label>Active<select id="aActive"><option value="true" ${item?.active!==false?"selected":""}>Active</option><option value="false" ${item?.active===false?"selected":""}>Inactive</option></select></label>${recipeHtml}</form>`,async()=>{
+  openModal(item?"Edit Add-on":"Add Add-on",`<form id="addonForm" class="form-grid"><label>Name<input id="aName" required value="${esc(item?.name||"")}"></label><label>Price<input id="aPrice" type="number" step="0.01" value="${item?.price??0}"></label><label>Cost<input id="aCost" type="number" step="0.01" value="${item?.cost??0}" readonly></label><label>Active<select id="aActive"><option value="true" ${item?.active!==false?"selected":""}>Active</option><option value="false" ${item?.active===false?"selected":""}>Inactive</option></select></label>${recipeHtml}</form>`,async()=>{
     const name=$("#aName").value.trim();
     if(!name)return toast("Add-on name is required.");
     const rows=readAddonRecipeRows();
     const recipeCost=rows.reduce((sum,r)=>sum+r.quantity*ingredientBaseCost(window.__addonIngredients.find(x=>x.id===r.ingredient_id)),0);
     const cost=rows.length?recipeCost:Number(item?.cost||0);
-    const payload={user_id:dataUserId(),name,price:Number($("#aPrice").value||0),cost:Number(cost.toFixed(2)),active:$("#aActive").value==="true",sales_channel:$("#aChannel").value||activeChannel};
+    const payload={user_id:dataUserId(),name,price:Number($("#aPrice").value||0),cost:Number(cost.toFixed(2)),active:$("#aActive").value==="true"};
     let addonId=item?.id;
     const q=item?sb.from("addons").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("addons").insert(payload).select('id').single();
     const {data,error}=await q; if(error)return toast(errText(error));
@@ -3504,33 +3043,9 @@ async function openStaffModal(item=null){
     if(!name || !email || !password) return toast("Please complete all staff fields.");
     if(password.length<6) return toast("Password must be at least 6 characters.");
 
-    // Always fetch the latest Supabase session before calling the server endpoint.
-    // The page can stay open while Supabase silently refreshes the access token,
-    // so the global `session` variable may otherwise contain an older JWT.
-    let ownerSession=null;
-    try{
-      let latest=await sb.auth.getSession();
-      if(latest.error) throw latest.error;
-      ownerSession=latest.data?.session || null;
-
-      // If the current session is missing/expired, explicitly ask Supabase to
-      // refresh it once before giving up.
-      if(!ownerSession?.access_token || !ownerSession?.user?.id){
-        const refreshed=await sb.auth.refreshSession();
-        if(refreshed.error) throw refreshed.error;
-        ownerSession=refreshed.data?.session || null;
-      }
-    }catch(e){
-      console.error("NUONUO staff creation session refresh failed:",e);
-      return toast("Your login session needs to be refreshed. Please sign in again.");
-    }
-
-    const ownerUserId=ownerSession?.user?.id;
+    const ownerSession=session;
+    const ownerUserId=session?.user?.id;
     if(!ownerSession?.access_token || !ownerUserId) return toast("Owner session is missing. Please sign in again.");
-
-    // Keep the app's in-memory session synchronized with the fresh token so
-    // subsequent Owner actions do not continue using the stale JWT.
-    session=ownerSession;
 
     const btn=$("#modalSubmit");
     if(btn){btn.disabled=true;btn.textContent="Creating…";}
@@ -3585,119 +3100,64 @@ async function openInventoryItemModal(options={}){
   const item=options.item||null;
   const defaultType=item?.item_type||'ingredient';
   const ingredientType=defaultType==='ingredient';
-  const unit=item?.unit||(ingredientType?'1000g/unit':defaultType==='packaging'?'pcs':'unit');
+  const unit=item?.unit||(ingredientType?'500g':'pcs');
   const parsed=parseMeasureUnit(unit);
   const packAmount=parsed.valid?Math.max(parsed.amount,0.000001):1;
-  const baseUnit=ingredientType?(parsed.valid?parsed.unit:unit):(parsed.valid?parsed.unit:(defaultType==='packaging'?'pcs':'unit'));
-  const currentBase=item?Number(item.current_stock||0):0;
-  const lowBase=item?Number(item.low_stock_threshold||0):0;
+  const baseUnit=ingredientType?(parsed.valid?parsed.unit:unit):'pcs';
+  const currentBase=item?(ingredientType?Number(item.current_stock||0)*packAmount:Number(item.current_stock||0)):0;
+  const lowBase=item?(ingredientType?Number(item.low_stock_threshold||0)*packAmount:Number(item.low_stock_threshold||0)):0;
   const typeOptions=[['ingredient','Ingredients'],['packaging','Packaging'],['kitchenware','Kitchenware / Utensils'],['electronic','Electronic Equipment'],['equipment','Equipment'],['other','Other']];
-  const ingredientPurchaseUnits=[['box','Box'],['unit','Unit'],['pack','Pack'],['bottle','Bottle']];
-  const physicalPurchaseUnits=[['pcs','Pcs'],['unit','Unit']];
-  let purchaseAmount=1, purchaseUnit=ingredientType?'unit':(defaultType==='packaging'?'pcs':'unit'), containsAmount=packAmount, containsUnit=baseUnit;
+  const unitChoices=[['g','g'],['kg','kg'],['ml','ml'],['pcs','pcs'],['box','box']];
+  const rawUnit=String(unit||'500g').trim().toLowerCase().replace(/\s+/g,'');
+  const simpleMatch=rawUnit.match(/^([0-9]+(?:\.[0-9]+)?)(kg|g|ml|pcs|pc|box|boxes)$/i);
+  let purchaseAmount=1, purchaseUnit='g', containsAmount=packAmount, containsUnit=baseUnit;
   if(parsed.compound){
-    purchaseAmount=1; purchaseUnit=parsed.purchaseUnit||'box'; containsAmount=packAmount; containsUnit=baseUnit;
-  }else if(parsed.valid){
-    purchaseAmount=1;
-    purchaseUnit=ingredientType?(parsed.purchaseUnit&&['box','unit','pack','bottle'].includes(parsed.purchaseUnit)?parsed.purchaseUnit:'unit'):(defaultType==='packaging'?'pcs':(parsed.purchaseUnit&&['pcs','unit'].includes(parsed.purchaseUnit)?parsed.purchaseUnit:'unit'));
-    containsAmount=packAmount; containsUnit=baseUnit;
+    purchaseAmount=1; purchaseUnit='box'; containsAmount=packAmount; containsUnit=baseUnit;
+  }else if(simpleMatch){
+    purchaseAmount=Number(simpleMatch[1]);
+    purchaseUnit=({pc:'pcs',boxes:'box'}[simpleMatch[2].toLowerCase()]||simpleMatch[2].toLowerCase());
+    containsAmount=parsed.amount;
+    containsUnit=baseUnit;
+  }else if(!ingredientType){
+    purchaseAmount=1; purchaseUnit='pcs'; containsAmount=1; containsUnit='pcs';
   }
-  const whole=['pcs','unit','box','pack'].includes(baseUnit);
-  const unitSummary=ingredientType
-    ? (parsed.compound?`${Number(parsed.amount).toLocaleString()} ${parsed.unit}/${parsed.purchaseUnit||'box'}`:`${Number(parsed.amount).toLocaleString()} ${parsed.unit}/${parsed.purchaseUnit||'unit'}`)
-    : `${Number(parsed.amount||1).toLocaleString()} ${parsed.unit||baseUnit}`;
-  const editPurchaseUnit=ingredientType ? (parsed.purchaseUnit&&['box','unit','pack','bottle'].includes(parsed.purchaseUnit)?parsed.purchaseUnit:'unit') : (defaultType==='packaging'?'pcs':'unit');
-  const editContainsAmount=ingredientType ? Number(parsed.amount||1) : 1;
-  const editContainsUnit=ingredientType ? (parsed.unit||baseUnit||'g') : (defaultType==='packaging'?'pcs':baseUnit);
-  const editStockUnit=ingredientType ? editContainsUnit : baseUnit;
-
-  // Edit mode is intentionally an inventory-data editor only. It must NOT contain
-  // purchase quantity / quantity-per-purchase-unit controls. The unit definition is
-  // preserved from the existing item and Current Stock is the only stock value edited here.
+  const whole=['pcs','box'].includes(baseUnit);
   const body=`<form id="inventoryItemForm" class="form-grid">
     <label>Name<input id="invName" required value="${esc(item?.name||'')}"></label>
     <label>Category<select id="invType" onchange="updateInventoryItemFields()">${typeOptions.map(([v,l])=>`<option value="${v}" ${defaultType===v?'selected':''}>${l}</option>`).join('')}</select></label>
-    ${item ? (ingredientType ? `<div class="wide notice"><strong>Purchase unit definition</strong><div style="display:grid;grid-template-columns:1fr 180px;gap:10px;margin-top:10px"><label>Quantity per Purchase Unit<div style="display:flex;gap:8px"><input id="invEditContainsAmount" type="number" min="0.000001" step="0.001" value="${editContainsAmount}" oninput="updateInventoryItemFields()"><select id="invEditContainsUnit" onchange="updateInventoryItemFields()"><option value="g" ${editContainsUnit==='g'?'selected':''}>g</option><option value="kg" ${editContainsUnit==='kg'?'selected':''}>kg</option><option value="ml" ${editContainsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${editContainsUnit==='pcs'?'selected':''}>pcs</option><option value="unit" ${editContainsUnit==='unit'?'selected':''}>unit</option></select></div></label><label>Purchase Unit<select id="invEditPurchaseUnit" onchange="updateInventoryItemFields()"><option value="box" ${editPurchaseUnit==='box'?'selected':''}>Box</option><option value="unit" ${editPurchaseUnit==='unit'?'selected':''}>Unit</option><option value="pack" ${editPurchaseUnit==='pack'?'selected':''}>Pack</option><option value="bottle" ${editPurchaseUnit==='bottle'?'selected':''}>Bottle</option></select></label></div><div class="muted small" style="margin-top:8px">Example: 9 pcs / box means 1 box contains 9 pcs.</div></div>` : '') : `<label id="invUnitWrap">Purchase Quantity<div style="display:flex;gap:8px;align-items:center"><input id="invUnitAmount" type="number" min="0" step="1" value="0" oninput="updateInventoryItemFields()" style="flex:1"><select id="invUnitType" onchange="updateInventoryItemFields()" style="width:120px">${ingredientPurchaseUnits.map(([v,l])=>`<option value="${v}" ${purchaseUnit===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="muted small" style="margin-top:6px">Enter how many purchase units you are adding. Example: 2 Unit.</div></label>
-    <label id="invContainsWrap">Quantity per Purchase Unit<div style="display:flex;gap:8px;align-items:center"><input id="invContainsAmount" type="number" min="0.000001" step="0.001" value="${containsAmount}" oninput="updateInventoryItemFields()" style="flex:1"><select id="invContainsUnit" onchange="updateInventoryItemFields()" style="width:120px"><option value="g" ${containsUnit==='g'?'selected':''}>g</option><option value="kg" ${containsUnit==='kg'?'selected':''}>kg</option><option value="ml" ${containsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${containsUnit==='pcs'?'selected':''}>pcs</option></select></div><div class="muted small" style="margin-top:6px">Example: 1 Unit contains 1000 g.</div></label>`}
+    <label id="invUnitWrap">Purchase Unit<div style="display:flex;gap:8px;align-items:center"><input id="invUnitAmount" type="number" min="0.000001" step="0.001" value="${purchaseAmount}" oninput="updateInventoryItemFields()" style="flex:1"><select id="invUnitType" onchange="updateInventoryItemFields()" style="width:120px">${unitChoices.map(([v,l])=>`<option value="${v}" ${purchaseUnit===v?'selected':''}>${l}</option>`).join('')}</select></div></label>
+    <label id="invContainsWrap" ${purchaseUnit==='box'?'':'hidden'}>Quantity per Purchase Unit<div style="display:flex;gap:8px;align-items:center"><input id="invContainsAmount" type="number" min="0.000001" step="0.001" value="${containsAmount}" oninput="updateInventoryItemFields()" style="flex:1"><select id="invContainsUnit" onchange="updateInventoryItemFields()" style="width:120px"><option value="g" ${containsUnit==='g'?'selected':''}>g</option><option value="kg" ${containsUnit==='g'&&containsAmount>=1000?'selected':''}>kg</option><option value="ml" ${containsUnit==='ml'?'selected':''}>ml</option><option value="pcs" ${containsUnit==='pcs'?'selected':''}>pcs</option></select></div><div class="muted small" style="margin-top:6px">Example: 1 box contains 63 pcs.</div></label>
     <input id="invUnit" type="hidden" value="${esc(unit)}">
     <label>Cost / Purchase Unit<input id="invCost" type="number" min="0" step="0.0001" value="${item?.cost_per_unit??0}"></label>
     <label>Current Stock <span id="invStockUnit">(${esc(baseUnit)})</span><input id="invStock" type="number" min="0" step="${whole?'1':'0.01'}" value="${currentBase.toFixed(whole?0:2)}"></label>
-    ${item?'':`<label id="invAddStockWrap">Add Purchase Quantity <span id="invAddStockUnit">(${esc(baseUnit)})</span><input id="invAddStock" type="number" min="0" step="${whole?'1':'0.01'}" value="0" readonly></label>`}
     <label>Low Stock Threshold <span id="invLowUnit">(${esc(baseUnit)})</span><input id="invLow" type="number" min="0" step="${whole?'1':'0.01'}" value="${lowBase.toFixed(whole?0:2)}"></label>
     <label>Supplier<input id="invSupplier" value="${esc(item?.supplier||'')}"></label>
-    ${item?`<div class="wide muted small">Current Stock is editable directly in ${esc(baseUnit)}. Saving this form does not add or remove a purchase.</div>`:`<div id="invUnitPreview" class="wide notice"></div>`}
+    <div id="invUnitPreview" class="wide notice">${ingredientType?`<strong>${esc(inventoryUnitSummary(item||{unit}) )}</strong> · Inventory is tracked in ${esc(baseUnit)}.`:'Inventory is tracked in pcs.'}</div>
   </form>`;
   openModal(item?'Edit Inventory Item':'Add Inventory Item',body,async()=>{
-    const type=$('#invType').value, name=$('#invName').value.trim();
-    if(!name)return toast('Item name is required.');
-
-    // EDIT: preserve the existing unit definition. Never treat Edit as a purchase.
-    if(item){
-      const editedBase=Math.max(Number($('#invStock').value||0),0);
-      const lowBaseEdited=Math.max(Number($('#invLow').value||0),0);
-      const existingIngredient=item.item_type==='ingredient';
-      let saveUnit=item.unit;
-      let newPackAmount=1;
-      if(existingIngredient){
-        const amount=Math.max(Number($('#invEditContainsAmount')?.value||0),0.000001);
-        const rawUnit=String($('#invEditContainsUnit')?.value||'g');
-        const purchase=String($('#invEditPurchaseUnit')?.value||'unit');
-        let normalizedAmount=amount, normalizedUnit=rawUnit;
-        if(rawUnit==='kg'){ normalizedAmount=amount*1000; normalizedUnit='g'; }
-        if(rawUnit==='ml'){ normalizedAmount=amount; normalizedUnit='ml'; }
-        if(rawUnit==='pcs' || rawUnit==='unit'){ normalizedUnit=rawUnit; }
-        saveUnit=`${normalizedAmount}${normalizedUnit}/${purchase}`;
-        newPackAmount=Math.max(Number(parseMeasureUnit(saveUnit).amount)||normalizedAmount,0.000001);
-      }
-      const storedStock=editedBase;
-      const storedLow=lowBaseEdited;
-      const payload={
-        name,
-        item_type:type,
-        unit:saveUnit,
-        cost_per_unit:Number($('#invCost').value||0),
-        current_stock:Number(storedStock.toFixed(6)),
-        low_stock_threshold:Number(storedLow.toFixed(6)),
-        supplier:$('#invSupplier').value.trim()||''
-      };
-      const {error}=await sb.from('ingredients').update(payload).eq('id',item.id).eq('user_id',dataUserId());
-      if(error)return toast(`Save failed: ${errText(error)}`);
-      closeModal();toast('Inventory item updated.');
-      if(options.returnToPurchase){
-        const {data:ings,error:ie}=await sb.from('ingredients').select('id,name,unit,cost_per_unit,item_type,current_stock').eq('user_id',dataUserId()).order('name');
-        if(ie)return toast(errText(ie));window.__purchaseIngredients=ings||[];
-        await openPurchaseModal(options.purchaseDraft||null);
-        addQuickPurchaseLineWithItem(item.id);
-      }else{await navigate('inventory');}
-      return;
-    }
-
-    // ADD: purchase quantity controls are only for creating a brand-new inventory item.
-    const purchaseQty=Math.max(Number($('#invUnitAmount').value||0),0);
-    let low=Number($('#invLow').value||0);
-    const purchaseUnit=String($('#invUnitType').value||'unit');
-    let saveUnit,purchaseBaseAmount;
+    const type=$('#invType').value, name=$('#invName').value.trim();if(!name)return toast('Item name is required.');
+    let saveUnit='pcs',stock=Number($('#invStock').value||0),low=Number($('#invLow').value||0);
     if(type==='ingredient'){
-      const containsAmount=Math.max(Number($('#invContainsAmount').value||0),0.000001);
-      const containsUnit=String($('#invContainsUnit').value||'g');
-      let baseAmount=containsAmount, baseUnit2=containsUnit;
-      if(containsUnit==='kg')baseAmount*=1000,baseUnit2='g';
-      saveUnit=`${baseAmount}${baseUnit2}/${purchaseUnit}`;
-      purchaseBaseAmount=baseAmount;
-      low=low/Math.max(baseAmount,0.000001);
-    }else{
-      const allowedPhysical=type==='packaging'?['pcs']:['pcs','unit'];
-      const actualUnit=allowedPhysical.includes(purchaseUnit)?purchaseUnit:allowedPhysical[0];
-      saveUnit=actualUnit;
-      purchaseBaseAmount=1;
+      const purchaseAmount=Math.max(Number($('#invUnitAmount').value||0),0.000001);
+      const purchaseUnit=String($('#invUnitType').value||'g');
+      if(purchaseUnit==='box'){
+        const containsAmount=Math.max(Number($('#invContainsAmount').value||0),0.000001);
+        const containsUnit=String($('#invContainsUnit').value||'pcs');
+        let baseAmount=containsAmount, baseUnit=containsUnit;
+        if(containsUnit==='kg') baseAmount*=1000,baseUnit='g';
+        saveUnit=`${baseAmount}${baseUnit}/box`;
+        stock=stock/Math.max(baseAmount,0.000001);
+        low=low/Math.max(baseAmount,0.000001);
+      }else{
+        saveUnit=`${purchaseAmount}${purchaseUnit}`;
+        const p=parseMeasureUnit(saveUnit);const amount=p.valid?Math.max(p.amount,0.000001):1;stock=stock/amount;low=low/amount;
+      }
     }
-    const newBase=purchaseQty*purchaseBaseAmount;
-    const storedStock=newBase;
-    const payload={user_id:dataUserId(),name,item_type:type,unit:saveUnit,cost_per_unit:Number($('#invCost').value||0),current_stock:Number(storedStock.toFixed(6)),low_stock_threshold:Number(low.toFixed(6)),supplier:$('#invSupplier').value.trim()||''};
-    const {data,error}=await sb.from('ingredients').insert(payload).select('id,*').single();
-    if(error)return toast(`Save failed: ${errText(error)}`);
-    const newItem=data;
-    closeModal();toast('Inventory item added.');
+    const payload={user_id:dataUserId(),name,item_type:type,unit:saveUnit,cost_per_unit:Number($('#invCost').value||0),current_stock:stock,low_stock_threshold:low,supplier:$('#invSupplier').value.trim()||''};
+    const q=item?sb.from('ingredients').update(payload).eq('id',item.id).eq('user_id',dataUserId()):sb.from('ingredients').insert(payload).select('id,*').single();
+    const {data,error}=await q;if(error)return toast(errText(error));
+    const newItem=item?{...item,...payload}:data;
+    closeModal();toast(item?'Inventory item updated.':'Inventory item added.');
     if(options.returnToPurchase){
       const {data:ings,error:ie}=await sb.from('ingredients').select('id,name,unit,cost_per_unit,item_type,current_stock').eq('user_id',dataUserId()).order('name');
       if(ie)return toast(errText(ie));window.__purchaseIngredients=ings||[];
@@ -3707,51 +3167,29 @@ async function openInventoryItemModal(options={}){
   },'inventory-item-modal');
   updateInventoryItemFields();
 }
-
 function updateInventoryItemFields(){
   const type=$('#invType')?.value||'ingredient', isIng=type==='ingredient';
-  const amountEl=$('#invUnitAmount'), unitTypeEl=$('#invUnitType'), hiddenUnit=$('#invUnit'), containsAmount=$('#invContainsAmount'), containsUnitEl=$('#invContainsUnit'), containsWrap=$('#invContainsWrap'), stockUnit=$('#invStockUnit'), lowUnit=$('#invLowUnit'), addStockUnit=$('#invAddStockUnit'), stock=$('#invStock'), addStock=$('#invAddStock'), low=$('#invLow'), preview=$('#invUnitPreview');
-  const allowed=isIng?['box','unit','pack']:(type==='packaging'?['pcs']:['pcs','unit']);
-  if(unitTypeEl){
-    [...unitTypeEl.options].forEach(o=>o.hidden=!allowed.includes(o.value));
-    if(!allowed.includes(unitTypeEl.value))unitTypeEl.value=allowed[0];
-  }
-  const isEdit=!amountEl;
-  if(isEdit && isIng){
-    const editUnit=String($('#invEditContainsUnit')?.value||'g');
-    if(stockUnit)stockUnit.textContent=`(${editUnit})`;
-    if(lowUnit)lowUnit.textContent=`(${editUnit})`;
-    if(stock)stock.step=['pcs','unit'].includes(editUnit)?'1':'0.01';
-    if(low)low.step=['pcs','unit'].includes(editUnit)?'1':'0.01';
-    return;
-  }
-  const selectedUnit=String(unitTypeEl?.value||(isIng?'unit':type==='packaging'?'pcs':'unit'));
-  const purchaseQty=Math.max(Number(amountEl?.value||0),0);
+  const unitWrap=$('#invUnitWrap'), amountEl=$('#invUnitAmount'), unitTypeEl=$('#invUnitType'), hiddenUnit=$('#invUnit'), containsWrap=$('#invContainsWrap'), containsAmount=$('#invContainsAmount'), containsUnitEl=$('#invContainsUnit'), stockUnit=$('#invStockUnit'), lowUnit=$('#invLowUnit'), stock=$('#invStock'), low=$('#invLow'), preview=$('#invUnitPreview');
+  if(unitWrap)unitWrap.style.display=isIng?'':'none';
   if(!isIng){
-    if(containsWrap)containsWrap.hidden=true;
-    if(hiddenUnit)hiddenUnit.value=`1${selectedUnit}`;
-    if(stockUnit)stockUnit.textContent=`(${selectedUnit})`;
-    if(lowUnit)lowUnit.textContent=`(${selectedUnit})`;
-    if(addStockUnit)addStockUnit.textContent=`(${selectedUnit})`;
-    if(stock)stock.step='1'; if(low)low.step='1';
-    if(addStock)addStock.value=String(purchaseQty);
-    if(preview)preview.innerHTML=isEdit
-      ? `<strong>1 ${esc(selectedUnit)} = 1 ${esc(selectedUnit)}</strong> · Current stock is editable directly.`
-      : `<strong>Adding: ${purchaseQty} ${esc(selectedUnit)}</strong> · Current stock is shown above and will increase by this amount when saved.`;
-    return;
+    if(stockUnit)stockUnit.textContent='(pcs)'; if(lowUnit)lowUnit.textContent='(pcs)'; if(stock)stock.step='1'; if(low)low.step='1'; if(containsWrap)containsWrap.hidden=true; return;
   }
-  if(containsWrap)containsWrap.hidden=false;
-  const containsRaw=Math.max(Number(containsAmount?.value||0),0.000001);
-  const containsUnit=String(containsUnitEl?.value||'g');
-  let baseAmount=containsRaw, baseUnit=containsUnit;
-  if(containsUnit==='kg')baseAmount*=1000,baseUnit='g';
-  if(hiddenUnit)hiddenUnit.value=`${baseAmount}${baseUnit}/${selectedUnit}`;
-  if(stockUnit)stockUnit.textContent=`(${baseUnit})`; if(lowUnit)lowUnit.textContent=`(${baseUnit})`; if(addStockUnit)addStockUnit.textContent=`(${baseUnit})`;
-  const whole=['pcs','unit','box','pack'].includes(baseUnit); if(stock)stock.step=whole?'1':'0.01'; if(low)low.step=whole?'1':'0.01';
-  if(addStock)addStock.value=(purchaseQty*baseAmount).toFixed(whole?0:2);
-  if(preview)preview.innerHTML=isEdit
-    ? `<strong>1 ${esc(selectedUnit)} = ${Number(baseAmount).toLocaleString()} ${esc(baseUnit)}</strong> · Current stock is editable directly in ${esc(baseUnit)}.`
-    : `<strong>1 ${esc(selectedUnit)} = ${Number(baseAmount).toLocaleString()} ${esc(baseUnit)}</strong> · Adding ${purchaseQty} ${esc(selectedUnit)} = <strong>${Number(purchaseQty*baseAmount).toLocaleString()} ${esc(baseUnit)}</strong>. Current stock will be increased automatically when saved.`;
+  const selectedUnit=String(unitTypeEl?.value||'g');
+  const amount=Math.max(Number(amountEl?.value||0),0.000001);
+  if(containsWrap)containsWrap.hidden=selectedUnit!=='box';
+  let baseAmount=amount, baseUnit=selectedUnit;
+  if(selectedUnit==='box'){
+    baseAmount=Math.max(Number(containsAmount?.value||0),0.000001);
+    baseUnit=String(containsUnitEl?.value||'pcs');
+    if(baseUnit==='kg')baseAmount*=1000,baseUnit='g';
+    if(hiddenUnit)hiddenUnit.value=`${baseAmount}${baseUnit}/box`;
+  }else{
+    if(hiddenUnit)hiddenUnit.value=`${amount}${selectedUnit}`;
+    const parsed=parseMeasureUnit(`${amount}${selectedUnit}`);baseUnit=parsed.valid?parsed.unit:selectedUnit;baseAmount=parsed.amount;
+  }
+  if(stockUnit)stockUnit.textContent=`(${baseUnit})`; if(lowUnit)lowUnit.textContent=`(${baseUnit})`;
+  const whole=baseUnit==='pcs'; if(stock)stock.step=whole?'1':'0.01'; if(low)low.step=whole?'1':'0.01';
+  if(preview)preview.innerHTML=selectedUnit==='box'?`<strong>1 box = ${Number(baseAmount).toLocaleString()} ${esc(baseUnit)}</strong> · Inventory is tracked in ${esc(baseUnit)}.`:`<strong>Purchase: ${Number(amount).toLocaleString()} ${esc(selectedUnit)}</strong> · Inventory is tracked in ${esc(baseUnit)}.`;
 }
 
 async function openIngredientModalById(id){
@@ -3765,8 +3203,8 @@ async function openIngredientModal(item=null){
   const parsed=parseMeasureUnit(defaultUnit);
   const packAmount=parsed.valid?Math.max(parsed.amount,0.000001):1;
   const baseUnit=parsed.valid?parsed.unit:defaultUnit;
-  const currentBase=item?Number(item.current_stock||0):0;
-  const lowBase=item?Number(item.low_stock_threshold||0):0;
+  const currentBase=item?Number(item.current_stock||0)*packAmount:0;
+  const lowBase=item?Number(item.low_stock_threshold||0)*packAmount:0;
   const baseDigits=baseUnit==='pcs'||baseUnit==='個'?0:2;
   openModal(item?'Edit Ingredient':'Add Ingredient',`<form id="ingredientForm" class="form-grid">
     <label>Name<input id="iName" required value="${esc(item?.name||"")}"></label>
@@ -3780,7 +3218,7 @@ async function openIngredientModal(item=null){
     const unit=$("#iUnit").value.trim()||'g';
     const parsedSave=parseMeasureUnit(unit);
     const savePackAmount=parsedSave.valid?Math.max(parsedSave.amount,0.000001):1;
-    const payload={user_id:dataUserId(),name:$("#iName").value.trim(),item_type:'ingredient',unit,cost_per_unit:Number($("#iCost").value||0),current_stock:Number($("#iStock").value||0),low_stock_threshold:Number($("#iLow").value||0),supplier:$("#iSupplier").value};
+    const payload={user_id:dataUserId(),name:$("#iName").value.trim(),item_type:'ingredient',unit,cost_per_unit:Number($("#iCost").value||0),current_stock:Number($("#iStock").value||0)/savePackAmount,low_stock_threshold:Number($("#iLow").value||0)/savePackAmount,supplier:$("#iSupplier").value};
     const q=item?sb.from("ingredients").update(payload).eq("id",item.id).eq("user_id",dataUserId()):sb.from("ingredients").insert(payload);
     const {error}=await q;if(error)return toast(errText(error));closeModal();toast("Ingredient saved.");await render.ingredients();
   });
@@ -3862,7 +3300,7 @@ function setEnglishDateValue(value){if(!activeEnglishDateInput)return;const norm
 function openEnglishCalendar(input){activeEnglishDateInput=input;englishCalendarView=parseDateString(input.value);englishCalendarView=new Date(englishCalendarView.getFullYear(),englishCalendarView.getMonth(),1);const cal=ensureEnglishCalendar();cal.classList.remove("hidden");renderEnglishCalendar();positionEnglishCalendar();}
 function closeEnglishCalendar(){const cal=document.getElementById("englishDateCalendar");if(cal)cal.classList.add("hidden");activeEnglishDateInput=null;}
 function initEnglishDateField(id){const input=document.getElementById(id);if(!input||input.dataset.englishDateReady)return;input.dataset.englishDateReady="1";input.setAttribute("lang","en");input.setAttribute("dir","ltr");input.addEventListener("blur",()=>{const v=validDateString(input.value);if(v)input.value=v;else if(input.value.trim())input.value=localDate();});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();input.blur();}});const btn=input.closest(".english-date-field")?.querySelector(".date-picker-btn");if(btn&&!btn.dataset.englishCalendarReady){btn.dataset.englishCalendarReady="1";btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openEnglishCalendar(input);});}}
-function initAllEnglishDateFields(){["invoiceDate","wDate","eoDate","eDate","oDate","eoScheduledDate","oScheduledDate","eoPaymentDate"].forEach(initEnglishDateField);}
+function initAllEnglishDateFields(){["invoiceDate","wDate","eoDate","eDate","oDate","eoScheduledDate","oScheduledDate"].forEach(initEnglishDateField);}
 
 async function openExpenseModal(){
   const categoryOptions=EXPENSE_CATEGORIES.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("");
@@ -3957,15 +3395,11 @@ function renderOrderMenu(){
   const term=($("#orderSearch")?.value||"").toLowerCase();
   const category=$("#orderCategory")?.value||"";
   const rows=(window.__orderProducts||[]).filter(p=>(p.name||"").toLowerCase().includes(term)&&(!category||p.category_id===category));
-  const categoryMap=window.__orderCategoryMap||{};
-  root.innerHTML=rows.map(p=>{
-    const categoryName=categoryMap[p.category_id]||"Uncategorized";
-    return `<div class="order-product-card">
+  root.innerHTML=rows.map(p=>`<div class="order-product-card">
       ${p.image_url?`<img src="${esc(p.image_url)}" alt="" class="order-product-image" loading="lazy" decoding="async">`:`<div class="order-product-image order-product-placeholder"></div>`}
-      <div class="order-product-info"><div class="order-product-copy"><div class="order-product-category">${esc(categoryName)}</div><h4>${esc(p.name)}</h4><div class="muted small">${money(p.selling_price)}</div></div><div class="order-product-actions"><button type="button" class="order-add-btn" onclick="addOrderProduct('${p.id}')">+1</button><button type="button" class="order-addon-btn" onclick="toggleOrderAddonPanel('${p.id}')">Add-ons</button></div></div>
+      <div class="order-product-info"><div class="order-product-copy"><h4>${esc(p.name)}</h4><div class="muted small">${money(p.selling_price)}</div></div><div class="order-product-actions"><button type="button" class="order-add-btn" onclick="addOrderProduct('${p.id}')">+1</button><button type="button" class="order-addon-btn" onclick="toggleOrderAddonPanel('${p.id}')">Add-ons</button></div></div>
       <div id="addonPanel-${p.id}" class="addon-picker-inline hidden"></div>
-    </div>`;
-  }).join("") || `<div class="order-empty">No products found.</div>`;
+    </div>`).join("") || `<div class="order-empty">No products found.</div>`;
 }
 function renderOrderCart(){
   const root=$("#orderCart"); if(!root)return;
@@ -3990,59 +3424,16 @@ function toggleEditOrderTypeFields(){
   if(wrap)wrap.classList.toggle("hidden",type!=="pre_order");
 }
 
-function toggleQuickCustomerForm(force){
-  const form=document.getElementById("quickCustomerForm");
-  if(!form)return;
-  const show=typeof force==="boolean"?force:form.classList.contains("hidden");
-  form.classList.toggle("hidden",!show);
-  if(show){
-    setTimeout(()=>document.getElementById("qcName")?.focus(),0);
-    initEnglishDateField("qcBirthday");
-  }
-}
-
-async function saveQuickCustomer(){
-  const name=String(document.getElementById("qcName")?.value||"").trim();
-  if(!name)return toast("Customer name is required.");
-  const birthdayRaw=String(document.getElementById("qcBirthday")?.value||"").trim();
-  const birthday=birthdayRaw?validDateString(birthdayRaw):null;
-  if(birthdayRaw&&!birthday)return toast("Please enter a valid birthday in YYYY-MM-DD format.");
-  const payload={
-    user_id:dataUserId(),
-    name,
-    phone:String(document.getElementById("qcPhone")?.value||"").trim(),
-    email:String(document.getElementById("qcEmail")?.value||"").trim(),
-    address:String(document.getElementById("qcAddress")?.value||"").trim(),
-    notes:null,
-    birthday
-  };
-  const {data,error}=await sb.from("customers").insert(payload).select("id,name").single();
-  if(error)return toast(errText(error));
-  const select=document.getElementById("oCustomer");
-  if(select&&data){
-    const option=document.createElement("option");
-    option.value=data.id;
-    option.textContent=data.name;
-    select.appendChild(option);
-    select.value=data.id;
-  }
-  ["qcName","qcPhone","qcEmail","qcAddress","qcBirthday"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-  toggleQuickCustomerForm(false);
-  toast(`Customer ${data?.name||name} added and selected.`);
-}
-
 async function openOrderModal(){
   const [{data:customers,error:ce},{data:products,error:pe},{data:categories,error:cate},{data:addons,error:ae},{data:links,error:le}]=await Promise.all([
     sb.from("customers").select("id,name").eq("user_id",dataUserId()).order("name"),
-    sb.from("products").select("id,name,selling_price,calculated_cost,image_url,category_id,sales_channel").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).eq("active",true).order("name"),
-    sb.from("categories").select("id,name").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).order("sort_order").order("name"),
-    sb.from("addons").select("id,name,price,cost,active,sales_channel").eq("user_id",dataUserId()).eq("sales_channel",activeChannel).eq("active",true).order("name"),
+    sb.from("products").select("id,name,selling_price,calculated_cost,image_url,category_id").eq("user_id",dataUserId()).eq("active",true).order("name"),
+    sb.from("categories").select("id,name").eq("user_id",dataUserId()).order("sort_order").order("name"),
+    sb.from("addons").select("id,name,price,cost,active").eq("user_id",dataUserId()).eq("active",true).order("name"),
     sb.from("product_addons").select("product_id,addon_id").eq("user_id",dataUserId())
   ]);
   for(const e of [ce,pe,cate,ae,le]) if(e) throw e;
   window.__orderProducts=products||[];
-  window.__orderCategories=categories||[];
-  window.__orderCategoryMap=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
   window.__orderAddons=addons||[];
   window.__orderAddonLinks=links||[];
   orderCart=[];
@@ -4066,20 +3457,7 @@ async function openOrderModal(){
       <div class="order-cart-head"><div><h4>Your order</h4><span id="orderCount" class="muted small">0 items</span></div></div>
       <div id="orderCart" class="order-cart"></div>
       <div class="order-checkout">
-        <div class="order-customer-field">
-          <div class="order-customer-select-row"><label>Customer<select id="oCustomer"><option value="">Walk-in</option>${(customers||[]).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></label><button type="button" class="btn order-new-customer-btn" onclick="toggleQuickCustomerForm()">+ New Customer</button></div>
-          <div id="quickCustomerForm" class="quick-customer-form hidden">
-            <div class="quick-customer-form-head"><strong>New Customer</strong><button type="button" class="quick-customer-close" onclick="toggleQuickCustomerForm(false)" aria-label="Close">×</button></div>
-            <div class="quick-customer-grid">
-              <label>Name<input id="qcName" required placeholder="Customer name"></label>
-              <label>Phone<input id="qcPhone" placeholder="Phone number"></label>
-              <label>Email<input id="qcEmail" type="email" placeholder="Email"></label>
-              <label>Birthday<div class="english-date-field"><input id="qcBirthday" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="YYYY-MM-DD"><button type="button" class="date-picker-btn" data-date-target="qcBirthday" aria-label="Choose birthday" title="Choose birthday">▣</button></div></label>
-              <label class="wide">Address<input id="qcAddress" placeholder="Address"></label>
-            </div>
-            <button type="button" class="btn btn-dark quick-customer-save" onclick="saveQuickCustomer()">Save Customer</button>
-          </div>
-        </div>
+        <label>Customer<select id="oCustomer"><option value="">Walk-in</option>${(customers||[]).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></label>
         <label>Payment status<select id="oPaymentStatus"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="partial">Partial</option></select></label>
         <label>Payment method<select id="oPayment"><option value="">Not set</option><option>Cash</option><option>Bank transfer</option><option>Card</option></select></label>
         <div class="order-inline-fields"><label>Discount<input id="oDiscount" type="number" step="0.01" value="0"></label><label>Delivery<input id="oDelivery" type="number" step="0.01" value="0"></label></div>
@@ -4094,10 +3472,10 @@ async function openOrderModal(){
     const addonNote=orderCart.flatMap(i=>i.addons.map(a=>`${i.name}: ${a.name} (+${money(a.price)}) x${i.qty}`)).join("; ");
     const notes=[userNote,addonNote].filter(Boolean).join(" | ");
     const orderType=orderTypeOf({order_type:String($("#oOrderType")?.value||"walk_in")});
-    const scheduledDate=String($("#oScheduledDate")?.value||"").trim();
+    const scheduledDate=String($("#oScheduledDate")?.value||localDate()).trim();
     if(orderType==="pre_order" && !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) return toast("Please enter the pre-order date as YYYY-MM-DD.");
     const orderDate=orderType==="walk_in"?localDate():scheduledDate;
-    const {data:order,error}=await sb.from("orders").insert({user_id:dataUserId(),customer_id:$("#oCustomer").value||null,order_number:`ORD-${Date.now().toString().slice(-6)}`,sales_channel:activeChannel,order_type:orderType,scheduled_date:orderType==="pre_order"?scheduledDate:null,order_date:orderDate,status:String($("#oStatus").value||"pending")==="completed"?"pending":$("#oStatus").value,subtotal,discount,delivery_fee:delivery,total,payment_status:$("#oPaymentStatus").value||"unpaid",payment_method:$("#oPayment").value||null,notes:notes||null}).select().single();
+    const {data:order,error}=await sb.from("orders").insert({user_id:dataUserId(),customer_id:$("#oCustomer").value||null,order_number:`ORD-${Date.now().toString().slice(-6)}`,order_type:orderType,scheduled_date:orderType==="pre_order"?scheduledDate:null,order_date:orderDate,status:$("#oStatus").value,subtotal,discount,delivery_fee:delivery,total,payment_status:$("#oPaymentStatus").value||"unpaid",payment_method:$("#oPayment").value||null,notes:notes||null}).select().single();
     if(error)return toast(errText(error));
     for(const item of orderCart){
       const addonUnit=orderAddonTotal(item), lineTotal=item.qty*(item.price+addonUnit);
@@ -4109,24 +3487,23 @@ async function openOrderModal(){
         if(ae){await sb.from("orders").delete().eq("id",order.id);return toast(errText(ae));}
       }
     }
-    let completedNow=false;
-    if(String($("#oStatus").value||"")==="completed") {
-      try{ await completeOrderWithCorrectInventory(order.id); completedNow=true; }
-      catch(e){
-        console.error("Auto-complete failed:",e);
-        return toast("Order was created, but completion failed: "+errText(e));
-      }
-    }
-    // Sales are recognized when payment is received, regardless of order status.
+    // Payment is the trigger for Sales. Completion still only controls inventory deduction.
     if(String(order.payment_status||"").toLowerCase()==="paid") {
       try{
-        await createSaleForPaidOrder(order.id);
+        await createSaleForCompletedOrder(order.id);
       }catch(e){
         console.error("Auto sales creation failed:",e);
         return toast("Order was created, but Sales could not be created: "+errText(e));
       }
     }
-    closeModal();toast(completedNow && String(order.payment_status||"").toLowerCase()==="paid"?"Order created and Sales updated.":"Order created.");await navigate(currentPage);
+    if(String(order.status)==="completed") {
+      const {error:completeError}=await sb.rpc("complete_order_and_deduct_inventory",{p_order_id:order.id,p_user_id:dataUserId()});
+      if(completeError){
+        console.error("Auto-complete failed:",completeError);
+        return toast("Order was created, but completion failed: "+errText(completeError));
+      }
+    }
+    closeModal();toast(String(order.payment_status||"").toLowerCase()==="paid"?"Order created and Sales updated.":"Order created.");await navigate(currentPage);
   },"order-modal");
   renderOrderMenu();
   renderOrderCart();
@@ -4135,7 +3512,7 @@ async function openOrderModal(){
 }
 
 window.openInvoiceModal=openInvoiceModal;window.viewInvoice=viewInvoice;window.printInvoice=printInvoice;window.downloadInvoicePDF=downloadInvoicePDF;window.downloadInvoicePNG=downloadInvoicePNG;window.deleteInvoice=deleteInvoice;window.toggleOrderAddonPanel=toggleOrderAddonPanel;window.setOrderAddonDraft=setOrderAddonDraft;window.addDraftedOrderProduct=addDraftedOrderProduct;window.addOrderProduct=addOrderProduct;window.changeOrderQty=changeOrderQty;window.menuDragStart=menuDragStart;window.menuDragEnd=menuDragEnd;window.menuDragOver=menuDragOver;window.menuDrop=menuDrop;window.moveProductByOffset=moveProductByOffset;window.openProductModal=openProductModal;window.openCategoryModal=openCategoryModal;window.openAddonModal=openAddonModal;window.addAddonRecipeRow=addAddonRecipeRow;window.updateAddonRecipePreview=updateAddonRecipePreview;window.openStaffModal=openStaffModal;window.deleteStaff=deleteStaff;window.openInventoryItemModal=openInventoryItemModal;window.openInventoryItemModalById=openInventoryItemModalById;window.deleteInventoryItem=deleteInventoryItem;window.setInventoryFilter=setInventoryFilter;window.openIngredientModal=openIngredientModal;window.openIngredientModalById=openIngredientModalById;window.openPackagingModal=openPackagingModal;window.openPackagingModalById=openPackagingModalById;window.openSubrecipeModal=openSubrecipeModal;window.deleteSubrecipe=deleteSubrecipe;window.addSubrecipeRow=addSubrecipeRow;window.changeSubrecipeType=changeSubrecipeType;window.updateSubrecipePreview=updateSubrecipePreview;window.openCustomerModal=openCustomerModal;window.openExpenseModal=openExpenseModal;window.openOrderModal=openOrderModal;window.closeModal=closeModal;window.deleteRow=deleteRow;window.deleteOrder=deleteOrder;window.completeOrder=completeOrder;
-window.openWastageModal=openWastageModal;window.updateWastagePreview=updateWastagePreview;window.deleteWastage=deleteWastage;window.toggleQuickCustomerForm=toggleQuickCustomerForm;window.saveQuickCustomer=saveQuickCustomer;
+window.openWastageModal=openWastageModal;window.updateWastagePreview=updateWastagePreview;window.deleteWastage=deleteWastage;
 window.openOrderDateEditor=openOrderDateEditor;window.openOrderEditModal=openOrderEditModal;window.addEditOrderItem=addEditOrderItem;window.renderEditOrderNewItems=renderEditOrderNewItems;window.updateEditOrderNewQty=updateEditOrderNewQty;window.removeEditOrderNewItem=removeEditOrderNewItem;window.render=render;window.openMenuCategory=openMenuCategory;window.renderMenuCategories=renderMenuCategories;window.printKitchenOrder=printKitchenOrder;window.printAllPendingKitchen=printAllPendingKitchen;
 
 window.addEventListener("error",e=>{ console.error("NUONUO runtime error:",e.error||e.message); });
@@ -4159,7 +3536,7 @@ const englishDateObserver=new MutationObserver(()=>{
       input.setAttribute("autocomplete","off");
       input.setAttribute("placeholder","YYYY-MM-DD");
     }
-  },"order-modal");
+  });
 });
 englishDateObserver.observe(document.body,{childList:true,subtree:true});
 init();
