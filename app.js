@@ -174,9 +174,10 @@ function renderRewards(){
   const vouchers=Array.isArray(currentRewards.vouchers)?currentRewards.vouchers:[];
   const available=vouchers.filter(v=>!v.used_at && new Date(v.expires_at)>new Date());
   box.innerHTML=`
-    <div class="rewards-head"><b>My rewards</b><span>${available.length} voucher${available.length===1?'':'s'}</span></div>
-    <div class="reward-stats"><span><b>${Number(currentRewards.order_count||0)}</b> orders</span><span><b>${money(currentRewards.total_spent||0)}</b> spent</span></div>
-    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM 10 off · min. spend RM 50 · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
+    <div class="rewards-head"><b>My rewards</b><span>${available.length} available voucher${available.length===1?'':'s'}</span></div>
+    <div class="reward-stats"><span><b>${Number(currentRewards.order_count||0)}</b><small>Total orders</small></span><span><b>${money(currentRewards.total_spent||0)}</b><small>Total spent</small></span></div>
+    <p class="reward-rule">🎟️ Every RM 100 qualifying order earns RM 10 off for your next purchase. Min. spend RM 50 · valid for 3 months.</p>
+    ${available.length?available.map(v=>`<div class="voucher-row"><div><b>${esc(v.code)}</b><small>RM ${Number(v.amount||10).toFixed(2)} off · min. spend RM ${Number(v.minimum_spend||50).toFixed(2)} · expires ${new Date(v.expires_at).toLocaleDateString()}</small></div><button type="button" onclick="copyVoucher('${esc(v.code)}')">Copy</button></div>`).join(''):'<p class="reward-empty">No active vouchers yet.</p>'}
     <button type="button" class="secondary-action" onclick="openOrderHistory()">View order history</button>
   `;
 }
@@ -192,17 +193,20 @@ window.openOrderHistory=async()=>{
     const {data,error}=await sb.rpc('get_nuonuo_customer_order_history');
     if(error)throw error;
     const orders=Array.isArray(data?.orders)?data.orders:[];
+    const count=Number(data?.order_count||orders.length||0);
+    const spent=Number(data?.total_spent||0);
+    const summary=`<div class="history-summary"><b>${count}</b><span>Total orders</span><b>${money(spent)}</b><span>Total spent</span></div>`;
     if(!orders.length && data?.diagnostics){
       const d=data.diagnostics;
-      box.innerHTML=`<p class="reward-empty">No orders found yet.</p><small class="history-debug">Profile: ${d.profile_found?'OK':'missing'} · Phone: ${d.phone_found?'OK':'missing'} · Matching customers: ${Number(d.matching_customers||0)} · Matching orders: ${Number(d.matching_orders||0)}</small>`;
+      box.innerHTML=summary+`<p class="reward-empty">No orders found yet.</p><small class="history-debug">Profile: ${d.profile_found?'OK':'missing'} · Phone: ${d.phone_found?'OK':'missing'} · Matching customers: ${Number(d.matching_customers||0)} · Matching orders: ${Number(d.matching_orders||0)}</small>`;
       return;
     }
-    box.innerHTML=orders.length?orders.map(o=>`
+    box.innerHTML=summary+(orders.length?orders.map(o=>`
       <div class="history-order">
         <div class="history-top"><b>${esc(o.order_number||'Order')}</b><span>${new Date(o.created_at).toLocaleString()}</span></div>
         <div class="history-items">${(Array.isArray(o.items)?o.items:[]).map(i=>`<div><span>${esc(i.name||'Item')} × ${i.quantity}</span><b>${money(i.line_total)}</b></div>`).join('')}</div>
         <div class="history-total"><span>${esc(o.status||'Pending')}</span><b>${money(o.total)}</b></div>
-      </div>`).join(''):'<p class="reward-empty">No orders found yet.</p>';
+      </div>`).join(''):'<p class="reward-empty">No orders found yet.</p>');
   }catch(e){
     console.warn('Order history unavailable until the optional rewards SQL is run:',e);
     box.innerHTML='<p class="reward-empty">Order history is not available yet. Please run the NuoNuo rewards SQL once.</p>';
