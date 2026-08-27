@@ -768,3 +768,28 @@ body{background:var(--bg)}
   .site-header{background:linear-gradient(110deg,#49434B 0%,#57515A 48%,#6A5A60 100%)}
   .hero-wrap{background:linear-gradient(110deg,rgba(186,141,185,.035) 0%,rgba(255,240,225,.025) 100%)}
 }
+
+/* V13: refine Hero typography and keep Dark Mode dark all the way through the footer. */
+.hero-copy h1{
+  font-size:clamp(46px,5.15vw,72px);
+  line-height:.94;
+  letter-spacing:-.04em;
+}
+
+@media(max-width:650px){
+  .hero-copy h1{font-size:48px;line-height:.95}
+}
+@media(max-width:430px){
+  .hero-copy h1{font-size:44px}
+}
+
+@media(prefers-color-scheme:dark){
+  .site-footer{
+    background:linear-gradient(135deg,#29272D 0%,#302D34 52%,#3B353E 100%);
+    border-top-color:#514C56;
+    color:#D9D0D8;
+  }
+  .footer-socials span{color:#BDB2BC}
+  .footer-socials a{color:#F0DDEB}
+  .footer-bottom{color:#BDB2BC;border-top-color:rgba(255,240,225,.14)}
+}
