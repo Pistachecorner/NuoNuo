@@ -113,6 +113,7 @@ async function openMe(){
   $('#meMessage').textContent='';
   $('#meModal').classList.remove('hidden');
   await loadRewards();
+  await openOrderHistory();
 }
 async function refreshAuth(){
   const {data:{session}}=await sb.auth.getSession();
@@ -191,6 +192,11 @@ window.openOrderHistory=async()=>{
     const {data,error}=await sb.rpc('get_nuonuo_customer_order_history');
     if(error)throw error;
     const orders=Array.isArray(data?.orders)?data.orders:[];
+    if(!orders.length && data?.diagnostics){
+      const d=data.diagnostics;
+      box.innerHTML=`<p class="reward-empty">No orders found yet.</p><small class="history-debug">Profile: ${d.profile_found?'OK':'missing'} · Phone: ${d.phone_found?'OK':'missing'} · Matching customers: ${Number(d.matching_customers||0)} · Matching orders: ${Number(d.matching_orders||0)}</small>`;
+      return;
+    }
     box.innerHTML=orders.length?orders.map(o=>`
       <div class="history-order">
         <div class="history-top"><b>${esc(o.order_number||'Order')}</b><span>${new Date(o.created_at).toLocaleString()}</span></div>
