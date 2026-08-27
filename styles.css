@@ -232,3 +232,42 @@ body.cart-open{overflow:hidden}
 /* Customer profile actions */
 .logout-btn{width:100%;margin-top:8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:10px 15px}
 .logout-btn:hover{background:var(--ink);color:var(--bg)}
+
+/* V6 customer rewards, order history and password security */
+.account-link{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-section{margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}
+.account-section-head{display:flex;align-items:end;justify-content:space-between;gap:12px}
+.account-section-head small{display:block;font-size:9px;letter-spacing:.18em;color:var(--muted)}
+.account-section-head h3{margin:5px 0 0;font:22px Georgia,serif;color:var(--ink)}
+.account-section-copy{font-size:12px;line-height:1.6;color:var(--muted);margin:8px 0 14px}
+.reward-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.reward-stats>div{border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center;background:var(--card)}
+.reward-stats b{display:block;font-size:17px;color:var(--ink)}
+.reward-stats span{display:block;margin-top:4px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.voucher-list{display:flex;flex-direction:column;gap:8px}
+.voucher-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:rgba(210,190,130,.08)}
+.voucher-card b{display:block;font-size:13px}
+.voucher-card small{display:block;margin-top:3px;font-size:9px;color:var(--muted);letter-spacing:.08em}
+.voucher-card>span{font-size:10px;color:var(--muted);white-space:nowrap}
+.muted{font-size:12px;color:var(--muted);line-height:1.6}
+.order-history{display:flex;flex-direction:column;gap:10px}
+.history-card{border:1px solid var(--line);border-radius:11px;padding:13px;background:var(--card)}
+.history-head{display:flex;justify-content:space-between;gap:12px;align-items:start}
+.history-head b{display:block;font-size:13px}
+.history-head small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.history-head strong{font-size:13px;white-space:nowrap}
+.history-items{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:5px}
+.history-items>div{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--muted)}
+.history-items>div span:last-child{white-space:nowrap}
+.history-status{display:inline-block;margin-top:10px;padding:4px 7px;border:1px solid var(--line);border-radius:99px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.voucher-checkout{margin:14px 0;padding:13px;border:1px solid var(--line);border-radius:10px;background:rgba(210,190,130,.08)}
+.voucher-checkout label{display:block;font-size:12px;color:var(--muted)}
+.voucher-checkout select{display:block;width:100%;margin-top:6px;border:1px solid var(--line);padding:11px;border-radius:8px;background:var(--card);color:var(--ink);outline:none}
+.voucher-hint{font-size:10px;color:var(--muted);margin:7px 0 0}
+@media(max-width:650px){
+  .account-link{max-width:155px}
+  .reward-stats{gap:6px}
+  .reward-stats>div{padding:10px 6px}
+  .reward-stats b{font-size:14px}
+  .reward-stats span{font-size:8px}
+}
