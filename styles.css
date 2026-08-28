@@ -1400,3 +1400,89 @@ body{color-scheme:light;}
   .popular-image{background:#000!important;}
   .hero-visual:after{display:none!important;}
 }
+
+/* V25 FINAL VISUAL OVERRIDE
+   Dark: pure black / white, muted dusty-lavender accent only.
+   Light: pure white / black, muted gray-blue accent only.
+   No gradient page surfaces and no purple-tinted backgrounds.
+*/
+:root{
+  --bg:#FFFFFF;
+  --ink:#111111;
+  --muted:#6E777C;
+  --line:#E6E6E6;
+  --card:#FFFFFF;
+  --accent:#657984;
+  --accent-soft:#E9DED3;
+  --dark-accent:#8F7D92;
+  --brown-accent:#6B5145;
+}
+html,body{background:#FFFFFF!important;background-image:none!important;color:#111111!important;}
+body{color-scheme:light;}
+.site-header,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.mobile-nav{background:#FFFFFF!important;background-image:none!important;color:#111111!important;}
+.site-header{border-color:#E6E6E6!important;box-shadow:none!important;backdrop-filter:none!important;}
+.icon-btn,.account-link,.header-title,.mobile-nav button{color:#111111!important;}
+.mobile-nav{border-color:#E6E6E6!important;box-shadow:0 12px 28px rgba(0,0,0,.08)!important;}
+.cart-btn{background:#FFFFFF!important;color:#111111!important;border:1px solid #E6E6E6!important;}
+.cart-btn i{background:#657984!important;color:#FFFFFF!important;}
+.hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#657984!important;}
+.hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3{color:#111111!important;}
+.hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint{color:#687177!important;}
+.hero-btn,.add,.dark{background:#111111!important;color:#FFFFFF!important;border:1px solid #111111!important;box-shadow:none!important;}
+.hero-btn:hover,.add:hover,.dark:hover{background:#2B2B2B!important;border-color:#2B2B2B!important;}
+.hero-visual{border-color:#E6E6E6!important;box-shadow:none!important;}
+.hero-placeholder,.no-image{background:#F5F5F5!important;color:#657984!important;}
+.text-btn,.trending-link{color:#657984!important;}
+.trending-links{border-color:#E6E6E6!important;}
+.category-card{border-color:#E6E6E6!important;}
+.tab{background:#FFFFFF!important;color:#657984!important;border-color:#DFE4E6!important;}
+.tab.active{background:#657984!important;color:#FFFFFF!important;border-color:#657984!important;}
+.search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#FFFFFF!important;color:#111111!important;border-color:#DFE4E6!important;}
+.card{border-color:#E6E6E6!important;box-shadow:none!important;}
+.site-footer{border-color:#E6E6E6!important;}
+.footer-socials a{color:#111111!important;}.footer-socials span,.footer-bottom{color:#657984!important;}
+.footer-mark{background:#E9DED3!important;color:#111111!important;}
+.panel,.modal,.account-modal,.success{color:#111111!important;}
+.close-btn{color:#111111!important;}
+.line,.summary{border-color:#E6E6E6!important;}
+.qty button{background:#FFFFFF!important;color:#111111!important;border-color:#DFE4E6!important;}
+.toast{background:#657984!important;color:#FFFFFF!important;}
+.popular-image{background:#F5F5F5!important;}
+
+@media (prefers-color-scheme:dark){
+  :root{--bg:#000000;--ink:#FFFFFF;--muted:#C8C8C8;--line:#242424;--card:#000000;--accent:#8F7D92;--accent-soft:#2A2327;}
+  html,body{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
+  body{color-scheme:dark;}
+  .site-header,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.mobile-nav{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
+  .site-header{border-color:#242424!important;box-shadow:none!important;}
+  .icon-btn,.account-link,.header-title,.mobile-nav button{color:#FFFFFF!important;}
+  .mobile-nav{border-color:#242424!important;box-shadow:0 12px 28px rgba(0,0,0,.75)!important;}
+  .cart-btn{background:#000000!important;color:#FFFFFF!important;border-color:#242424!important;}
+  .cart-btn i{background:#8F7D92!important;color:#FFFFFF!important;}
+  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#8F7D92!important;}
+  .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3{color:#FFFFFF!important;}
+  .hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint{color:#C8C8C8!important;}
+  .hero-btn,.add,.dark{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;}
+  .hero-btn:hover,.add:hover,.dark:hover{background:#EAEAEA!important;border-color:#EAEAEA!important;}
+  .hero-visual{border-color:#242424!important;box-shadow:none!important;}
+  .hero-placeholder{background:#000000!important;color:#8F7D92!important;}
+  .no-image{background:#171717!important;color:#FFFFFF!important;}
+  .text-btn,.trending-link{color:#8F7D92!important;}
+  .trending-links{border-color:#242424!important;}
+  .category-card{border-color:#242424!important;}
+  .tab{background:#000000!important;color:#C8C8C8!important;border-color:#333333!important;}
+  .tab.active{background:#8F7D92!important;color:#FFFFFF!important;border-color:#8F7D92!important;}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .search-wrap input::placeholder{color:#777777!important;}
+  .card{border-color:#242424!important;box-shadow:none!important;}
+  .site-footer{border-color:#242424!important;}
+  .footer-socials a{color:#FFFFFF!important;}.footer-socials span,.footer-bottom{color:#A8A8A8!important;}
+  .footer-mark{background:#6B5145!important;color:#FFFFFF!important;}
+  .panel,.modal,.account-modal,.success{color:#FFFFFF!important;}
+  .close-btn{color:#FFFFFF!important;}
+  .line,.summary{border-color:#242424!important;}
+  .qty button{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .toast{background:#8F7D92!important;color:#FFFFFF!important;}
+  .popular-image{background:#000000!important;}
+  .hero-visual:after{display:none!important;}
+}

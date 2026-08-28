@@ -81,14 +81,13 @@ function categoryProducts(catId){return products.filter(p=>sameId(p.category_id,
 
 function menu(cat='',query=''){
   let q=query.trim().toLowerCase();
-  if(!cat){
-    $('#grid').innerHTML='<div class="menu-empty">Select a category to view the menu.</div>';return;
-  }
-  let list=products.filter(p=>sameId(p.category_id,cat)&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
+  // No category means Shop all. Category/trending links pass a category id.
+  // This keeps navigation visibly responsive instead of landing on an empty menu.
+  let list=products.filter(p=>(!cat||sameId(p.category_id,cat))&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
     const imgs=productImageCandidates(p);
     return `<article class="card"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" type="button" data-add-product="${esc(p.id)}">Add</button></div></div></article>`
-  }).join('')||'<p>No products available in this category.</p>';
+  }).join('')||'<p>No products available.</p>';
   $('#grid').querySelectorAll('[data-add-product]').forEach(btn=>btn.onclick=()=>window.add(btn.dataset.addProduct));
 }
 
@@ -225,10 +224,16 @@ async function load(){
   }
 }
 
-window.filterByCategory=(id)=>{const select=$('#categorySelect');if(select){select.value=id;menu(id,$('#searchInput')?.value||'')}else menu(id,$('#searchInput')?.value||'')};
+window.filterByCategory=(id)=>{
+  const categoryId=String(id??'');
+  const select=$('#categorySelect');
+  if(select)select.value=categoryId;
+  menu(categoryId,$('#searchInput')?.value||'');
+  scrollToId('menu');
+};
 window.filterCat=(b,id)=>window.filterByCategory(id);
 function currentCategory(){return $('#categorySelect')?.value||''}
-$('#shopBtn').onclick=()=>scrollToId('menu');$('#menuToggle').onclick=()=>$('#mobileNav').classList.toggle('open');$('#cart').onclick=()=>{$('#drawer').classList.remove('hidden');$('#drawer').setAttribute('aria-hidden','false');document.body.classList.add('cart-open');render()};$('#close').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};$('#drawerBackdrop').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};
+$('#shopBtn').onclick=()=>{menu('',$('#searchInput')?.value||'');scrollToId('menu')};$('#menuToggle').onclick=()=>$('#mobileNav').classList.toggle('open');$('#cart').onclick=()=>{$('#drawer').classList.remove('hidden');$('#drawer').setAttribute('aria-hidden','false');document.body.classList.add('cart-open');render()};$('#close').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};$('#drawerBackdrop').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};
 function setAuthMode(mode){authMode=mode;$('#loginTab').classList.toggle('active',mode==='login');$('#signupTab').classList.toggle('active',mode==='signup');$('#authTitle').textContent=mode==='login'?'Welcome back.':'Create your NuoNuo account.';$('#authSubmit').textContent=mode==='login'?'Sign in':'Create account';$('#authNameField').classList.toggle('hidden',mode==='login');$('#authName').required=mode==='signup';$('#authPassword').autocomplete=mode==='signup'?'new-password':'current-password';$('#authMessage').textContent=''}
 async function getProfile(){const {data:{session}}=await sb.auth.getSession();if(!session){currentProfile=null;return null}const {data,error}=await sb.from('nuonuo_customer_profiles').select('id,name,phone,email,address,birthday').eq('auth_user_id',session.user.id).eq('owner_id',owner).maybeSingle();if(error){console.error('Profile load error',error);currentProfile=null;return null}currentProfile=data||null;return currentProfile}
 function profileComplete(p){return !!(p?.name?.trim()&&p?.phone?.trim())}
