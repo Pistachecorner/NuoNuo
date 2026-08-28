@@ -718,7 +718,7 @@ body{background:var(--bg)}
 .hero-copy p{max-width:470px}
 .hero-visual{
   height:auto;
-  aspect-ratio:4 / 3;
+  aspect-ratio:3 / 2;
   min-height:0;
   border-radius:28px;
   transform:translateX(1.5%);
@@ -735,13 +735,13 @@ body{background:var(--bg)}
 @media(max-width:900px){
   .hero-wrap{grid-template-columns:1fr;gap:38px;padding-top:48px}
   .hero-copy{padding-left:0}
-  .hero-visual{width:100%;transform:none;aspect-ratio:4 / 3;height:auto}
+  .hero-visual{width:100%;transform:none;aspect-ratio:3 / 2;height:auto}
 }
 
 @media(max-width:650px){
   .hero-wrap{padding:34px 5% 28px;gap:28px}
   .hero-copy h1{font-size:52px}
-  .hero-visual{aspect-ratio:4 / 3;height:auto;border-radius:18px}
+  .hero-visual{aspect-ratio:3 / 2;height:auto;border-radius:18px}
   .hero-caption{left:18px;bottom:16px}
   .hero-caption span{font-size:25px}
   .hero-caption small{font-size:10px}
@@ -749,7 +749,7 @@ body{background:var(--bg)}
 
 @media(max-width:430px){
   .hero-copy h1{font-size:48px}
-  .hero-visual{aspect-ratio:4 / 3;height:auto}
+  .hero-visual{aspect-ratio:3 / 2;height:auto}
 }
 
 /* Keep the Light Mode footer neutral: no leftover purple surfaces. */
@@ -1773,3 +1773,18 @@ body{color-scheme:light;}
 .hero-slide-image{width:100%;height:100%;display:block;object-fit:cover;object-position:center;border:0;}
 .hero-caption{display:none!important;}
 @media(max-width:900px){.hero-slide-image{object-fit:cover;object-position:center;}}
+
+
+/* Product detail flow: menu cards open details; quantity is selected before adding. */
+.product-card-clickable{cursor:pointer}
+.product-card-clickable:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.view-product{font-size:11px;opacity:.72;white-space:nowrap}
+.product-detail-quantity{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid #e5e5e5;font-size:13px;font-weight:700}
+.quantity-control{display:flex;align-items:center;border:1px solid #ddd;border-radius:10px;overflow:hidden}
+.quantity-control button{width:38px;height:36px;border:0;background:transparent;color:inherit;font-size:20px}
+.quantity-control span{min-width:38px;text-align:center;font-weight:700}
+@media(prefers-color-scheme:dark){
+  .product-detail-quantity{border-color:#2d2d2d}
+  .quantity-control{border-color:#2d2d2d;background:#050505}
+  .quantity-control button{color:#fff}
+}
