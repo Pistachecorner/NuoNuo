@@ -1121,3 +1121,68 @@ body{background:var(--bg)}
   .announcement-bar{background:#130F10;color:#A98E9E;border-color:#2A242A}.announcement-bar span{color:#7B5B50}
   .hero-wrap,.section{background:#09080A!important}.hero-copy h1,.section-title-row h2,.about-section h2,.menu-title h2{color:#D1B9CD!important}.hero-copy p,.body p,.about-section p{color:#A38F9F!important}.hero-copy small,.section-kicker,.popular-meta small{color:#9B7F92!important}.hero-btn,.add,.dark{background:#6B4A3E!important;border-color:#6B4A3E!important;color:#F5ECE9!important;box-shadow:0 10px 25px rgba(107,74,62,.18)}.hero-btn:hover,.add:hover,.dark:hover{background:#7A5649!important;border-color:#7A5649!important}.hero-visual{background:#171116!important;box-shadow:0 20px 50px rgba(0,0,0,.42)}.category-card{background:#141116!important;border-color:#302731!important}.popular-image{box-shadow:inset 0 0 0 1px rgba(183,155,180,.12)}.popular-meta h3{color:#C9B1C5!important}.text-btn,.trending-link{color:#B79BB4!important}.trending-links{border-color:#2A242A}.tab{background:#141116!important;color:#B79BB4!important;border-color:#302731!important}.tab.active{background:#6B4A3E!important;color:#F5ECE9!important;border-color:#6B4A3E!important}.search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#141116!important;color:#D5C0D1!important;border-color:#302731!important}.search-wrap input::placeholder{color:#786879!important}.card{background:#141116!important;border-color:#302731!important;box-shadow:0 12px 30px rgba(0,0,0,.28)}.about-section{background:#121014!important;border-color:#2A242A!important}.site-footer{background:#0D0B0D!important;border-color:#2A242A!important}.footer-socials a,.footer-socials span,.footer-bottom{color:#9E899B!important}.panel,.modal,.account-modal,.success{background:#111013!important;color:#B79BB4!important}.line,.summary{border-color:#2A242A!important}.qty button{background:#171217!important;color:#B79BB4!important;border-color:#302731!important}.toast{background:#6B4A3E!important;color:#F5ECE9!important}.overlay{background:rgba(0,0,0,.72)!important}.no-image{background:linear-gradient(135deg,#241815 0%,#6B4A3E 100%)!important}.rewards-box,.voucher-checkout,.checkout-voucher-card{background:#141116!important;border-color:#302731!important}.voucher-badge{background:rgba(107,74,62,.25)!important;color:#C5A9B8!important}
 }
+
+/* V21 FINAL THEME: pure white light / pure black dark. */
+:root{
+  --ink:#4F606A;
+  --muted:#7B878E;
+  --line:#E4E7E8;
+  --bg:#FFFFFF;
+  --card:#FFFFFF;
+  --accent:#4F606A;
+}
+body{background:#FFFFFF;color:#4F606A}
+.site-header{background:#FFFFFF;border-color:#E4E7E8}
+.hero-wrap,.section{background:#FFFFFF}
+.hero-visual,.category-card,.card,.about-section,.site-footer,.panel,.modal,.account-modal,.success{background:#FFFFFF}
+.hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3{color:#4F606A}
+.hero-copy p,.body p,.about-section p,.modal-sub{color:#7B878E}
+.hero-btn,.add,.dark{background:#4F606A;border-color:#4F606A;color:#FFFFFF}
+.hero-btn:hover,.add:hover,.dark:hover{background:#3E4E57;border-color:#3E4E57}
+.cart-btn{background:#FFFFFF;border-color:#4F606A;color:#4F606A}
+.cart-btn i{background:#4F606A;color:#FFFFFF}
+.text-btn,.trending-link{color:#4F606A}
+.tab{background:#FFFFFF;color:#4F606A;border-color:#D9E0E2}
+.tab.active{background:#4F606A;color:#FFFFFF;border-color:#4F606A}
+.category-card{border-color:#E4E7E8}
+.about-section{border-color:#E8DED5}
+.site-footer{border-color:#E8DED5}
+.footer-socials a{color:#4F606A}
+.footer-socials span,.footer-bottom{color:#7B878E}
+.footer-mark{background:#CCBBAE;color:#3E2D3E}
+.no-image{background:#F4F1EC}
+.search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#FFFFFF;color:#4F606A;border-color:#D9E0E2}
+.panel,.modal,.account-modal,.success{color:#4F606A}
+.qty button{background:#FFFFFF;color:#4F606A;border-color:#D9E0E2}
+.toast{background:#4F606A;color:#FFFFFF}
+
+@media (prefers-color-scheme: dark){
+  :root{--ink:#B79BB4;--muted:#B6A8B2;--line:#2A2A2A;--bg:#000000;--card:#0A0A0A;--accent:#B79BB4}
+  html,body{background:#000000!important;color:#B79BB4!important}
+  .site-header{background:#000000!important;border-color:#242424!important}
+  .mobile-nav{background:#000000!important;border-color:#242424!important}
+  .hero-wrap,.section{background:#000000!important}
+  .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3{color:#B79BB4!important}
+  .hero-copy p,.body p,.about-section p,.modal-sub,.hero-copy small,.section-kicker,.popular-meta small{color:#B6A8B2!important}
+  .hero-visual{background:#0A0A0A!important;box-shadow:none!important}
+  .hero-visual.no-image,.no-image{background:#1A1513!important}
+  .category-card,.card,.popular-card{background:#0A0A0A!important;border-color:#262626!important;box-shadow:none!important}
+  .category-card h3,.hero-caption{color:#FFFFFF!important}
+  .text-btn,.trending-link{color:#B79BB4!important}
+  .tab{background:#0A0A0A!important;color:#B79BB4!important;border-color:#2A2A2A!important}
+  .tab.active{background:#3E2D3E!important;color:#CCBBAE!important;border-color:#3E2D3E!important}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#0A0A0A!important;color:#B79BB4!important;border-color:#2A2A2A!important}
+  .cart-btn{background:#000000!important;color:#B79BB4!important;border-color:#B79BB4!important}
+  .cart-btn i{background:#B79BB4!important;color:#000000!important}
+  .hero-btn,.add,.dark{background:#3E2D3E!important;color:#CCBBAE!important;border-color:#3E2D3E!important;box-shadow:none!important}
+  .hero-btn:hover,.add:hover,.dark:hover{background:#4A364A!important;border-color:#4A364A!important}
+  .about-section{background:#0A0A0A!important;border-color:#262626!important}
+  .site-footer{background:#000000!important;border-color:#242424!important}
+  .footer-socials a{color:#B79BB4!important}.footer-socials span,.footer-bottom{color:#8F808C!important}
+  .footer-mark{background:#CCBBAE!important;color:#3E2D3E!important}
+  .panel,.modal,.account-modal,.success{background:#0A0A0A!important;color:#B79BB4!important}
+  .line,.summary{border-color:#2A2A2A!important}
+  .qty button{background:#000000!important;color:#B79BB4!important;border-color:#2A2A2A!important}
+  .overlay{background:rgba(0,0,0,.78)!important}
+  .toast{background:#CCBBAE!important;color:#3E2D3E!important}
+}
