@@ -473,6 +473,7 @@ document.addEventListener('click',e=>{
   const addBtn=e.target.closest?.('[data-add-product]');
   if(addBtn){e.preventDefault();window.add(addBtn.dataset.addProduct);return;}
 });
+async 
 /* =========================================
    NuoNuo transparent stars + rotating meteors
    ========================================= */
@@ -498,8 +499,7 @@ document.addEventListener('click',e=>{
     el.className='nuonuo-space-star '+s[3];
     el.style.left=s[0]+'%';
     el.style.top=s[1]+'%';
-    el.style.width=s[2]+'px';
-    el.style.height=s[2]+'px';
+    el.style.setProperty('--star-size',s[2]+'px');
     el.style.setProperty('--star-duration',(3.4+(i%5)*.8)+'s');
     el.style.setProperty('--star-delay',(-((i*0.73)%5))+'s');
     space.appendChild(el);
@@ -521,5 +521,5 @@ document.addEventListener('click',e=>{
   setInterval(launchMeteor,2000);
 })();
 
-async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
+function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();
