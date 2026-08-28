@@ -234,6 +234,15 @@ function heroProducts(){
   // changes from removing or replacing the Hero slides.
   return HERO_SLIDES;
 }
+function restartHeroTimer(){
+  clearInterval(window.__nuonuoHeroTimer);
+  window.__nuonuoHeroTimer=setInterval(()=>{
+    const slides=heroProducts();
+    if(slides.length<2)return;
+    heroIndex=(heroIndex+1)%slides.length;
+    renderHero();
+  },5000);
+}
 function renderHero(){
   const slides=heroProducts();
   if(!slides.length)return;
@@ -246,18 +255,16 @@ function renderHero(){
   holder.dataset.bound='1';
   holder.addEventListener('click',e=>{
     const dot=e.target.closest('[data-hero-index]');
-    if(dot){heroIndex=Number(dot.dataset.heroIndex)||0;renderHero();return;}
-    if(e.target.closest('.hero-prev')){heroIndex=(heroIndex-1+heroProducts().length)%heroProducts().length;renderHero();return;}
-    if(e.target.closest('.hero-next')){heroIndex=(heroIndex+1)%heroProducts().length;renderHero();return;}
+    if(dot){heroIndex=Number(dot.dataset.heroIndex)||0;renderHero();restartHeroTimer();return;}
+    if(e.target.closest('.hero-prev')){heroIndex=(heroIndex-1+heroProducts().length)%heroProducts().length;renderHero();restartHeroTimer();return;}
+    if(e.target.closest('.hero-next')){heroIndex=(heroIndex+1)%heroProducts().length;renderHero();restartHeroTimer();return;}
   });
   let sx=0,sy=0;
   holder.addEventListener('touchstart',e=>{const t=e.changedTouches[0];sx=t.clientX;sy=t.clientY},{passive:true});
-  holder.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){const n=heroProducts().length;heroIndex=(heroIndex+(dx<0?1:-1)+n)%n;renderHero();}},{passive:true});
+  holder.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){const n=heroProducts().length;heroIndex=(heroIndex+(dx<0?1:-1)+n)%n;renderHero();restartHeroTimer();}},{passive:true});
 }
 function startHero(){
-  clearInterval(window.__nuonuoHeroTimer);
-  window.__nuonuoHeroTimer=null;
-  // Hero is intentionally manual: swipe, arrows, or dots.
+  restartHeroTimer();
 }
 
 function isNuoNuoChannel(value){const v=String(value??'').trim().toLowerCase().replace(/[·–—_\-]+/g,' ').replace(/\s+/g,' ');if(!v)return true;return v==='nuonuo'||v.startsWith('nuonuo ')}
