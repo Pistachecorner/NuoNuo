@@ -154,18 +154,24 @@ function bindCategoryCards(){
     if(id) filterByCategory(id);
   });
 }
+const HERO_SLIDES=[
+  {src:'hero-signature-pistachio.png',alt:'Signature Pistachio Dubai Chewy Cookies × Ferrero Rocher'},
+  {src:'hero-matcha-strawberry.png',alt:'Matcha Reserve Dubai Chewy Cookies × Strawberry'}
+];
 function heroProducts(){
-  // Exactly four hero slides, sourced from the live Management menu.
-  return products.filter(p=>productImage(p)).slice(0,4);
+  // Hero imagery is intentionally independent from the live product menu.
+  // This keeps the two selected Hero banners stable and prevents product data
+  // changes from removing or replacing the Hero slides.
+  return HERO_SLIDES;
 }
 function renderHero(){
   const slides=heroProducts();
   if(!slides.length)return;
-  heroIndex=Math.max(0,Math.min(heroIndex,slides.length-1));
-  const p=slides[heroIndex],imgs=productImageCandidates(p);
+  heroIndex=((heroIndex%slides.length)+slides.length)%slides.length;
+  const slide=slides[heroIndex];
   const holder=$('#heroVisual');
   if(!holder)return;
-  holder.innerHTML=`${imgs.length?imageTag(imgs,p.name):'<div class="hero-placeholder">NuoNuo</div>'}<div class="hero-caption"><span>${esc(p.name)}</span><small>Shop NuoNuo</small></div><div class="hero-controls" aria-label="Hero image controls"><button type="button" class="hero-arrow hero-prev" aria-label="Previous">‹</button><div class="hero-dots">${slides.map((_,i)=>`<button type="button" class="hero-dot ${i===heroIndex?'active':''}" data-hero-index="${i}" aria-label="Slide ${i+1}"></button>`).join('')}</div><button type="button" class="hero-arrow hero-next" aria-label="Next">›</button></div>`;
+  holder.innerHTML=`<img class="hero-slide-image" src="${esc(slide.src)}" alt="${esc(slide.alt)}"><div class="hero-controls" aria-label="Hero image controls"><button type="button" class="hero-arrow hero-prev" aria-label="Previous">‹</button><div class="hero-dots">${slides.map((_,i)=>`<button type="button" class="hero-dot ${i===heroIndex?'active':''}" data-hero-index="${i}" aria-label="Slide ${i+1}"></button>`).join('')}</div><button type="button" class="hero-arrow hero-next" aria-label="Next">›</button></div>`;
   if(holder.dataset.bound==='1')return;
   holder.dataset.bound='1';
   holder.addEventListener('click',e=>{
