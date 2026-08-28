@@ -1610,3 +1610,50 @@ body{color-scheme:light;}
   .hero-btn,.add,.dark,.ok{background:#111111!important;color:#FFFFFF!important;border-color:#111111!important;}
   .footer-mark{background:#E8E8E8!important;color:#111111!important;}
 }
+
+/* FINAL OVERRIDE: DARK MODE HEADER + ANNOUNCEMENT = PURE BLACK / WHITE ONLY */
+@media (prefers-color-scheme: dark){
+  .announcement-bar{
+    background:#000000 !important;
+    background-image:none !important;
+    color:#FFFFFF !important;
+    border-bottom:1px solid #222222 !important;
+  }
+  .announcement-bar span{color:#FFFFFF !important;opacity:1 !important}
+
+  .site-header{
+    background:#000000 !important;
+    background-image:none !important;
+    color:#FFFFFF !important;
+    border-bottom:1px solid #222222 !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+  }
+  .header-title,
+  .icon-btn,
+  .account-link,
+  .account-link *{
+    color:#FFFFFF !important;
+  }
+  .cart-btn{
+    background:#000000 !important;
+    background-image:none !important;
+    color:#FFFFFF !important;
+    border:1px solid #333333 !important;
+    box-shadow:none !important;
+  }
+  .cart-btn *{color:#FFFFFF !important}
+  .cart-btn i{
+    background:#FFFFFF !important;
+    color:#000000 !important;
+    border-color:#FFFFFF !important;
+  }
+  .mobile-nav{
+    background:#000000 !important;
+    background-image:none !important;
+    color:#FFFFFF !important;
+    border-color:#222222 !important;
+    box-shadow:none !important;
+  }
+  .mobile-nav button{color:#FFFFFF !important;background:#000000 !important}
+}
