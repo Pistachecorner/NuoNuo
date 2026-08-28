@@ -36,7 +36,6 @@ function addonOptionsForProduct(productId){
   return addons.filter(a=>a && a.active!==false);
 }
 function addToCart(p,selectedAddons=[]){if(!p)return;const normalized=[...(selectedAddons||[])].sort((a,b)=>String(a.id).localeCompare(String(b.id)));const signature=`${p.id}|${normalized.map(a=>a.id).join(',')}`;const x=cart.find(x=>x.signature===signature);if(x)x.qty++;else cart.push({signature,id:p.id,name:p.name,price:Number(p.selling_price||0),cost:Number(p.calculated_cost||0),qty:1,addons:normalized.map(a=>({id:a.id,name:a.name,price:Number(a.price||0)}))});render();showToast('Item added')}
-window.add=(id)=>{const p=products.find(x=>x.id===id);addToCart(p,[])};
 function closeProductDetail(){const m=$('#productDetailModal');if(m){m.classList.add('hidden');m.setAttribute('aria-hidden','true')}}
 function openProductDetail(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const m=$('#productDetailModal'),content=$('#productDetailContent');if(!m||!content)return;const imgs=productImageCandidates(p);const cat=cats.find(c=>sameId(c.id,p.category_id));const options=addonOptionsForProduct(p.id);content.innerHTML=`<button type="button" class="product-detail-close" aria-label="Close">×</button><div class="product-detail-grid"><div class="product-detail-image">${imgs.length?imageTag(imgs,p.name):'<div class="no-image">NuoNuo</div>'}</div><div class="product-detail-info"><small>${esc(cat?.name||'NUONUO')}</small><h2>${esc(p.name)}</h2><div class="product-detail-price">${money(p.selling_price)}</div>${p.description?`<p class="product-detail-description">${esc(p.description)}</p>`:'<p class="product-detail-description muted">Freshly made with care.</p>'}${options.length?`<div class="product-detail-addons"><div class="addon-heading"><span>Add-ons</span><small>Optional</small></div><div class="addon-list">${options.map(a=>`<label class="addon-option"><input type="checkbox" value="${esc(a.id)}"><span>${esc(a.name)}</span><b>+ ${money(a.price)}</b></label>`).join('')}</div></div>`:''}<button type="button" id="productDetailAdd" class="dark product-detail-add">Add to cart · ${money(p.selling_price)}</button></div></div>`;m.classList.remove('hidden');m.setAttribute('aria-hidden','false');const close=content.querySelector('.product-detail-close');close.onclick=closeProductDetail;const addBtn=content.querySelector('#productDetailAdd');const updateTotal=()=>{const selected=options.filter(a=>content.querySelector(`input[value="${CSS.escape(String(a.id))}"]`)?.checked);addBtn.textContent=`Add to cart · ${money(Number(p.selling_price||0)+selected.reduce((s,a)=>s+Number(a.price||0),0))}`};content.querySelectorAll('.addon-option input').forEach(i=>i.onchange=updateTotal);addBtn.onclick=()=>{const selected=options.filter(a=>content.querySelector(`input[value="${CSS.escape(String(a.id))}"]`)?.checked);addToCart(p,selected);closeProductDetail()}}
 
@@ -114,10 +113,14 @@ function menu(cat='',query=''){
   let list=products.filter(p=>(!cat||sameId(p.category_id,cat))&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
     const imgs=productImageCandidates(p);
-    return `<article class="card"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" type="button" data-add-product="${esc(p.id)}">Add</button></div></div></article>`
+    return `<article class="card" role="button" tabindex="0" data-view-product="${esc(p.id)}"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="view-product" type="button" data-view-product-btn="${esc(p.id)}">View details →</button></div></div></article>`
   }).join('')||'<p>No products available.</p>';
-  $('#grid').querySelectorAll('[data-add-product]').forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();window.add(btn.dataset.addProduct)});
-  $('#grid').querySelectorAll('.card').forEach(card=>card.onclick=(e)=>{if(e.target.closest('button'))return;const btn=card.querySelector('[data-add-product]');if(btn)openProductDetail(btn.dataset.addProduct)});
+  $('#grid').querySelectorAll('[data-view-product-btn]').forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();openProductDetail(btn.dataset.viewProductBtn)});
+  $('#grid').querySelectorAll('[data-view-product]').forEach(card=>{
+    const open=()=>openProductDetail(card.dataset.viewProduct);
+    card.onclick=(e)=>{if(e.target.closest('button'))return;open()};
+    card.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};
+  });
 }
 
 function renderTrending(){
@@ -481,9 +484,5 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape') closeProductDetail()});
 
-document.addEventListener('click',e=>{
-  const addBtn=e.target.closest?.('[data-add-product]');
-  if(addBtn){e.preventDefault();window.add(addBtn.dataset.addProduct);return;}
-});
 async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();

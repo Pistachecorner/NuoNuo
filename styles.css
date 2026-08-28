@@ -1560,3 +1560,8 @@ body{color-scheme:light;}
   .addon-heading small,.summary small{color:#FFFFFF!important;opacity:.7;}
   .footer-mark{background:#111111!important;color:#FFFFFF!important;}
 }
+
+/* V29: products must be opened before they can be added to cart. */
+.view-product{appearance:none;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:8px 13px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.view-product:hover{opacity:.78}
+.card[role="button"]{cursor:pointer}
