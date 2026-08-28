@@ -1017,3 +1017,79 @@ body{background:var(--bg)}
   .toast{background:#CCBBAE!important;color:#3E2D3E!important}
   .no-image{background:linear-gradient(135deg,#6B5958,#3E2D3E)!important}
 }
+
+/* V18 — Dark mode: cocoa brown foundation + plum accents only */
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#CCBBAE;
+    --muted:#c2b1a6;
+    --line:#806f6c;
+    --bg:#6B5958;
+    --card:#635151;
+    --accent:#3E2D3E;
+  }
+  html,body{background:#6B5958!important;color:#CCBBAE!important}
+  body{color-scheme:dark}
+
+  .site-header{
+    background:#776462!important;
+    border-bottom:1px solid #8b7975!important;
+    box-shadow:0 8px 28px rgba(35,24,24,.18);
+  }
+  .brand b,.brand small,.icon-btn,.account-link{color:#CCBBAE!important}
+  .mark{background:#3E2D3E!important;color:#CCBBAE!important}
+  .cart-btn{
+    background:#7d6967!important;
+    border-color:#3E2D3E!important;
+    color:#CCBBAE!important;
+  }
+  .cart-btn i{background:#3E2D3E!important;color:#CCBBAE!important}
+  .mobile-nav{background:#635151!important;border-color:#806f6c!important}
+  .mobile-nav button{color:#CCBBAE!important}
+
+  .hero-wrap,.section{background:#6B5958!important}
+  .hero-copy small,.section-kicker,.modal small,.success small{color:#CCBBAE!important;opacity:.82}
+  .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2{color:#F4ECE5!important}
+  .hero-copy p,.about-section p,.body p,.modal-sub,.checkout-hint,#loading{color:#D2C1B6!important}
+  .hero-btn,.add,.dark{
+    background:#3E2D3E!important;
+    color:#F4ECE5!important;
+    border-color:#3E2D3E!important;
+    box-shadow:0 8px 24px rgba(62,45,62,.28);
+  }
+  .hero-btn:hover,.add:hover,.dark:hover{background:#4b374b!important;border-color:#4b374b!important}
+
+  .hero-visual{background:#5e4d4c!important;box-shadow:0 18px 45px rgba(35,24,24,.30)}
+  .hero-placeholder{background:#5e4d4c!important;color:#CCBBAE!important}
+  .category-card{background:#635151!important;border-color:#806f6c!important}
+  .tab{background:#635151!important;color:#CCBBAE!important;border-color:#806f6c!important}
+  .tab.active{background:#3E2D3E!important;color:#F4ECE5!important;border-color:#3E2D3E!important}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{
+    background:#635151!important;color:#F4ECE5!important;border-color:#806f6c!important
+  }
+  .search-wrap input::placeholder,.fields input::placeholder,.fields textarea::placeholder,.account-modal input::placeholder{color:#c2b1a6!important}
+  .card{background:#635151!important;border-color:#806f6c!important;box-shadow:0 10px 28px rgba(35,24,24,.20)}
+  .panel{background:#6B5958!important;box-shadow:-16px 0 40px rgba(35,24,24,.25)}
+  .modal,.account-modal,.success{background:#6B5958!important;color:#CCBBAE!important;box-shadow:0 20px 60px rgba(35,24,24,.30)}
+  .close-btn,.text-btn{color:#CCBBAE!important}
+  .line,.summary{border-bottom-color:#806f6c!important}
+  .qty button{background:#635151!important;color:#CCBBAE!important;border-color:#806f6c!important}
+  .about-section{background:#635151!important;border-color:#806f6c!important}
+  .site-footer{background:#6B5958!important;border-top-color:#806f6c!important}
+  .footer-mark{background:#3E2D3E!important;color:#CCBBAE!important}
+  .toast{background:#3E2D3E!important;color:#F4ECE5!important}
+  .no-image{background:linear-gradient(135deg,#5e4d4c 0%,#6B5958 100%)!important}
+  .overlay{background:rgba(30,20,20,.58)!important}
+  .secondary-action{background:transparent!important;color:#CCBBAE!important;border-color:#806f6c!important}
+  .header-me{background:transparent!important;color:#CCBBAE!important;border-color:#806f6c!important}
+  .header-me:hover{background:#3E2D3E!important;color:#F4ECE5!important}
+  .rewards-box,.voucher-checkout{background:#635151!important;border-color:#806f6c!important}
+  .voucher-row button,.voucher-copy-btn{color:#CCBBAE!important;border-color:#806f6c!important}
+  .voucher-copy-btn:hover{background:#3E2D3E!important;color:#F4ECE5!important}
+  .voucher-badge{background:rgba(62,45,62,.75)!important;color:#CCBBAE!important}
+  .checkout-voucher-card{background:#635151!important;color:#CCBBAE!important;border-color:#806f6c!important}
+  .checkout-voucher-card.is-selected{background:#3E2D3E!important;border-color:#CCBBAE!important}
+  .checkout-voucher-card.is-selected .checkout-voucher-action{background:#CCBBAE!important;color:#3E2D3E!important;border-color:#CCBBAE!important}
+  .logout-btn{color:#CCBBAE!important;border-color:#806f6c!important}
+  .logout-btn:hover{background:#3E2D3E!important;color:#F4ECE5!important}
+}
