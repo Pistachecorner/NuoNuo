@@ -1729,3 +1729,150 @@ body{color-scheme:light;}
   .product-detail-overlay{background:rgba(0,0,0,.86)!important;}
   .footer-mark{background:#111111!important;color:#FFFFFF!important;}
 }
+
+/* V32 STYLE-ONLY: strict Dark Mode monochrome. No layout or functionality changes. */
+@media (prefers-color-scheme: dark){
+  html,body{
+    background:#000000!important;
+    color:#FFFFFF!important;
+  }
+
+  .announcement-bar,
+  .site-header,
+  .mobile-nav,
+  .hero-wrap,
+  .section,
+  .site-footer,
+  .about-section,
+  .card,
+  .popular-card,
+  .category-card,
+  .hero-visual,
+  .panel,
+  .modal,
+  .account-modal,
+  .success,
+  .product-detail-modal{
+    background:#000000!important;
+    background-image:none!important;
+  }
+
+  /* Header: absolutely no cream / beige / purple. */
+  .announcement-bar,
+  .announcement-bar * ,
+  .site-header,
+  .site-header * ,
+  .mobile-nav,
+  .mobile-nav *{
+    color:#FFFFFF!important;
+  }
+
+  .site-header,
+  .announcement-bar{
+    border-color:#222222!important;
+    box-shadow:none!important;
+  }
+
+  .site-header .cart-btn{
+    background:#000000!important;
+    border-color:#333333!important;
+    color:#FFFFFF!important;
+  }
+  .site-header .cart-btn i{
+    background:#FFFFFF!important;
+    color:#000000!important;
+  }
+  .site-header .cart-icon svg{
+    stroke:#FFFFFF!important;
+  }
+
+  /* All normal dark-mode typography is white. */
+  .hero-copy small,
+  .hero-copy h1,
+  .hero-copy p,
+  .section-kicker,
+  .section-title-row h2,
+  .text-btn,
+  .trending-link,
+  .popular-meta small,
+  .popular-meta h3,
+  .popular-meta b,
+  .body h3,
+  .body p,
+  .body b,
+  .about-section h2,
+  .about-section p,
+  .panel h2,
+  .modal h2,
+  .modal-sub,
+  .success h2,
+  .account-modal h2,
+  .product-detail-info h2,
+  .product-detail-price,
+  .product-detail-info>small,
+  .product-detail-description,
+  .product-detail-quantity,
+  .addon-heading,
+  .addon-heading small,
+  .addon-option,
+  .addon-option span,
+  .addon-option b,
+  .footer-socials span,
+  .footer-socials a,
+  .footer-bottom,
+  .site-footer,
+  .site-footer a{
+    color:#FFFFFF!important;
+  }
+
+  .hero-copy p,
+  .body p,
+  .about-section p,
+  .modal-sub,
+  .product-detail-description{
+    opacity:.82;
+  }
+
+  /* White is reserved for primary action surfaces; no purple or cream. */
+  .hero-btn,
+  .add,
+  .dark,
+  .tab.active,
+  .product-detail-add{
+    background:#FFFFFF!important;
+    color:#000000!important;
+    border-color:#FFFFFF!important;
+    box-shadow:none!important;
+  }
+  .hero-btn:hover,
+  .add:hover,
+  .dark:hover,
+  .tab.active:hover,
+  .product-detail-add:hover{
+    background:#EEEEEE!important;
+    color:#000000!important;
+    border-color:#EEEEEE!important;
+  }
+
+  .tab,
+  .search-wrap input,
+  .fields input,
+  .fields select,
+  .fields textarea,
+  .account-modal input,
+  .qty button,
+  .quantity-stepper,
+  .quantity-stepper button{
+    background:#000000!important;
+    color:#FFFFFF!important;
+    border-color:#333333!important;
+  }
+  .search-wrap input::placeholder{color:#FFFFFF!important;opacity:.5;}
+  .card,.category-card{border-color:#222222!important;box-shadow:none!important;}
+  .line,.summary,.product-detail-addons,.product-detail-quantity{border-color:#222222!important;}
+  .product-detail-image,.product-detail-image img{background:#111111!important;}
+  .product-detail-close{background:#111111!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .product-detail-overlay{background:rgba(0,0,0,.9)!important;}
+  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
+  .toast{background:#FFFFFF!important;color:#000000!important;}
+}
