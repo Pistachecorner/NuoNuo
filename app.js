@@ -533,6 +533,19 @@ document.addEventListener('click',e=>{
   }
 
   document.body.prepend(space);
+
+  // Keep the starfield attached to the page itself, not the viewport.
+  // Its height follows the full document so stars move naturally with scrolling.
+  const syncStarfieldHeight=()=>{
+    space.style.height=Math.max(document.documentElement.scrollHeight,window.innerHeight)+'px';
+  };
+  syncStarfieldHeight();
+  window.addEventListener('resize',syncStarfieldHeight,{passive:true});
+  window.addEventListener('load',syncStarfieldHeight,{once:true});
+  if(window.ResizeObserver){
+    const ro=new ResizeObserver(syncStarfieldHeight);
+    ro.observe(document.body);
+  }
 })();
 async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();
