@@ -1834,3 +1834,23 @@ body{color-scheme:light;}
     aspect-ratio:4 / 3!important;
   }
 }
+
+
+/* V35 · Hero accent words */
+.hero-copy h1 .hero-accent-purple{color:#BC84F5!important;-webkit-text-fill-color:#BC84F5!important;}
+.hero-copy h1 .hero-accent-yellow{color:#F8D64E!important;-webkit-text-fill-color:#F8D64E!important;}
+
+/* V35 · Craft cards alternate image/text on every screen size.
+   Pistachio: image left / text right.
+   Marshmallow: text left / image right. */
+.craft-card{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important;}
+.craft-card-reverse{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)!important;}
+.craft-card-reverse .craft-copy{order:1!important;}
+.craft-card-reverse .craft-image{order:2!important;}
+@media(max-width:650px){
+  .craft-card,.craft-card-reverse{grid-template-columns:50% 50%!important;}
+  .craft-card .craft-image{order:1!important;}
+  .craft-card .craft-copy{order:2!important;}
+  .craft-card-reverse .craft-copy{order:1!important;}
+  .craft-card-reverse .craft-image{order:2!important;}
+}
