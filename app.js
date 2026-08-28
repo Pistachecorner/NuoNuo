@@ -189,10 +189,7 @@ async function load(){
   try{
     if((!url||url.includes('PASTE_')||!key||key.includes('PASTE_'))){
       try{
-        const r=await fetch('/api/config',{cache:'no-store'
-  animation-delay: calc(var(--star-index, 0) * 0.37s);
-  animation-iteration-count: infinite;
-});
+        const r=await fetch('/api/config',{cache:'no-store'});
         if(r.ok){const c=await r.json();url=c.url||url;key=c.key||key;}
       }catch(e){console.warn('NuoNuo config API unavailable:',e)}
     }
@@ -476,5 +473,41 @@ document.addEventListener('click',e=>{
   const addBtn=e.target.closest?.('[data-add-product]');
   if(addBtn){e.preventDefault();window.add(addBtn.dataset.addProduct);return;}
 });
+/* =========================================
+   NuoNuo transparent stars
+   Genuine hollow 5-point stars only.
+   Yellow + purple. Staggered blinking.
+   No meteors.
+   ========================================= */
+(function initNuoNuoSpace(){
+  if(document.querySelector('.nuonuo-space')) return;
+
+  const space=document.createElement('div');
+  space.className='nuonuo-space';
+
+  const positions=[
+    [5,8],[13,16],[21,7],[29,20],[37,10],[45,17],[53,6],[61,22],[69,11],[77,18],[86,7],[94,15],
+    [8,31],[17,42],[26,29],[35,47],[44,34],[53,43],[62,31],[71,46],[80,35],[89,43],[97,30],
+    [4,57],[13,68],[22,53],[31,74],[40,61],[49,69],[58,55],[67,72],[76,59],[85,68],[94,54],
+    [7,84],[17,94],[27,81],[37,91],[47,83],[57,96],[67,86],[77,93],[87,82],[96,91]
+  ];
+
+  const sizes=[10,15,12,18,13,20,11,16,14,22];
+
+  positions.forEach((pos,i)=>{
+    const el=document.createElement('span');
+    el.className='nuonuo-space-star '+(i%2===0?'yellow':'purple');
+    el.style.left=pos[0]+'%';
+    el.style.top=pos[1]+'%';
+    el.style.setProperty('--star-size',sizes[i%sizes.length]+'px');
+    el.style.setProperty('--star-duration',(3.8+(i%7)*0.45)+'s');
+    el.style.setProperty('--star-delay',(-((i*0.53)%7))+'s');
+    el.style.setProperty('--star-opacity',(0.30+(i%4)*0.07).toFixed(2));
+    el.style.setProperty('--star-rotation',((i%5)*7-14)+'deg');
+    space.appendChild(el);
+  });
+
+  document.body.prepend(space);
+})();
 async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();

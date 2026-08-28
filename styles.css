@@ -1766,70 +1766,63 @@ body{color-scheme:light;}
 }
 
 /* =========================================
-   NuoNuo night-sky background v2
+   NuoNuo transparent starfield
+   Genuine hollow 5-point stars only.
+   Yellow + purple, staggered twinkle.
+   No meteors.
    ========================================= */
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:0;
-  opacity:.42;
-  background:
-    radial-gradient(circle at 8% 18%, rgba(248,220,105,.95) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 18% 72%, rgba(248,220,105,.75) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 29% 34%, rgba(248,220,105,.9) 0 1.3px, transparent 1.9px),
-    radial-gradient(circle at 42% 82%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 54% 17%, rgba(248,220,105,.95) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 65% 61%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 76% 28%, rgba(248,220,105,.85) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 88% 76%, rgba(248,220,105,.8) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 94% 13%, rgba(248,220,105,.9) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 12% 48%, rgba(248,220,105,.65) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 48% 53%, rgba(248,220,105,.8) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 70% 91%, rgba(248,220,105,.75) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 24% 12%, rgba(248,220,105,.75) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 35% 64%, rgba(248,220,105,.8) 0 1.1px, transparent 1.7px),
-    radial-gradient(circle at 58% 38%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 81% 56%, rgba(248,220,105,.82) 0 1.1px, transparent 1.7px),
-    radial-gradient(circle at 91% 88%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 5% 89%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 45% 7%, rgba(248,220,105,.85) 0 1.1px, transparent 1.7px),
-    radial-gradient(circle at 73% 73%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 98% 51%, rgba(248,220,105,.8) 0 1px, transparent 1.6px);
-  animation:nuonuoStars 4.2s ease-in-out infinite;
+.nuonuo-space {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: transparent !important;
 }
-
-body::after{
-  content:"";
-  position:fixed;
-  width:170px;
-  height:1px;
-  top:12%;
-  left:108%;
-  pointer-events:none;
-  z-index:0;
-  opacity:0;
-  background:linear-gradient(90deg, transparent, rgba(146,91,196,.12) 18%, rgba(177,119,230,.88) 82%, rgba(218,183,255,1));
-  box-shadow:
-    0 0 9px rgba(177,119,230,.5),
-    0 230px 0 rgba(177,119,230,.75),
-    0 470px 0 rgba(177,119,230,.72),
-    0 710px 0 rgba(177,119,230,.68);
-  transform:rotate(-35deg);
+.nuonuo-space-star {
+  position: absolute;
+  display: block;
+  width: var(--star-size, 15px);
+  height: var(--star-size, 15px);
+  opacity: var(--star-opacity, .40);
+  transform: translate(-50%, -50%) rotate(var(--star-rotation, 0deg));
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cpath%20fill%3D%27white%27%20fill-rule%3D%27evenodd%27%20d%3D%27M%2050.00%2C4.00%20L%2061.17%2C34.63%20L%2093.75%2C35.79%20L%2068.07%2C55.87%20L%2077.04%2C87.21%20L%2050.00%2C69.00%20L%2022.96%2C87.21%20L%2031.93%2C55.87%20L%206.25%2C35.79%20L%2038.83%2C34.63%20Z%20M%2050.00%2C33.00%20L%2054.70%2C43.53%20L%2066.17%2C44.75%20L%2057.61%2C52.47%20L%2059.99%2C63.75%20L%2050.00%2C58.00%20L%2040.01%2C63.75%20L%2042.39%2C52.47%20L%2033.83%2C44.75%20L%2045.30%2C43.53%20Z%27%2F%3E%3C%2Fsvg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cpath%20fill%3D%27white%27%20fill-rule%3D%27evenodd%27%20d%3D%27M%2050.00%2C4.00%20L%2061.17%2C34.63%20L%2093.75%2C35.79%20L%2068.07%2C55.87%20L%2077.04%2C87.21%20L%2050.00%2C69.00%20L%2022.96%2C87.21%20L%2031.93%2C55.87%20L%206.25%2C35.79%20L%2038.83%2C34.63%20Z%20M%2050.00%2C33.00%20L%2054.70%2C43.53%20L%2066.17%2C44.75%20L%2057.61%2C52.47%20L%2059.99%2C63.75%20L%2050.00%2C58.00%20L%2040.01%2C63.75%20L%2042.39%2C52.47%20L%2033.83%2C44.75%20L%2045.30%2C43.53%20Z%27%2F%3E%3C%2Fsvg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background: var(--star-color, #f2cf55);
+  animation: nuonuoStarTwinkle var(--star-duration, 4.2s) ease-in-out var(--star-delay, 0s) infinite;
 }
-
-@keyframes nuonuoStars{
-  0%,100%{opacity:.28;}
-  50%{opacity:.72;}
+.nuonuo-space-star.yellow {
+  --star-color: #f2cf55;
+  filter: drop-shadow(0 0 4px rgba(242,207,85,.28));
 }
-
-  0%{transform:translate3d(0,0,0) rotate(-35deg);opacity:0;}
-  5%{opacity:.85;}
-  14%{opacity:0;}
-  100%{transform:translate3d(-1100px,730px,0) rotate(-35deg);opacity:0;}
+.nuonuo-space-star.purple {
+  --star-color: #9b78c4;
+  filter: drop-shadow(0 0 4px rgba(155,120,196,.25));
 }
-
-@media (prefers-reduced-motion:reduce){
-  body::before,body::after{animation:none;}
+@keyframes nuonuoStarTwinkle {
+  0%, 58%, 100% {
+    opacity: var(--star-opacity, .40);
+    transform: translate(-50%, -50%) rotate(var(--star-rotation, 0deg)) scale(.92);
+  }
+  68% {
+    opacity: .08;
+    transform: translate(-50%, -50%) rotate(var(--star-rotation, 0deg)) scale(.72);
+  }
+  76% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--star-rotation, 0deg)) scale(1.12);
+  }
+  84% {
+    opacity: var(--star-opacity, .40);
+    transform: translate(-50%, -50%) rotate(var(--star-rotation, 0deg)) scale(.92);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nuonuo-space-star { animation: none !important; }
 }

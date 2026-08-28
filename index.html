@@ -13,32 +13,6 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-
-<style id="nuonuo-stars-only-style">
-#nuonuo-stars-only-layer{
-  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
-}
-#nuonuo-stars-only-layer .nn-star{
-  position:absolute; width:10px; height:10px; opacity:.7;
-  transform:rotate(45deg);
-  animation:nnStarTwinkle 2.8s ease-in-out infinite;
-}
-#nuonuo-stars-only-layer .nn-star::before,
-#nuonuo-stars-only-layer .nn-star::after{
-  content:""; position:absolute; left:50%; top:50%;
-  transform:translate(-50%,-50%);
-  background:currentColor; border-radius:999px;
-}
-#nuonuo-stars-only-layer .nn-star::before{width:100%;height:2px;}
-#nuonuo-stars-only-layer .nn-star::after{width:2px;height:100%;}
-#nuonuo-stars-only-layer .nn-star.purple{color:rgba(150,95,210,.72);}
-#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(235,205,95,.78);}
-@keyframes nnStarTwinkle{
-  0%,100%{opacity:.25;transform:rotate(45deg) scale(.82)}
-  45%{opacity:.82;transform:rotate(45deg) scale(1.18)}
-  70%{opacity:.38;transform:rotate(45deg) scale(.92)}
-}
-</style>
 </head>
 <body>
   <div class="announcement-bar">LOCAL PICKUP & DELIVERY · IPOH <span>Freshly made to order</span></div>
@@ -222,34 +196,5 @@
 
   <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
-
-<script id="nuonuo-stars-only-script">
-(function(){
-  function addStars(){
-    if(document.getElementById('nuonuo-stars-only-layer')) return;
-    var layer=document.createElement('div');
-    layer.id='nuonuo-stars-only-layer';
-    var positions=[
-      [7,13],[16,28],[24,9],[32,22],[41,12],[50,31],[58,17],[67,7],
-      [76,25],[86,13],[94,34],[11,48],[20,65],[29,43],[38,72],[47,54],
-      [56,66],[64,45],[73,78],[82,58],[91,69],[5,87],[18,82],[31,92],
-      [44,84],[57,94],[69,88],[80,91],[93,83]
-    ];
-    positions.forEach(function(p,i){
-      var s=document.createElement('span');
-      s.className='nn-star '+(i%2?'yellow':'purple');
-      s.style.left=p[0]+'%';
-      s.style.top=p[1]+'%';
-      s.style.width=(7+(i%4)*2)+'px';
-      s.style.height=(7+(i%4)*2)+'px';
-      s.style.animationDelay=(-((i*0.37)%2.8))+'s';
-      layer.appendChild(s);
-    });
-    document.body.appendChild(layer);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addStars);
-  else addStars();
-})();
-</script>
 </body>
 </html>
