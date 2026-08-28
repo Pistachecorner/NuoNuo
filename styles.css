@@ -1788,3 +1788,29 @@ body{color-scheme:light;}
   .quantity-control{border-color:#2d2d2d;background:#050505}
   .quantity-control button{color:#fff}
 }
+
+/* V27 · MOBILE HERO RATIO FIX
+   The supplied Hero images are 1536×1152 = 4:3.
+   Keep the mobile Hero container at the same 4:3 ratio so object-fit:cover
+   does not crop the left/right artwork or typography. */
+@media (max-width:650px){
+  .hero-visual{
+    width:100%;
+    height:auto!important;
+    aspect-ratio:4 / 3!important;
+    overflow:hidden;
+  }
+  .hero-slide-image{
+    width:100%!important;
+    height:100%!important;
+    aspect-ratio:4 / 3!important;
+    object-fit:cover!important;
+    object-position:center!important;
+  }
+}
+@media (max-width:430px){
+  .hero-visual{
+    height:auto!important;
+    aspect-ratio:4 / 3!important;
+  }
+}
