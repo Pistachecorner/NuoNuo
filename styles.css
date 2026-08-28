@@ -1766,8 +1766,8 @@ body{color-scheme:light;}
 }
 
 /* =========================================
-   NuoNuo subtle night-sky background
-   Pure black base + restrained purple meteors + soft yellow stars
+   NuoNuo night-sky background v2
+   More stars + purple meteors every ~3 seconds
    ========================================= */
 body::before{
   content:"";
@@ -1775,7 +1775,7 @@ body::before{
   inset:0;
   pointer-events:none;
   z-index:0;
-  opacity:.34;
+  opacity:.42;
   background:
     radial-gradient(circle at 8% 18%, rgba(248,220,105,.95) 0 1.2px, transparent 1.8px),
     radial-gradient(circle at 18% 72%, rgba(248,220,105,.75) 0 1px, transparent 1.7px),
@@ -1788,36 +1788,49 @@ body::before{
     radial-gradient(circle at 94% 13%, rgba(248,220,105,.9) 0 1.2px, transparent 1.8px),
     radial-gradient(circle at 12% 48%, rgba(248,220,105,.65) 0 1px, transparent 1.6px),
     radial-gradient(circle at 48% 53%, rgba(248,220,105,.8) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 70% 91%, rgba(248,220,105,.75) 0 1px, transparent 1.6px);
-  animation:nuonuoStars 5s ease-in-out infinite;
+    radial-gradient(circle at 70% 91%, rgba(248,220,105,.75) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 24% 12%, rgba(248,220,105,.75) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 35% 64%, rgba(248,220,105,.8) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 58% 38%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 81% 56%, rgba(248,220,105,.82) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 91% 88%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 5% 89%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 45% 7%, rgba(248,220,105,.85) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 73% 73%, rgba(248,220,105,.72) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 98% 51%, rgba(248,220,105,.8) 0 1px, transparent 1.6px);
+  animation:nuonuoStars 4.2s ease-in-out infinite;
 }
 
 body::after{
   content:"";
   position:fixed;
-  width:150px;
+  width:170px;
   height:1px;
-  top:14%;
+  top:12%;
   left:108%;
   pointer-events:none;
   z-index:0;
   opacity:0;
-  background:linear-gradient(90deg, transparent, rgba(146,91,196,.08) 18%, rgba(177,119,230,.8) 82%, rgba(218,183,255,.95));
-  box-shadow:0 0 8px rgba(177,119,230,.45);
+  background:linear-gradient(90deg, transparent, rgba(146,91,196,.12) 18%, rgba(177,119,230,.88) 82%, rgba(218,183,255,1));
+  box-shadow:
+    0 0 9px rgba(177,119,230,.5),
+    0 230px 0 rgba(177,119,230,.75),
+    0 470px 0 rgba(177,119,230,.72),
+    0 710px 0 rgba(177,119,230,.68);
   transform:rotate(-35deg);
-  animation:nuonuoMeteor 8s linear infinite;
+  animation:nuonuoMeteor 3s linear infinite;
 }
 
 @keyframes nuonuoStars{
-  0%,100%{opacity:.24;}
-  50%{opacity:.62;}
+  0%,100%{opacity:.28;}
+  50%{opacity:.72;}
 }
 
 @keyframes nuonuoMeteor{
   0%{transform:translate3d(0,0,0) rotate(-35deg);opacity:0;}
-  8%{opacity:.75;}
-  17%{opacity:0;}
-  100%{transform:translate3d(-900px,600px,0) rotate(-35deg);opacity:0;}
+  5%{opacity:.85;}
+  14%{opacity:0;}
+  100%{transform:translate3d(-1100px,730px,0) rotate(-35deg);opacity:0;}
 }
 
 @media (prefers-reduced-motion:reduce){
