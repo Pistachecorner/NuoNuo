@@ -1826,3 +1826,15 @@ body{color-scheme:light;}
 @media (prefers-reduced-motion: reduce) {
   .nuonuo-space-star { animation: none !important; }
 }
+
+/* Hero-only stars: visible around the headline, never over the hero image. */
+.hero-copy{position:relative;overflow:hidden;isolation:isolate}
+.hero-copy > :not(.nuonuo-hero-star){position:relative;z-index:2}
+.nuonuo-hero-star-zone .nuonuo-hero-star{z-index:1;pointer-events:none}
+.nuonuo-hero-star{position:absolute!important;display:block!important}
+
+/* Keep the phone view calmer: fewer background stars, while desktop keeps the full field. */
+@media (max-width:650px){
+  .nuonuo-space-star:nth-child(n+13){display:none}
+  .nuonuo-hero-star:nth-of-type(n+5){display:none!important}
+}

@@ -497,6 +497,7 @@ document.addEventListener('click',e=>{
   positions.forEach((pos,i)=>{
     const el=document.createElement('span');
     el.className='nuonuo-space-star '+(i%2===0?'yellow':'purple');
+    el.left=pos[0]+'%';
     el.style.left=pos[0]+'%';
     el.style.top=pos[1]+'%';
     el.style.setProperty('--star-size',sizes[i%sizes.length]+'px');
@@ -506,6 +507,30 @@ document.addEventListener('click',e=>{
     el.style.setProperty('--star-rotation',((i%5)*7-14)+'deg');
     space.appendChild(el);
   });
+
+  // A small, separate star layer for the hero text so the stars are also
+  // visible around “Less sweet…” without covering the product image.
+  const heroCopy=document.querySelector('.hero-copy');
+  if(heroCopy){
+    heroCopy.classList.add('nuonuo-hero-star-zone');
+    const heroStars=[
+      [7,10,14,'yellow'],[88,18,18,'purple'],[22,38,10,'purple'],
+      [94,45,12,'yellow'],[10,68,17,'purple'],[82,76,11,'yellow'],
+      [52,87,15,'purple'],[35,20,9,'yellow']
+    ];
+    heroStars.forEach((item,i)=>{
+      const el=document.createElement('span');
+      el.className='nuonuo-space-star '+item[3]+' nuonuo-hero-star';
+      el.style.left=item[0]+'%';
+      el.style.top=item[1]+'%';
+      el.style.setProperty('--star-size',item[2]+'px');
+      el.style.setProperty('--star-duration',(4.1+(i%5)*0.55)+'s');
+      el.style.setProperty('--star-delay',(-((i*0.71)%6))+'s');
+      el.style.setProperty('--star-opacity',(0.28+(i%4)*0.07).toFixed(2));
+      el.style.setProperty('--star-rotation',((i%5)*8-16)+'deg');
+      heroCopy.appendChild(el);
+    });
+  }
 
   document.body.prepend(space);
 })();
