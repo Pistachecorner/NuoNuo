@@ -1876,3 +1876,209 @@ body{color-scheme:light;}
   .footer-mark{background:#111111!important;color:#FFFFFF!important;}
   .toast{background:#FFFFFF!important;color:#000000!important;}
 }
+
+/* =========================================================
+   FINAL DARK MODE OVERRIDE - PURE BLACK / WHITE ONLY
+   Style-only override. Must remain LAST in this stylesheet.
+   ========================================================= */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #FFFFFF !important;
+    --muted: #FFFFFF !important;
+    --line: #222222 !important;
+    --bg: #000000 !important;
+    --card: #000000 !important;
+    --accent: #FFFFFF !important;
+  }
+
+  html,
+  body {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+  }
+
+  body {
+    background-image: none !important;
+    background-color: #000000 !important;
+  }
+
+  /* Header and everything inside it */
+  .site-header,
+  .mobile-nav {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border-color: #222222 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .site-header *,
+  .mobile-nav * {
+    color: #FFFFFF !important;
+    border-color: #222222 !important;
+  }
+
+  .brand,
+  .brand b,
+  .brand small,
+  .header-title,
+  .icon-btn,
+  .account-link,
+  .person-icon,
+  .cart-btn,
+  .cart-btn i {
+    color: #FFFFFF !important;
+  }
+
+  .cart-btn {
+    background: #000000 !important;
+    border-color: #333333 !important;
+  }
+
+  .cart-btn i {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  /* Remove old colored surfaces / gradients everywhere */
+  .hero-visual,
+  .category-card,
+  .pic,
+  .card,
+  .panel,
+  .modal,
+  .account-modal,
+  .success,
+  .about-section,
+  .site-footer,
+  .footer-mark {
+    background: #000000 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  /* All typography */
+  h1, h2, h3, h4, h5, h6,
+  p, small, span, b, strong, label,
+  .hero-copy *,
+  .section *,
+  .menu-section *,
+  .body *,
+  .about-section *,
+  .panel *,
+  .modal *,
+  .account-modal *,
+  .success *,
+  .site-footer * {
+    color: #FFFFFF !important;
+  }
+
+  /* Keep secondary text white, just slightly softer with opacity */
+  .hero-copy p,
+  .body p,
+  .about-section p,
+  .modal-sub,
+  .checkout-hint,
+  .hero-copy small,
+  .section-kicker,
+  .modal small,
+  .success small,
+  .brand small,
+  .footer-brand small,
+  .footer-bottom {
+    color: #FFFFFF !important;
+    opacity: .78 !important;
+  }
+
+  /* Links / tabs / text buttons */
+  a,
+  .text-btn,
+  .trending-link,
+  .footer-socials a,
+  .tab,
+  .tab.active {
+    color: #FFFFFF !important;
+  }
+
+  .tab {
+    background: #000000 !important;
+    border-color: #333333 !important;
+  }
+
+  .tab.active {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border-color: #FFFFFF !important;
+  }
+
+  /* Primary actions stay black/white */
+  .hero-btn,
+  .add,
+  .dark,
+  .product-detail-add {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border-color: #FFFFFF !important;
+    box-shadow: none !important;
+  }
+
+  .hero-btn:hover,
+  .add:hover,
+  .dark:hover,
+  .product-detail-add:hover {
+    background: #EEEEEE !important;
+    color: #000000 !important;
+    border-color: #EEEEEE !important;
+  }
+
+  /* Inputs / quantity controls */
+  .search-wrap input,
+  .fields input,
+  .fields select,
+  .fields textarea,
+  .account-modal input,
+  .qty button,
+  .quantity-stepper,
+  .quantity-stepper button {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #FFFFFF !important;
+    opacity: .5 !important;
+  }
+
+  /* Product/detail borders */
+  .card,
+  .category-card,
+  .line,
+  .summary,
+  .product-detail-addons,
+  .product-detail-quantity {
+    border-color: #222222 !important;
+  }
+
+  .product-detail-image,
+  .product-detail-image img {
+    background: #000000 !important;
+  }
+
+  .product-detail-close {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+  }
+
+  .product-detail-overlay,
+  .overlay {
+    background: rgba(0,0,0,.94) !important;
+  }
+
+  .toast {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+}
