@@ -96,6 +96,36 @@
     <div id="trendingLinks" class="trending-links"></div>
   </section>
 
+  <section id="craft" class="section craft-section">
+    <div class="craft-heading">
+      <div class="section-kicker">MADE WITH INTENTION</div>
+      <h2>The details matter.</h2>
+      <p>From our pistachio paste to our marshmallow, every key ingredient is chosen and prepared with the texture we want you to taste.</p>
+    </div>
+    <div class="craft-grid">
+      <article class="craft-card">
+        <div class="craft-image"><img src="pistachio-grinding.jpg" alt="Fresh pistachios being ground into pistachio paste"></div>
+        <div class="craft-copy">
+          <span class="craft-script">Stone-ground</span>
+          <h3>PISTACHIO PASTE</h3>
+          <div class="craft-rule"></div>
+          <p class="craft-lead">Our pistachio paste is freshly stone-ground in-house.</p>
+          <p>We carefully select our pistachios and grind them fresh to preserve their natural oils and aroma, giving every bite a rich, nutty and beautifully smooth finish.</p>
+        </div>
+      </article>
+      <article class="craft-card craft-card-reverse">
+        <div class="craft-copy">
+          <span class="craft-script">Premium</span>
+          <h3>MARSHMALLOW</h3>
+          <div class="craft-rule"></div>
+          <p class="craft-lead">Less sweet, soft and seriously chewy.</p>
+          <p>We use a carefully selected marshmallow with a lower-sweetness profile and a stretchy, satisfying chew, so the texture stays soft without becoming overly sweet.</p>
+        </div>
+        <div class="craft-image"><img src="premium-marshmallow.jpg" alt="Premium marshmallows with a soft stretchy texture"></div>
+      </article>
+    </div>
+  </section>
+
   <section id="popular" class="section popular-section">
     <div class="section-title-row"><div><div class="section-kicker">POPULAR PRODUCTS</div><h2>Made to be remembered.</h2></div><button class="text-btn" onclick="scrollToId('menu')">Shop all →</button></div>
     <div id="popularGrid" class="popular-grid"></div>
@@ -280,7 +310,7 @@
      */
     var protectedRects=[];
     var protectedSelectors=[
-      '.site-header', '.announcement-bar', '.hero-visual',
+      '.site-header', '.announcement-bar', '.hero-visual', '.craft-card', '.craft-image',
       '.category-card', '.card', '.pic', '.about-section',
       '.overlay', '.panel', '.modal', '.account-modal', '.success'
     ];
