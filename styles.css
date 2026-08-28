@@ -1450,7 +1450,7 @@ body{color-scheme:light;}
 .popular-image{background:#F5F5F5!important;}
 
 @media (prefers-color-scheme:dark){
-  :root{--bg:#000000;--ink:#FFFFFF;--muted:#C8C8C8;--line:#242424;--card:#000000;--accent:#FFFFFF;--accent-soft:#111111;}
+  :root{--bg:#000000;--ink:#FFFFFF;--muted:#C8C8C8;--line:#242424;--card:#000000;--accent:#8F7D92;--accent-soft:#2A2327;}
   html,body{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
   body{color-scheme:dark;}
   .site-header,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.mobile-nav{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
@@ -1458,20 +1458,20 @@ body{color-scheme:light;}
   .icon-btn,.account-link,.header-title,.mobile-nav button{color:#FFFFFF!important;}
   .mobile-nav{border-color:#242424!important;box-shadow:0 12px 28px rgba(0,0,0,.75)!important;}
   .cart-btn{background:#000000!important;color:#FFFFFF!important;border-color:#242424!important;}
-  .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
-  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#FFFFFF!important;}
+  .cart-btn i{background:#8F7D92!important;color:#FFFFFF!important;}
+  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#8F7D92!important;}
   .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3{color:#FFFFFF!important;}
   .hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint{color:#C8C8C8!important;}
   .hero-btn,.add,.dark{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;}
   .hero-btn:hover,.add:hover,.dark:hover{background:#EAEAEA!important;border-color:#EAEAEA!important;}
   .hero-visual{border-color:#242424!important;box-shadow:none!important;}
-  .hero-placeholder{background:#000000!important;color:#FFFFFF!important;}
+  .hero-placeholder{background:#000000!important;color:#8F7D92!important;}
   .no-image{background:#171717!important;color:#FFFFFF!important;}
-  .text-btn,.trending-link{color:#FFFFFF!important;}
+  .text-btn,.trending-link{color:#8F7D92!important;}
   .trending-links{border-color:#242424!important;}
   .category-card{border-color:#242424!important;}
   .tab{background:#000000!important;color:#C8C8C8!important;border-color:#333333!important;}
-  .tab.active{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;}
+  .tab.active{background:#8F7D92!important;color:#FFFFFF!important;border-color:#8F7D92!important;}
   .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
   .search-wrap input::placeholder{color:#777777!important;}
   .card{border-color:#242424!important;box-shadow:none!important;}
@@ -1482,7 +1482,7 @@ body{color-scheme:light;}
   .close-btn{color:#FFFFFF!important;}
   .line,.summary{border-color:#242424!important;}
   .qty button{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .toast{background:#FFFFFF!important;color:#000000!important;}
+  .toast{background:#8F7D92!important;color:#FFFFFF!important;}
   .popular-image{background:#000000!important;}
   .hero-visual:after{display:none!important;}
 }
@@ -1529,8 +1529,8 @@ body{color-scheme:light;}
   .product-detail-close{background:#111;color:#fff}
   .product-detail-image{background:#111}
   .product-detail-image img{background:#111}
-  .product-detail-info>small{color:#FFFFFF}
-  .product-detail-description{color:#d8d8d8}
+  .product-detail-info>small{color:#8f8790}
+  .product-detail-description{color:#c8c8c8}
   .product-detail-addons{border-color:#2d2d2d}
   .addon-heading small{color:#888}
   .addon-option{border-color:#2d2d2d;background:#050505}
@@ -1539,340 +1539,74 @@ body{color-scheme:light;}
 }
 
 
-/* V27 DARK MODE FINAL PALETTE GUARD: pure black + white only. */
-@media (prefers-color-scheme: dark){
-  html,body{background:#000000!important;color:#FFFFFF!important;background-image:none!important;}
-  .site-header,.mobile-nav,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
-  .icon-btn,.account-link,.header-title,.mobile-nav button,.hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3,.product-detail-modal,.product-detail-info h2,.product-detail-price,.product-detail-info>small{color:#FFFFFF!important;}
-  .hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint,.product-detail-description{color:#FFFFFF!important;opacity:.82;}
-  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small,.text-btn,.trending-link{color:#FFFFFF!important;}
-  .hero-btn,.add,.dark,.tab.active,.toast{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;}
-  .cart-btn{background:#000000!important;color:#FFFFFF!important;border-color:#242424!important;}
-  .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
-  .tab{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .hero-visual:after{display:none!important;}
-  .product-detail-modal{background:#000000!important;}
-  .product-detail-close{background:#111111!important;color:#FFFFFF!important;}
-  .product-detail-image,.product-detail-image img{background:#111111!important;}
-  .product-detail-addons{border-color:#2D2D2D!important;}
-  .addon-option{background:#050505!important;border-color:#2D2D2D!important;color:#FFFFFF!important;}
-  .addon-heading small,.summary small{color:#FFFFFF!important;opacity:.7;}
-  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
-}
-
-/* V29: products must be opened before they can be added to cart. */
-.view-product{appearance:none;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:8px 13px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
-.view-product:hover{opacity:.78}
-.card[role="button"]{cursor:pointer}
-
-/* V30: Dark mode final cleanup + product quantity selector.
-   Dark mode uses only pure black/white. No purple, beige, gradients or tinted surfaces. */
-@media (prefers-color-scheme: dark){
-  :root{--bg:#000000!important;--card:#000000!important;--ink:#FFFFFF!important;--muted:#FFFFFF!important;--line:#252525!important;--accent:#FFFFFF!important;}
-  html,body{background:#000!important;background-image:none!important;color:#fff!important;}
-  body *{background-image:none!important;}
-  .announcement-bar,.site-header,.mobile-nav,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.product-detail-modal{background:#000!important;color:#fff!important;}
-  .announcement-bar{border-color:#252525!important;color:#fff!important;}
-  .announcement-bar span{color:#fff!important;opacity:.7!important;}
-  .site-header{border-color:#252525!important;box-shadow:none!important;}
-  .brand .mark,.footer-mark{background:#fff!important;color:#000!important;}
-  .icon-btn,.account-link,.header-title,.mobile-nav button,.hero-copy h1,.hero-copy p,.hero-copy small,.section-kicker,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.body p,.popular-meta h3,.popular-meta small,.text-btn,.trending-link,.product-detail-info h2,.product-detail-price,.product-detail-info>small,.product-detail-description{color:#fff!important;}
-  .cart-btn{background:#000!important;color:#fff!important;border-color:#252525!important;}
-  .cart-btn i{background:#fff!important;color:#000!important;}
-  .hero-btn,.add,.dark,.tab.active,.toast{background:#fff!important;color:#000!important;border-color:#fff!important;box-shadow:none!important;}
-  .tab{background:#000!important;color:#fff!important;border-color:#303030!important;}
-  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000!important;color:#fff!important;border-color:#303030!important;}
-  .card,.category-card{border-color:#252525!important;box-shadow:none!important;}
-  .site-footer,.about-section,.trending-links,.line,.summary{border-color:#252525!important;}
-  .product-detail-overlay{background:rgba(0,0,0,.82)!important;}
-  .product-detail-modal{border:1px solid #252525!important;}
-  .product-detail-close{background:#111!important;color:#fff!important;border:1px solid #252525!important;}
-  .product-detail-image,.product-detail-image img{background:#111!important;}
-  .product-detail-addons{border-color:#252525!important;}
-  .addon-option{background:#000!important;border-color:#303030!important;color:#fff!important;}
-  .addon-heading small,.summary small{color:#fff!important;opacity:.7!important;}
-  .qty button{background:#000!important;color:#fff!important;border-color:#303030!important;}
-  .no-image{background:#111!important;color:#fff!important;}
-}
-
-/* Product quantity selector inside the detail view. */
-.product-detail-quantity{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0 4px;padding:14px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;font-size:14px;font-weight:600;}
-.quantity-stepper{display:flex;align-items:center;border:1px solid #dcdcdc;border-radius:10px;overflow:hidden;background:#fff;}
-.quantity-stepper button{width:40px;height:38px;border:0;background:#fff;color:#111;font-size:20px;line-height:1;cursor:pointer;}
-.quantity-stepper button:hover{background:#f3f3f3;}
-.quantity-stepper span{min-width:42px;text-align:center;font-size:15px;font-weight:600;}
-@media(max-width:700px){
-  .product-detail-quantity{margin-top:14px;}
-  .quantity-stepper button{width:42px;height:40px;}
-}
-@media(prefers-color-scheme:dark){
-  .product-detail-quantity{border-color:#252525!important;color:#fff!important;}
-  .quantity-stepper{background:#000!important;border-color:#303030!important;}
-  .quantity-stepper button{background:#000!important;color:#fff!important;}
-  .quantity-stepper button:hover{background:#111!important;}
-}
-
-
-/* V31 FINAL: remove the redundant Choose section and keep dark mode strictly black + white. */
+/* V23 FINAL: user-requested monochrome themes. No purple / beige in dark mode. */
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#000000!important;
-    --card:#000000!important;
-    --ink:#FFFFFF!important;
-    --muted:#FFFFFF!important;
-    --line:#222222!important;
-    --accent:#FFFFFF!important;
+    --ink:#FFFFFF;
+    --muted:#FFFFFF;
+    --line:#222222;
+    --bg:#000000;
+    --card:#000000;
+    --accent:#FFFFFF;
   }
-  html,body{background:#000000!important;color:#FFFFFF!important;}
-  .announcement-bar,
-  .site-header,
-  .mobile-nav,
-  .hero-wrap,
-  .section,
-  .site-footer,
-  .about-section,
-  .card,
-  .popular-card,
-  .category-card,
-  .hero-visual,
-  .panel,
-  .modal,
-  .account-modal,
-  .success,
-  .product-detail-modal{
-    background:#000000!important;
-    background-image:none!important;
-    color:#FFFFFF!important;
+  html,body{background:#000000!important;color:#FFFFFF!important;background-image:none!important;}
+  body,.site-header,.mobile-nav,.hero-wrap,.section,.about-section,.site-footer,.panel,.modal,.account-modal,.success,
+  .card,.category-card,.popular-card,.popular-image,.hero-visual,.rewards-box,.voucher-checkout,.checkout-voucher-card{
+    background:#000000!important;background-image:none!important;
   }
-  .announcement-bar,
-  .site-header{border-color:#222222!important;box-shadow:none!important;}
-  .announcement-bar,
-  .announcement-bar span,
-  .header-title,
-  .icon-btn,
-  .account-link,
-  .mobile-nav button,
-  .hero-copy small,
-  .hero-copy h1,
-  .hero-copy p,
-  .section-kicker,
-  .section-title-row h2,
-  .text-btn,
-  .trending-link,
-  .popular-meta small,
-  .popular-meta h3,
-  .popular-meta b,
-  .body h3,
-  .body p,
-  .body b,
-  .about-section h2,
-  .about-section p,
-  .panel h2,
-  .modal h2,
-  .modal-sub,
-  .success h2,
-  .account-modal h2,
-  .product-detail-info h2,
-  .product-detail-price,
-  .product-detail-info>small,
-  .product-detail-description,
-  .product-detail-quantity,
-  .addon-heading,
-  .addon-heading small,
-  .addon-option,
-  .addon-option span,
-  .addon-option b{
-    color:#FFFFFF!important;
+  .site-header,.mobile-nav,.trending-links,.trending-section,.card,.category-card,.about-section,.site-footer,
+  .panel,.modal,.account-modal,.success,.rewards-box,.voucher-checkout,.checkout-voucher-card{
+    border-color:#222222!important;
   }
-  .hero-copy p,
-  .body p,
-  .about-section p,
-  .modal-sub,
-  .product-detail-description{opacity:.82;}
-  .hero-btn,
-  .add,
-  .dark,
-  .tab.active,
-  .product-detail-add{
-    background:#FFFFFF!important;
-    color:#000000!important;
-    border-color:#FFFFFF!important;
-    box-shadow:none!important;
-  }
-  .cart-btn{
-    background:#000000!important;
-    color:#FFFFFF!important;
-    border-color:#333333!important;
+  *,*::before,*::after{border-color:#222222!important;}
+  .header-title,.icon-btn,.account-link,.mobile-nav button,
+  .hero-copy h1,.hero-copy p,.hero-copy small,
+  .section-kicker,.section-title-row h2,.menu-title h2,
+  .about-section h2,.about-section p,.body,.body h3,.body p,
+  .modal h2,.modal-sub,.success h2,.account-modal h2,
+  .popular-meta h3,.popular-meta small,.text-btn,.trending-link,
+  .hero-caption,.hero-caption span,.hero-caption small,
+  .footer-socials a,.footer-socials span,.footer-bottom,
+  .panel h2,.panel small,.panel p,.panel span,.panel b,
+  .history-summary,.history-order,.history-top,.history-items,.history-total,
+  .reward-empty,.reward-rule,.rewards-head,.reward-stats,
+  .voucher-code,.voucher-card-details,.voucher-validity,
+  .checkout-hint,.fields label,.account-modal label{color:#FFFFFF!important;}
+  .cart-btn,.qty button,.tab,.search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{
+    background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;
   }
   .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
-  .tab,
-  .search-wrap input,
-  .fields input,
-  .fields select,
-  .fields textarea,
-  .account-modal input{
-    background:#000000!important;
-    color:#FFFFFF!important;
-    border-color:#333333!important;
+  .hero-btn,.add,.dark,.ok{
+    background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;
   }
-  .search-wrap input::placeholder{color:#FFFFFF!important;opacity:.55;}
-  .card,.category-card{border-color:#222222!important;box-shadow:none!important;}
-  .line,.summary,.product-detail-addons,.product-detail-quantity{border-color:#222222!important;}
-  .qty button,.quantity-stepper,.quantity-stepper button{
-    background:#000000!important;
-    color:#FFFFFF!important;
-    border-color:#333333!important;
+  .hero-btn:hover,.add:hover,.dark:hover,.ok:hover{background:#EDEDED!important;color:#000000!important;border-color:#EDEDED!important;}
+  .tab.active{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;}
+  .footer-mark{background:#FFFFFF!important;color:#000000!important;}
+  .toast{background:#FFFFFF!important;color:#000000!important;}
+  .voucher-badge{background:#FFFFFF!important;color:#000000!important;}
+  .voucher-copy-btn,.voucher-row button,.logout-btn,.secondary-action,.header-me{
+    background:#000000!important;color:#FFFFFF!important;border-color:#444444!important;
   }
-  .product-detail-image,.product-detail-image img,.no-image{background:#111111!important;}
-  .product-detail-close{background:#111111!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .product-detail-overlay{background:rgba(0,0,0,.86)!important;}
-  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
+  .voucher-copy-btn:hover,.logout-btn:hover,.header-me:hover{background:#FFFFFF!important;color:#000000!important;}
+  .hero-arrow{border-color:#FFFFFF!important;background:#000000!important;color:#FFFFFF!important;}
+  .hero-dot{border-color:#FFFFFF!important;background:#000000!important;}
+  .hero-dot.active{background:#FFFFFF!important;}
+  .overlay{background:rgba(0,0,0,.82)!important;}
+  .no-image{background:#111111!important;}
 }
 
-/* V32 STYLE-ONLY: strict Dark Mode monochrome. No layout or functionality changes. */
-@media (prefers-color-scheme: dark){
-  html,body{
-    background:#000000!important;
-    color:#FFFFFF!important;
-  }
-
-  .announcement-bar,
-  .site-header,
-  .mobile-nav,
-  .hero-wrap,
-  .section,
-  .site-footer,
-  .about-section,
-  .card,
-  .popular-card,
-  .category-card,
-  .hero-visual,
-  .panel,
-  .modal,
-  .account-modal,
-  .success,
-  .product-detail-modal{
-    background:#000000!important;
-    background-image:none!important;
-  }
-
-  /* Header: absolutely no cream / beige / purple. */
-  .announcement-bar,
-  .announcement-bar * ,
-  .site-header,
-  .site-header * ,
-  .mobile-nav,
-  .mobile-nav *{
-    color:#FFFFFF!important;
-  }
-
-  .site-header,
-  .announcement-bar{
-    border-color:#222222!important;
-    box-shadow:none!important;
-  }
-
-  .site-header .cart-btn{
-    background:#000000!important;
-    border-color:#333333!important;
-    color:#FFFFFF!important;
-  }
-  .site-header .cart-btn i{
-    background:#FFFFFF!important;
-    color:#000000!important;
-  }
-  .site-header .cart-icon svg{
-    stroke:#FFFFFF!important;
-  }
-
-  /* All normal dark-mode typography is white. */
-  .hero-copy small,
-  .hero-copy h1,
-  .hero-copy p,
-  .section-kicker,
-  .section-title-row h2,
-  .text-btn,
-  .trending-link,
-  .popular-meta small,
-  .popular-meta h3,
-  .popular-meta b,
-  .body h3,
-  .body p,
-  .body b,
-  .about-section h2,
-  .about-section p,
-  .panel h2,
-  .modal h2,
-  .modal-sub,
-  .success h2,
-  .account-modal h2,
-  .product-detail-info h2,
-  .product-detail-price,
-  .product-detail-info>small,
-  .product-detail-description,
-  .product-detail-quantity,
-  .addon-heading,
-  .addon-heading small,
-  .addon-option,
-  .addon-option span,
-  .addon-option b,
-  .footer-socials span,
-  .footer-socials a,
-  .footer-bottom,
-  .site-footer,
-  .site-footer a{
-    color:#FFFFFF!important;
-  }
-
-  .hero-copy p,
-  .body p,
-  .about-section p,
-  .modal-sub,
-  .product-detail-description{
-    opacity:.82;
-  }
-
-  /* White is reserved for primary action surfaces; no purple or cream. */
-  .hero-btn,
-  .add,
-  .dark,
-  .tab.active,
-  .product-detail-add{
-    background:#FFFFFF!important;
-    color:#000000!important;
-    border-color:#FFFFFF!important;
-    box-shadow:none!important;
-  }
-  .hero-btn:hover,
-  .add:hover,
-  .dark:hover,
-  .tab.active:hover,
-  .product-detail-add:hover{
-    background:#EEEEEE!important;
-    color:#000000!important;
-    border-color:#EEEEEE!important;
-  }
-
-  .tab,
-  .search-wrap input,
-  .fields input,
-  .fields select,
-  .fields textarea,
-  .account-modal input,
-  .qty button,
-  .quantity-stepper,
-  .quantity-stepper button{
-    background:#000000!important;
-    color:#FFFFFF!important;
-    border-color:#333333!important;
-  }
-  .search-wrap input::placeholder{color:#FFFFFF!important;opacity:.5;}
-  .card,.category-card{border-color:#222222!important;box-shadow:none!important;}
-  .line,.summary,.product-detail-addons,.product-detail-quantity{border-color:#222222!important;}
-  .product-detail-image,.product-detail-image img{background:#111111!important;}
-  .product-detail-close{background:#111111!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .product-detail-overlay{background:rgba(0,0,0,.9)!important;}
-  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
-  .toast{background:#FFFFFF!important;color:#000000!important;}
+@media (prefers-color-scheme: light){
+  :root{--ink:#111111;--muted:#4F606A;--line:#E5E5E5;--bg:#FFFFFF;--card:#FFFFFF;--accent:#4F606A;}
+  html,body{background:#FFFFFF!important;color:#111111!important;background-image:none!important;}
+  .site-header,.mobile-nav,.hero-wrap,.section,.about-section,.site-footer,.panel,.modal,.account-modal,.success,
+  .card,.category-card,.popular-card,.hero-visual{background:#FFFFFF!important;background-image:none!important;}
+  .header-title,.icon-btn,.account-link,.mobile-nav button,.hero-copy h1,.section-title-row h2,.menu-title h2,
+  .about-section h2,.body h3,.modal h2,.success h2,.account-modal h2,.popular-meta h3,.text-btn,.trending-link,
+  .hero-caption,.panel h2{color:#111111!important;}
+  .hero-copy p,.about-section p,.body p,.modal-sub,.section-kicker,.hero-copy small,.popular-meta small,
+  .footer-socials span,.footer-bottom{color:#4F606A!important;}
+  .cart-btn{background:#FFFFFF!important;color:#111111!important;border-color:#4F606A!important;}
+  .cart-btn i{background:#4F606A!important;color:#FFFFFF!important;}
+  .hero-btn,.add,.dark,.ok{background:#111111!important;color:#FFFFFF!important;border-color:#111111!important;}
+  .footer-mark{background:#E8E8E8!important;color:#111111!important;}
 }

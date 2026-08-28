@@ -7,7 +7,7 @@
   <meta name="description" content="NuoNuo desserts · local pickup & delivery in Ipoh">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#080b0f" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" href="favicon-light.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="favicon-dark.png" media="(prefers-color-scheme: dark)">
   <link rel="stylesheet" href="styles.css">
@@ -23,6 +23,7 @@
     </div>
     <nav id="mobileNav" class="mobile-nav" aria-label="Main navigation">
       <button type="button" onclick="scrollToId('menu')">Shop</button>
+      <button type="button" onclick="scrollToId('categories')">Categories</button>
       <button type="button" onclick="scrollToId('about')">About NuoNuo</button>
       <button id="myOrdersNav" class="hidden" type="button" onclick="openMe()">My orders & rewards</button>
     </nav>
@@ -56,6 +57,12 @@
   <section id="popular" class="section popular-section">
     <div class="section-title-row"><div><div class="section-kicker">POPULAR PRODUCTS</div><h2>Made to be remembered.</h2></div><button class="text-btn" onclick="scrollToId('menu')">Shop all →</button></div>
     <div id="popularGrid" class="popular-grid"></div>
+  </section>
+
+  <section id="categories" class="section category-section">
+    <div class="section-kicker">NUONUO MENU</div>
+    <div class="section-title-row"><h2>Choose your favourites</h2><button class="text-btn" onclick="scrollToId('menu')">View all →</button></div>
+    <div id="categoryCards" class="category-cards"></div>
   </section>
 
   <section id="menu" class="section menu-section">
