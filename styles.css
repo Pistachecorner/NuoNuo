@@ -1764,3 +1764,62 @@ body{color-scheme:light;}
     letter-spacing: .02em;
   }
 }
+
+/* =========================================
+   NuoNuo subtle night-sky background
+   Pure black base + restrained purple meteors + soft yellow stars
+   ========================================= */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  opacity:.34;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(248,220,105,.95) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 18% 72%, rgba(248,220,105,.75) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 29% 34%, rgba(248,220,105,.9) 0 1.3px, transparent 1.9px),
+    radial-gradient(circle at 42% 82%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 54% 17%, rgba(248,220,105,.95) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 65% 61%, rgba(248,220,105,.7) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 76% 28%, rgba(248,220,105,.85) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 88% 76%, rgba(248,220,105,.8) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 94% 13%, rgba(248,220,105,.9) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 12% 48%, rgba(248,220,105,.65) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 48% 53%, rgba(248,220,105,.8) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 70% 91%, rgba(248,220,105,.75) 0 1px, transparent 1.6px);
+  animation:nuonuoStars 5s ease-in-out infinite;
+}
+
+body::after{
+  content:"";
+  position:fixed;
+  width:150px;
+  height:1px;
+  top:14%;
+  left:108%;
+  pointer-events:none;
+  z-index:0;
+  opacity:0;
+  background:linear-gradient(90deg, transparent, rgba(146,91,196,.08) 18%, rgba(177,119,230,.8) 82%, rgba(218,183,255,.95));
+  box-shadow:0 0 8px rgba(177,119,230,.45);
+  transform:rotate(-35deg);
+  animation:nuonuoMeteor 8s linear infinite;
+}
+
+@keyframes nuonuoStars{
+  0%,100%{opacity:.24;}
+  50%{opacity:.62;}
+}
+
+@keyframes nuonuoMeteor{
+  0%{transform:translate3d(0,0,0) rotate(-35deg);opacity:0;}
+  8%{opacity:.75;}
+  17%{opacity:0;}
+  100%{transform:translate3d(-900px,600px,0) rotate(-35deg);opacity:0;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body::before,body::after{animation:none;}
+}
