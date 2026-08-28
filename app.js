@@ -33,35 +33,33 @@ function imageSrc(value){
 }
 function menu(cat='',query=''){
   let q=query.trim().toLowerCase();
-  if(!cat){
-    $('#grid').innerHTML='<div class="menu-empty">Select a category to view the menu.</div>';return;
-  }
-  let list=products.filter(p=>p.category_id===cat&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
+  let list=products.filter(p=>(!cat||p.category_id===cat)&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
     const img=imageSrc(p.image_url);
-    return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
-  }).join('')||'<p>No products available in this category.</p>';
+    const category=cats.find(c=>c.id===p.category_id);
+    const categoryName=category?.name||'Uncategorized';
+    return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><div class="product-category">${esc(categoryName)}</div><h3>${esc(p.name)}</h3>${p.description?`<p class="product-description">${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
+  }).join('')||'<p>No products available.</p>';
+}
+function renderTrending(){
+  const holder=$('#trendingLinks');if(!holder)return;
+  holder.innerHTML=cats.map(c=>`<button type="button" class="trending-link" onclick="filterByCategory('\${c.id}\')">${esc(c.name)}</button>`).join('');
+}
+function renderPopular(){
+  const holder=$('#popularGrid');if(!holder)return;
+  const list=products.filter(p=>p.image_url).slice(0,4);
+  holder.innerHTML=list.map(p=>{
+    const img=imageSrc(p.image_url);
+    const category=cats.find(c=>c.id===p.category_id);
+    return `<article class="popular-card"><button type="button" class="popular-image" onclick="filterByCategory('\${p.category_id}\')" style="background-image:url('\${esc(img)}\')"><span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
+  }).join('')||'<p class="menu-empty">No featured products available.</p>';
 }
 function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;
   holder.innerHTML=cats.map(c=>{
     const p=products.find(x=>x.category_id===c.id),img=imageSrc(p?.image_url);
-    return `<button class="category-card" type="button" data-category-id="${esc(c.id)}" aria-label="View ${esc(c.name)}">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
+    return `<button class="category-card" type="button" onclick="filterByCategory('${c.id}')">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
   }).join('')||'<p>No categories yet.</p>';
-}
-
-function bindCategoryCards(){
-  const holder=$('#categoryCards');
-  if(!holder||holder.dataset.bound==='1')return;
-  holder.dataset.bound='1';
-  holder.addEventListener('click',e=>{
-    const card=e.target.closest('.category-card');
-    if(!card||!holder.contains(card))return;
-    e.preventDefault();
-    e.stopPropagation();
-    const id=card.dataset.categoryId;
-    if(id) filterByCategory(id);
-  });
 }
 function renderHero(){
   if(!products.length)return;
@@ -102,8 +100,9 @@ async function load(){
       select.innerHTML='<option value="">Categories</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
       select.onchange=()=>menu(select.value,$('#searchInput')?.value||'');
     }
+    renderTrending();
+    renderPopular();
     renderCategories();
-    bindCategoryCards();
     renderHero();
     startHero();
     menu('');
@@ -117,7 +116,29 @@ async function load(){
 window.filterByCategory=(id)=>{const select=$('#categorySelect');if(select){select.value=id;menu(id,$('#searchInput')?.value||'')}else menu(id,$('#searchInput')?.value||'')};
 window.filterCat=(b,id)=>window.filterByCategory(id);
 function currentCategory(){return $('#categorySelect')?.value||''}
-$('#shopBtn').onclick=()=>scrollToId('menu');$('#menuToggle').onclick=()=>$('#mobileNav').classList.toggle('open');$('#cart').onclick=()=>{$('#drawer').classList.remove('hidden');$('#drawer').setAttribute('aria-hidden','false');document.body.classList.add('cart-open');render()};$('#close').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};$('#drawerBackdrop').onclick=()=>{$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};
+function bindUI(){
+  const shopBtn=$('#shopBtn');
+  const menuToggle=$('#menuToggle');
+  const mobileNav=$('#mobileNav');
+  const cartBtn=$('#cart');
+  const drawer=$('#drawer');
+  const closeBtn=$('#close');
+  const drawerBackdrop=$('#drawerBackdrop');
+  if(shopBtn) shopBtn.onclick=()=>scrollToId('menu');
+  if(menuToggle&&mobileNav) menuToggle.onclick=()=>mobileNav.classList.toggle('open');
+  if(cartBtn&&drawer){cartBtn.onclick=()=>{drawer.classList.remove('hidden');drawer.setAttribute('aria-hidden','false');document.body.classList.add('cart-open');render()};}
+  const closeCart=()=>{if(!drawer)return;drawer.classList.add('hidden');drawer.setAttribute('aria-hidden','true');document.body.classList.remove('cart-open')};
+  if(closeBtn) closeBtn.onclick=closeCart;
+  if(drawerBackdrop) drawerBackdrop.onclick=closeCart;
+  const accountBtn=$('#accountBtn');
+  if(accountBtn) accountBtn.onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal')?.classList.remove('hidden');setAuthMode('login');refreshAuth().catch(console.error)}};
+  const rewardsClose=$('#rewardsClose'); if(rewardsClose) rewardsClose.onclick=()=>$('#rewardsModal')?.classList.add('hidden');
+  const accountClose=$('#accountClose'); if(accountClose) accountClose.onclick=()=>$('#accountModal')?.classList.add('hidden');
+  const loginTab=$('#loginTab'); if(loginTab) loginTab.onclick=()=>setAuthMode('login');
+  const signupTab=$('#signupTab'); if(signupTab) signupTab.onclick=()=>setAuthMode('signup');
+  const meClose=$('#meClose'); if(meClose) meClose.onclick=()=>$('#meModal')?.classList.add('hidden');
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindUI,{once:true}); else bindUI();
 function setAuthMode(mode){authMode=mode;$('#loginTab').classList.toggle('active',mode==='login');$('#signupTab').classList.toggle('active',mode==='signup');$('#authTitle').textContent=mode==='login'?'Welcome back.':'Create your NuoNuo account.';$('#authSubmit').textContent=mode==='login'?'Sign in':'Create account';$('#authNameField').classList.toggle('hidden',mode==='login');$('#authName').required=mode==='signup';$('#authPassword').autocomplete=mode==='signup'?'new-password':'current-password';$('#authMessage').textContent=''}
 async function getProfile(){const {data:{session}}=await sb.auth.getSession();if(!session){currentProfile=null;return null}const {data,error}=await sb.from('nuonuo_customer_profiles').select('id,name,phone,email,address,birthday').eq('auth_user_id',session.user.id).eq('owner_id',owner).maybeSingle();if(error){console.error('Profile load error',error);currentProfile=null;return null}currentProfile=data||null;return currentProfile}
 function profileComplete(p){return !!(p?.name?.trim()&&p?.phone?.trim())}
@@ -150,10 +171,7 @@ async function refreshAuth(){
     nav?.classList.add('hidden');
   }
 }
-$('#accountBtn').onclick=()=>{const signedIn=!!currentProfile;if(signedIn){openMe()}else{$('#accountModal').classList.remove('hidden');setAuthMode('login');refreshAuth()}};
 window.openRewardsAndOrders=async()=>{if(!currentProfile)return;$('#rewardsModal').classList.remove('hidden');await loadRewards();await openOrderHistory()};
-$('#rewardsClose').onclick=()=>$('#rewardsModal').classList.add('hidden');
-$('#accountClose').onclick=()=>$('#accountModal').classList.add('hidden');$('#loginTab').onclick=()=>setAuthMode('login');$('#signupTab').onclick=()=>setAuthMode('signup');
 $('#authForm').onsubmit=async e=>{e.preventDefault();$('#authMessage').textContent='';$('#authSubmit').disabled=true;try{const phone=normalizePhone($('#authPhone').value),password=$('#authPassword').value,name=$('#authName').value.trim();if(!/^\+?[0-9]{8,15}$/.test(phone.replace(/\s/g,'')))throw new Error('Please enter a valid phone number, e.g. +601112345678.');if(authMode==='signup'){const authEmail=authEmailFromPhone(phone);const {data,error}=await sb.auth.signUp({email:authEmail,password,options:{data:{full_name:name,display_name:name,account_type:'customer',app:'nuonuo-public-store',phone}}});if(error)throw error;if(data.session){await saveProfile({name,phone,email:'',address:'',birthday:''});$('#authMessage').textContent='Account created. You are signed in.';await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}else{$('#authMessage').textContent='Account created, but no session was returned. In Supabase, keep Email confirmations OFF for this password-only customer login.'}}else{const authEmail=authEmailFromPhone(phone);const {error}=await sb.auth.signInWithPassword({email:authEmail,password});if(error)throw error;await refreshAuth();$('#accountModal').classList.add('hidden');openMe()}}catch(err){$('#authMessage').textContent=errText(err)}finally{$('#authSubmit').disabled=false}};
 function normalizePhone(value){return String(value||'').replace(/[()\s-]/g,'').trim()}
 // NuoNuo uses the phone number as the customer's login ID without requiring
@@ -162,7 +180,6 @@ function normalizePhone(value){return String(value||'').replace(/[()\s-]/g,'').t
 function authEmailFromPhone(phone){const digits=normalizePhone(phone).replace(/^\+/,'').replace(/[^0-9]/g,'');return `customer_${digits}@auth.nuonuo.test`}
 async function saveProfile(profile){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Please sign in first.');const normalizedPhone=normalizePhone(profile.phone)||normalizePhone(session.user.phone);const payload={auth_user_id:session.user.id,owner_id:owner,name:profile.name?.trim()||null,phone:normalizedPhone||null,email:profile.email?.trim()||null,address:profile.address?.trim()||null,birthday:profile.birthday||null,updated_at:new Date().toISOString()};const {data,error}=await sb.from('nuonuo_customer_profiles').upsert(payload,{onConflict:'auth_user_id,owner_id'}).select().single();if(error)throw error;currentProfile=data;return data}
 $('#meForm').onsubmit=async e=>{e.preventDefault();$('#meMessage').textContent='';$('#meSave').disabled=true;try{await saveProfile({name:$('#meName').value,phone:$('#mePhone').value,email:$('#meEmail').value,address:$('#meAddress').value,birthday:$('#meBirthday').value});await refreshAuth();$('#meModal').classList.add('hidden');showToast('Your details are saved')}catch(err){$('#meMessage').textContent=errText(err)}finally{$('#meSave').disabled=false}};
-$('#meClose').onclick=()=>$('#meModal').classList.add('hidden');
 
 async function loadRewards(){
   if(!sb||!currentProfile){

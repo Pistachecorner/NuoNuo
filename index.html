@@ -15,6 +15,7 @@
   <script src="config.js"></script>
 </head>
 <body>
+  <div class="announcement-bar">LOCAL PICKUP & DELIVERY · IPOH <span>Freshly made to order</span></div>
   <header class="site-header">
     <div class="header-left">
       <button id="menuToggle" class="icon-btn" aria-label="Open menu">☰</button>
@@ -37,15 +38,25 @@
 
   <section class="hero-wrap">
     <div class="hero-copy">
-      <small>NUONUO</small>
+      <small>NUONUO · DESSERTS</small>
       <h1>Less sweet,<br>never less delicious.</h1>
-      <p>Freshly made desserts, prepared with care. Local pickup & delivery only.</p>
+      <p>Thoughtfully made desserts with a softer sweetness, richer texture and a little NuoNuo character.</p>
       <button id="shopBtn" class="hero-btn" type="button">Shop NuoNuo <span>→</span></button>
     </div>
     <div class="hero-visual" id="heroVisual">
       <div class="hero-placeholder"><img src="nuonuo-logo.png" alt="NuoNuo"></div>
       <div class="hero-caption"><span id="heroProductName">Freshly made</span><small>Explore the menu</small></div>
     </div>
+  </section>
+
+  <section class="section trending-section">
+    <div class="section-kicker">TRENDING NOW</div>
+    <div id="trendingLinks" class="trending-links"></div>
+  </section>
+
+  <section id="popular" class="section popular-section">
+    <div class="section-title-row"><div><div class="section-kicker">POPULAR PRODUCTS</div><h2>Made to be remembered.</h2></div><button class="text-btn" onclick="scrollToId('menu')">Shop all →</button></div>
+    <div id="popularGrid" class="popular-grid"></div>
   </section>
 
   <section id="categories" class="section category-section">
