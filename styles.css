@@ -1565,3 +1565,50 @@ body{color-scheme:light;}
 .view-product{appearance:none;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:8px 13px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
 .view-product:hover{opacity:.78}
 .card[role="button"]{cursor:pointer}
+
+/* V30: Dark mode final cleanup + product quantity selector.
+   Dark mode uses only pure black/white. No purple, beige, gradients or tinted surfaces. */
+@media (prefers-color-scheme: dark){
+  :root{--bg:#000000!important;--card:#000000!important;--ink:#FFFFFF!important;--muted:#FFFFFF!important;--line:#252525!important;--accent:#FFFFFF!important;}
+  html,body{background:#000!important;background-image:none!important;color:#fff!important;}
+  body *{background-image:none!important;}
+  .announcement-bar,.site-header,.mobile-nav,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.product-detail-modal{background:#000!important;color:#fff!important;}
+  .announcement-bar{border-color:#252525!important;color:#fff!important;}
+  .announcement-bar span{color:#fff!important;opacity:.7!important;}
+  .site-header{border-color:#252525!important;box-shadow:none!important;}
+  .brand .mark,.footer-mark{background:#fff!important;color:#000!important;}
+  .icon-btn,.account-link,.header-title,.mobile-nav button,.hero-copy h1,.hero-copy p,.hero-copy small,.section-kicker,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.body p,.popular-meta h3,.popular-meta small,.text-btn,.trending-link,.product-detail-info h2,.product-detail-price,.product-detail-info>small,.product-detail-description{color:#fff!important;}
+  .cart-btn{background:#000!important;color:#fff!important;border-color:#252525!important;}
+  .cart-btn i{background:#fff!important;color:#000!important;}
+  .hero-btn,.add,.dark,.tab.active,.toast{background:#fff!important;color:#000!important;border-color:#fff!important;box-shadow:none!important;}
+  .tab{background:#000!important;color:#fff!important;border-color:#303030!important;}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000!important;color:#fff!important;border-color:#303030!important;}
+  .card,.category-card{border-color:#252525!important;box-shadow:none!important;}
+  .site-footer,.about-section,.trending-links,.line,.summary{border-color:#252525!important;}
+  .product-detail-overlay{background:rgba(0,0,0,.82)!important;}
+  .product-detail-modal{border:1px solid #252525!important;}
+  .product-detail-close{background:#111!important;color:#fff!important;border:1px solid #252525!important;}
+  .product-detail-image,.product-detail-image img{background:#111!important;}
+  .product-detail-addons{border-color:#252525!important;}
+  .addon-option{background:#000!important;border-color:#303030!important;color:#fff!important;}
+  .addon-heading small,.summary small{color:#fff!important;opacity:.7!important;}
+  .qty button{background:#000!important;color:#fff!important;border-color:#303030!important;}
+  .no-image{background:#111!important;color:#fff!important;}
+}
+
+/* Product quantity selector inside the detail view. */
+.product-detail-quantity{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0 4px;padding:14px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;font-size:14px;font-weight:600;}
+.quantity-stepper{display:flex;align-items:center;border:1px solid #dcdcdc;border-radius:10px;overflow:hidden;background:#fff;}
+.quantity-stepper button{width:40px;height:38px;border:0;background:#fff;color:#111;font-size:20px;line-height:1;cursor:pointer;}
+.quantity-stepper button:hover{background:#f3f3f3;}
+.quantity-stepper span{min-width:42px;text-align:center;font-size:15px;font-weight:600;}
+@media(max-width:700px){
+  .product-detail-quantity{margin-top:14px;}
+  .quantity-stepper button{width:42px;height:40px;}
+}
+@media(prefers-color-scheme:dark){
+  .product-detail-quantity{border-color:#252525!important;color:#fff!important;}
+  .quantity-stepper{background:#000!important;border-color:#303030!important;}
+  .quantity-stepper button{background:#000!important;color:#fff!important;}
+  .quantity-stepper button:hover{background:#111!important;}
+}
