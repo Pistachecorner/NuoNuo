@@ -473,18 +473,20 @@ body{background:var(--bg)}
 
 /* V8 header spacing: keep NuoNuo on the left and move account to the right. */
 .header-left{display:flex;align-items:center;gap:14px;min-width:0}
-.header-title{position:static;transform:none;font:400 24px Georgia,serif;letter-spacing:-.02em;color:#3a3150;pointer-events:auto;white-space:nowrap}
+.header-title{position:static;transform:none;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;line-height:1;letter-spacing:0;color:#3a3150;pointer-events:auto;white-space:nowrap}.header-title-main{font:400 24px Georgia,serif;letter-spacing:-.02em}.header-title-sub{font:400 8px Arial,Helvetica,sans-serif;letter-spacing:.16em;text-transform:none;margin-top:5px;color:#7f8790}
 .header-actions{display:flex;align-items:center;gap:12px}
 @media(max-width:650px){
   .site-header{padding:0 4%}
   .header-left{gap:11px}
-  .header-title{font-size:21px}
+  .header-title-main{font-size:21px}
+  .header-title-sub{font-size:7px;margin-top:4px}
   .header-actions{gap:6px}
   .account-link{font-size:12px}
   .account-link .person-icon{display:none}
 }
 @media(prefers-color-scheme:dark){
   .header-title{color:#f1f5f7}
+  .header-title-sub{color:#aeb7bf}
 }
 
 /* V7 color direction: light gray-blue + warm peach / dark plum-purple + lavender-peach */
