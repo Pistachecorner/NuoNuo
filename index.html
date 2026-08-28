@@ -272,19 +272,61 @@
     for(var c=count-1;c>0;c--){var k=Math.floor(Math.random()*(c+1));var tmp=colors[c];colors[c]=colors[k];colors[k]=tmp;}
 
     var used=[];
+
+    /*
+     * Keep stars in the open black space, never on top of the actual
+     * product/hero imagery or the main menu cards.  Positions are document
+     * coordinates so the stars naturally travel with the page while scrolling.
+     */
+    var protectedRects=[];
+    var protectedSelectors=[
+      '.site-header', '.announcement-bar', '.hero-visual',
+      '.category-card', '.card', '.pic', '.about-section',
+      '.overlay', '.panel', '.modal', '.account-modal', '.success'
+    ];
+    protectedSelectors.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){
+        var r=el.getBoundingClientRect();
+        protectedRects.push({
+          left:r.left+window.scrollX-18,
+          right:r.right+window.scrollX+18,
+          top:r.top+window.scrollY-18,
+          bottom:r.bottom+window.scrollY+18
+        });
+      });
+    });
+
+    function isProtected(x,y,pad){
+      for(var r=0;r<protectedRects.length;r++){
+        var box=protectedRects[r];
+        if(x>=box.left-pad && x<=box.right+pad && y>=box.top-pad && y<=box.bottom+pad) return true;
+      }
+      return false;
+    }
+
     for(var i=0;i<count;i++){
       var s=document.createElement('span');
       s.className='nn-star '+colors[i];
 
       var size=(mobile ? 14 : 16) + Math.round(Math.random()*(mobile ? 9 : 12));
-      var left=3 + Math.random()*94;
-      var top=45 + Math.random()*(pageHeight-90);
-      var tooClose=false;
-      for(var j=0;j<used.length;j++){
-        if(Math.abs(left-used[j][0])<4 && Math.abs(top-used[j][1])<90){tooClose=true;break;}
-      }
-      if(tooClose){
-        i--; continue;
+      var left,top,px,py,tooClose,tries=0;
+      do{
+        left=3 + Math.random()*94;
+        top=45 + Math.random()*Math.max(1,pageHeight-90);
+        px=(left/100)*document.documentElement.clientWidth;
+        py=top;
+        tooClose=false;
+        for(var j=0;j<used.length;j++){
+          if(Math.abs(left-used[j][0])<4 && Math.abs(top-used[j][1])<90){tooClose=true;break;}
+        }
+        tries++;
+      }while((tooClose || isProtected(px,py,Math.max(10,size*.65))) && tries<180);
+
+      /* If an unusually dense page leaves no perfect spot, keep searching
+         rather than placing a star over a product image. */
+      if(isProtected(px,py,Math.max(10,size*.65))){
+        i--;
+        continue;
       }
       used.push([left,top]);
 
