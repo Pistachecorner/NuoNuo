@@ -497,6 +497,7 @@ document.addEventListener('click',e=>{
   positions.forEach((pos,i)=>{
     const el=document.createElement('span');
     el.className='nuonuo-space-star '+(i%2===0?'yellow':'purple');
+    el.textContent='☆';
     el.left=pos[0]+'%';
     el.style.left=pos[0]+'%';
     el.style.top=pos[1]+'%';
@@ -521,6 +522,7 @@ document.addEventListener('click',e=>{
     heroStars.forEach((item,i)=>{
       const el=document.createElement('span');
       el.className='nuonuo-space-star '+item[3]+' nuonuo-hero-star';
+      el.textContent='☆';
       el.style.left=item[0]+'%';
       el.style.top=item[1]+'%';
       el.style.setProperty('--star-size',item[2]+'px');

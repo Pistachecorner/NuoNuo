@@ -1902,3 +1902,66 @@ body{position:relative}
     height:clamp(7px,calc(var(--star-size,15px)*.62),11px)!important;
   }
 }
+
+
+/* ============================================================
+   FINAL STAR VISIBILITY FIX
+   Stars sit above the black page surfaces but below all content.
+   Hollow 5-point glyphs are used for reliable rendering.
+   ============================================================ */
+.nuonuo-space{
+  position:absolute!important;
+  top:0!important;left:0!important;right:auto!important;bottom:auto!important;
+  width:100%!important;
+  min-height:100vh!important;
+  height:auto!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  z-index:4!important;
+  background:transparent!important;
+}
+.nuonuo-space-star{
+  position:absolute!important;
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  line-height:1!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+  font-weight:400!important;
+  font-size:var(--star-size,18px)!important;
+  color:var(--star-color,#f2cf55)!important;
+  background:none!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+  opacity:var(--star-opacity,.5)!important;
+  transform:translate(-50%,-50%) rotate(var(--star-rotation,0deg)) scale(.92);
+  animation:nuonuoStarTwinkleFinal var(--star-duration,4.2s) ease-in-out var(--star-delay,0s) infinite!important;
+  text-shadow:0 0 5px color-mix(in srgb,var(--star-color,#f2cf55) 35%,transparent);
+}
+.nuonuo-space-star.yellow{--star-color:#f2cf55!important}
+.nuonuo-space-star.purple{--star-color:#9b78c4!important}
+@keyframes nuonuoStarTwinkleFinal{
+  0%,55%,100%{opacity:var(--star-opacity,.5)!important;transform:translate(-50%,-50%) rotate(var(--star-rotation,0deg)) scale(.92)}
+  68%{opacity:.12!important;transform:translate(-50%,-50%) rotate(var(--star-rotation,0deg)) scale(.78)}
+  78%{opacity:1!important;transform:translate(-50%,-50%) rotate(var(--star-rotation,0deg)) scale(1.12)}
+  88%{opacity:var(--star-opacity,.5)!important;transform:translate(-50%,-50%) rotate(var(--star-rotation,0deg)) scale(.92)}
+}
+.site-header,.hero-wrap,.section,.about-section,.site-footer{position:relative!important;z-index:5!important}
+.hero-copy > .nuonuo-hero-star{z-index:1!important}
+
+/* Desktop: full but airy field. */
+@media screen and (min-width:651px){
+  .nuonuo-space-star{font-size:var(--star-size,18px)!important}
+}
+
+/* Phone portrait: fewer stars, never zero. */
+@media screen and (max-width:650px) and (orientation:portrait){
+  .nuonuo-space > .nuonuo-space-star:nth-child(n+21){display:none!important}
+  .nuonuo-space > .nuonuo-space-star{font-size:clamp(9px,calc(var(--star-size,18px)*.72),15px)!important}
+  .hero-copy > .nuonuo-hero-star:nth-of-type(n+4){display:none!important}
+  .hero-copy > .nuonuo-hero-star{font-size:clamp(9px,calc(var(--star-size,18px)*.72),14px)!important}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .nuonuo-space-star{animation:none!important}
+}
