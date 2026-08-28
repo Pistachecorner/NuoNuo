@@ -1884,3 +1884,46 @@ body{color-scheme:light;}
   .craft-copy .craft-lead{font-size:11px;line-height:1.32;margin-bottom:6px}
   .craft-copy p{font-size:9px;line-height:1.4}
 }
+
+
+/* Popular Products: compact single-row horizontal carousel */
+.popular-grid{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:16px !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:2px 2px 8px !important;
+}
+.popular-grid::-webkit-scrollbar{display:none}
+.popular-card{
+  flex:0 0 210px !important;
+  min-width:210px !important;
+  scroll-snap-align:start;
+}
+.popular-image{
+  width:100% !important;
+  aspect-ratio:1/1 !important;
+}
+.popular-meta{padding:9px 2px 0 !important}
+.popular-meta h3{
+  font-size:17px !important;
+  line-height:1.15 !important;
+  margin:5px 0 5px !important;
+}
+.popular-meta b{font-size:12px !important}
+.popular-section{padding-bottom:12px}
+@media(max-width:650px){
+  .popular-grid{gap:12px !important; padding-bottom:6px !important}
+  .popular-card{flex-basis:160px !important; min-width:160px !important}
+  .popular-meta{padding-top:7px !important}
+  .popular-meta h3{font-size:14px !important; margin:4px 0 4px !important}
+  .popular-meta small{font-size:8px !important}
+  .popular-meta b{font-size:11px !important}
+}
+@media(max-width:430px){
+  .popular-card{flex-basis:150px !important; min-width:150px !important}
+}

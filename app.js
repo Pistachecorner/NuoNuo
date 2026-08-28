@@ -186,7 +186,7 @@ function renderTrending(){
 function renderPopular(){
   const holder=$('#popularGrid');
   if(!holder)return;
-  const list=products.filter(p=>productImage(p)).slice(0,4);
+  const list=products.filter(p=>productImage(p)).slice(0,8);
   holder.innerHTML=list.map(p=>{
     const imgs=productImageCandidates(p);
     const category=cats.find(c=>sameId(c.id,p.category_id));
