@@ -1965,3 +1965,21 @@ body{position:relative}
 @media (prefers-reduced-motion: reduce){
   .nuonuo-space-star{animation:none!important}
 }
+
+/* ============================================================
+   FINAL STAR LAYER FIX
+   Decorative stars must be visible on BOTH desktop and mobile.
+   They remain attached to the document, so they scroll with the page.
+   Content stays above them, preserving products and all UI.
+   ============================================================ */
+.nuonuo-space{
+  z-index:6!important;
+  background:transparent!important;
+}
+.site-header,.mobile-nav,.hero-wrap,.section,.about-section,.site-footer{
+  z-index:7!important;
+}
+.nuonuo-space-star{
+  z-index:6!important;
+  visibility:visible!important;
+}
