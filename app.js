@@ -18,13 +18,34 @@ function imageSrc(value){
   if(/^https?:\/\//i.test(raw)||raw.startsWith('data:')||raw.startsWith('blob:'))return raw;
   if(!sb?.storage?.from)return raw;
   try{
-    let clean=raw.replace(/^\/+/, '').replace(/^storage\/v1\/object\/public\//i,'');
-    let bucket='product-images';
-    const m=clean.match(/^([^/]+)\/(.+)$/);
-    if(m && /^(product-images|nuonuo-images)$/i.test(m[1])){bucket=m[1];clean=m[2]}
-    const {data}=sb.storage.from(bucket).getPublicUrl(clean);
-    return data?.publicUrl||raw;
-  }catch(e){ return raw; }
+    let clean=raw.replace(/^\/+/, '');
+    // Handle Supabase storage URLs/paths saved by Management in several common forms:
+    // 1) https://<project>.supabase.co/storage/v1/object/public/product-images/<path>
+    // 2) /storage/v1/object/public/product-images/<path>
+    // 3) product-images/<path>
+    // 4) <path> (assumed to be inside product-images)
+    const publicMatch=clean.match(/^storage\/v1\/object\/public\/([^/]+)\/(.+)$/i);
+    if(publicMatch){
+      const bucket=publicMatch[1];
+      const path=publicMatch[2];
+      if(/^(product-images|nuonuo-images)$/i.test(bucket)){
+        return sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl||raw;
+      }
+    }
+    const bucketHint=clean.match(/^(product-images|nuonuo-images)\/(.+)$/i);
+    if(bucketHint){
+      const bucket=bucketHint[1],path=bucketHint[2];
+      return sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl||raw;
+    }
+    // Some older records may contain the storage object path without a bucket.
+    for(const bucket of ['product-images','nuonuo-images']){
+      try{
+        const u=sb.storage.from(bucket).getPublicUrl(clean).data?.publicUrl;
+        if(u)return u;
+      }catch{}
+    }
+  }catch(e){ console.warn('NuoNuo image URL normalization failed:',e); }
+  return raw;
 }
 function productImage(p){
   return imageSrc(p?.image_url||p?.image||p?.imageUrl||p?.photo_url||p?.photoUrl||'');
