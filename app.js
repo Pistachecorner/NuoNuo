@@ -46,8 +46,22 @@ function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;
   holder.innerHTML=cats.map(c=>{
     const p=products.find(x=>x.category_id===c.id),img=imageSrc(p?.image_url);
-    return `<button class="category-card" type="button" onclick="filterByCategory('${c.id}')">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
+    return `<button class="category-card" type="button" data-category-id="${esc(c.id)}" aria-label="View ${esc(c.name)}">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
   }).join('')||'<p>No categories yet.</p>';
+}
+
+function bindCategoryCards(){
+  const holder=$('#categoryCards');
+  if(!holder||holder.dataset.bound==='1')return;
+  holder.dataset.bound='1';
+  holder.addEventListener('click',e=>{
+    const card=e.target.closest('.category-card');
+    if(!card||!holder.contains(card))return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id=card.dataset.categoryId;
+    if(id) filterByCategory(id);
+  });
 }
 function renderHero(){
   if(!products.length)return;
@@ -89,6 +103,7 @@ async function load(){
       select.onchange=()=>menu(select.value,$('#searchInput')?.value||'');
     }
     renderCategories();
+    bindCategoryCards();
     renderHero();
     startHero();
     menu('');
