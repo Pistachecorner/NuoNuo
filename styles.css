@@ -1612,3 +1612,120 @@ body{color-scheme:light;}
   .quantity-stepper button{background:#000!important;color:#fff!important;}
   .quantity-stepper button:hover{background:#111!important;}
 }
+
+
+/* V31 FINAL: remove the redundant Choose section and keep dark mode strictly black + white. */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#000000!important;
+    --card:#000000!important;
+    --ink:#FFFFFF!important;
+    --muted:#FFFFFF!important;
+    --line:#222222!important;
+    --accent:#FFFFFF!important;
+  }
+  html,body{background:#000000!important;color:#FFFFFF!important;}
+  .announcement-bar,
+  .site-header,
+  .mobile-nav,
+  .hero-wrap,
+  .section,
+  .site-footer,
+  .about-section,
+  .card,
+  .popular-card,
+  .category-card,
+  .hero-visual,
+  .panel,
+  .modal,
+  .account-modal,
+  .success,
+  .product-detail-modal{
+    background:#000000!important;
+    background-image:none!important;
+    color:#FFFFFF!important;
+  }
+  .announcement-bar,
+  .site-header{border-color:#222222!important;box-shadow:none!important;}
+  .announcement-bar,
+  .announcement-bar span,
+  .header-title,
+  .icon-btn,
+  .account-link,
+  .mobile-nav button,
+  .hero-copy small,
+  .hero-copy h1,
+  .hero-copy p,
+  .section-kicker,
+  .section-title-row h2,
+  .text-btn,
+  .trending-link,
+  .popular-meta small,
+  .popular-meta h3,
+  .popular-meta b,
+  .body h3,
+  .body p,
+  .body b,
+  .about-section h2,
+  .about-section p,
+  .panel h2,
+  .modal h2,
+  .modal-sub,
+  .success h2,
+  .account-modal h2,
+  .product-detail-info h2,
+  .product-detail-price,
+  .product-detail-info>small,
+  .product-detail-description,
+  .product-detail-quantity,
+  .addon-heading,
+  .addon-heading small,
+  .addon-option,
+  .addon-option span,
+  .addon-option b{
+    color:#FFFFFF!important;
+  }
+  .hero-copy p,
+  .body p,
+  .about-section p,
+  .modal-sub,
+  .product-detail-description{opacity:.82;}
+  .hero-btn,
+  .add,
+  .dark,
+  .tab.active,
+  .product-detail-add{
+    background:#FFFFFF!important;
+    color:#000000!important;
+    border-color:#FFFFFF!important;
+    box-shadow:none!important;
+  }
+  .cart-btn{
+    background:#000000!important;
+    color:#FFFFFF!important;
+    border-color:#333333!important;
+  }
+  .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
+  .tab,
+  .search-wrap input,
+  .fields input,
+  .fields select,
+  .fields textarea,
+  .account-modal input{
+    background:#000000!important;
+    color:#FFFFFF!important;
+    border-color:#333333!important;
+  }
+  .search-wrap input::placeholder{color:#FFFFFF!important;opacity:.55;}
+  .card,.category-card{border-color:#222222!important;box-shadow:none!important;}
+  .line,.summary,.product-detail-addons,.product-detail-quantity{border-color:#222222!important;}
+  .qty button,.quantity-stepper,.quantity-stepper button{
+    background:#000000!important;
+    color:#FFFFFF!important;
+    border-color:#333333!important;
+  }
+  .product-detail-image,.product-detail-image img,.no-image{background:#111111!important;}
+  .product-detail-close{background:#111111!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .product-detail-overlay{background:rgba(0,0,0,.86)!important;}
+  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
+}
