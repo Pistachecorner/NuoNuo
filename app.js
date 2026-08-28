@@ -473,5 +473,53 @@ document.addEventListener('click',e=>{
   const addBtn=e.target.closest?.('[data-add-product]');
   if(addBtn){e.preventDefault();window.add(addBtn.dataset.addProduct);return;}
 });
+/* =========================================
+   NuoNuo transparent stars + rotating meteors
+   ========================================= */
+(function initNuoNuoSpace(){
+  if(document.querySelector('.nuonuo-space')) return;
+
+  const space=document.createElement('div');
+  space.className='nuonuo-space';
+
+  const starData=[
+    [5,12,3,'yellow'],[12,27,5,'white'],[19,8,3,'purple'],[27,19,4,'yellow'],
+    [34,10,6,'white'],[42,26,3,'purple'],[50,13,4,'yellow'],[58,7,3,'white'],
+    [67,21,5,'purple'],[76,11,3,'yellow'],[85,28,4,'white'],[94,16,6,'purple'],
+    [8,45,4,'white'],[17,58,6,'yellow'],[26,40,3,'purple'],[35,52,5,'white'],
+    [46,45,4,'yellow'],[55,61,6,'purple'],[64,43,3,'white'],[73,55,5,'yellow'],
+    [83,46,4,'purple'],[92,62,6,'white'],[4,76,5,'yellow'],[14,88,3,'purple'],
+    [24,73,6,'white'],[33,91,4,'yellow'],[44,78,3,'purple'],[53,87,5,'white'],
+    [63,74,4,'yellow'],[72,92,6,'purple'],[82,80,3,'white'],[91,89,5,'yellow']
+  ];
+
+  starData.forEach((s,i)=>{
+    const el=document.createElement('span');
+    el.className='nuonuo-space-star '+s[3];
+    el.style.left=s[0]+'%';
+    el.style.top=s[1]+'%';
+    el.style.width=s[2]+'px';
+    el.style.height=s[2]+'px';
+    el.style.setProperty('--star-duration',(3.4+(i%5)*.8)+'s');
+    el.style.setProperty('--star-delay',(-((i*0.73)%5))+'s');
+    space.appendChild(el);
+  });
+
+  document.body.prepend(space);
+
+  let meteorIndex=0;
+  const zones=[12,28,46,63,79,36,57,22];
+  function launchMeteor(){
+    const meteor=document.createElement('span');
+    meteor.className='nuonuo-meteor';
+    meteor.style.top=zones[meteorIndex%zones.length]+'%';
+    meteorIndex++;
+    space.appendChild(meteor);
+    meteor.addEventListener('animationend',()=>meteor.remove(),{once:true});
+  }
+  launchMeteor();
+  setInterval(launchMeteor,2000);
+})();
+
 async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();

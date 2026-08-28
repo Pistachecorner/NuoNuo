@@ -1766,90 +1766,84 @@ body{color-scheme:light;}
 }
 
 /* =========================================
-   NuoNuo subtle night-sky background v3
-   Transparent effects, soft meteors, quiet stars
+   NuoNuo subtle night sky
+   Transparent overlay: stars + soft purple meteors
    ========================================= */
 
-body::before{
-  content:"";
+.nuonuo-space{
   position:fixed;
   inset:0;
+  width:100%;
+  height:100%;
   pointer-events:none;
   z-index:0;
-  opacity:.52;
-  background:
-    radial-gradient(circle at 8% 18%, rgba(248,220,105,.55) 0 1.4px, transparent 2.2px),
-    radial-gradient(circle at 18% 72%, rgba(248,220,105,.35) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 29% 34%, rgba(248,220,105,.48) 0 1.8px, transparent 2.7px),
-    radial-gradient(circle at 42% 82%, rgba(248,220,105,.30) 0 1.1px, transparent 2px),
-    radial-gradient(circle at 54% 17%, rgba(248,220,105,.52) 0 1.5px, transparent 2.3px),
-    radial-gradient(circle at 65% 61%, rgba(248,220,105,.32) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 76% 28%, rgba(248,220,105,.46) 0 1.6px, transparent 2.5px),
-    radial-gradient(circle at 88% 76%, rgba(248,220,105,.36) 0 1.1px, transparent 2px),
-    radial-gradient(circle at 94% 13%, rgba(248,220,105,.50) 0 1.5px, transparent 2.3px),
-    radial-gradient(circle at 12% 48%, rgba(248,220,105,.28) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 48% 53%, rgba(248,220,105,.42) 0 1.2px, transparent 2px),
-    radial-gradient(circle at 70% 91%, rgba(248,220,105,.30) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 24% 12%, rgba(248,220,105,.34) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 35% 64%, rgba(248,220,105,.40) 0 1.3px, transparent 2.1px),
-    radial-gradient(circle at 58% 38%, rgba(248,220,105,.31) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 81% 56%, rgba(248,220,105,.44) 0 1.4px, transparent 2.2px),
-    radial-gradient(circle at 91% 88%, rgba(248,220,105,.30) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 5% 89%, rgba(248,220,105,.32) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 45% 7%, rgba(248,220,105,.42) 0 1.2px, transparent 2px),
-    radial-gradient(circle at 73% 73%, rgba(248,220,105,.31) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 98% 51%, rgba(248,220,105,.36) 0 1px, transparent 1.8px);
-  animation:nuonuoStarsSoft 9s ease-in-out infinite;
+  overflow:hidden;
+  background:transparent !important;
 }
 
-body::after{
-  content:"";
-  position:fixed;
-  width:115px;
-  height:1px;
-  top:12%;
-  left:108%;
-  pointer-events:none;
-  z-index:0;
+.nuonuo-space-star{
+  position:absolute;
+  display:block;
+  border-radius:50%;
+  background:#fff;
+  opacity:.28;
+  box-shadow:0 0 5px rgba(255,255,255,.28);
+  animation:nuonuoStarPulse var(--star-duration,5s) ease-in-out var(--star-delay,0s) infinite;
+}
+
+.nuonuo-space-star.yellow{
+  background:#f4d76d;
+  box-shadow:0 0 7px rgba(244,215,109,.42);
+}
+
+.nuonuo-space-star.purple{
+  background:#b99ad8;
+  box-shadow:0 0 7px rgba(185,154,216,.42);
+}
+
+.nuonuo-meteor{
+  position:absolute;
+  left:105%;
+  width:150px;
+  height:2px;
+  border-radius:999px;
   opacity:0;
-  background:linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(155,105,205,.06) 18%,
-    rgba(176,125,225,.24) 58%,
-    rgba(205,166,245,.48) 88%,
-    rgba(225,205,250,.12) 100%
-  );
-  filter:blur(.45px);
-  transform:rotate(-35deg);
-  animation:nuonuoMeteorSoft 2s linear infinite;
+  transform:rotate(-34deg);
+  transform-origin:right center;
+  background:linear-gradient(90deg,transparent 0%,rgba(166,125,205,.03) 35%,rgba(184,151,218,.22) 72%,rgba(210,185,235,.48) 100%);
+  box-shadow:0 0 5px rgba(180,145,215,.14);
+  animation:nuonuoMeteor 1.35s ease-out forwards;
 }
 
-@keyframes nuonuoStarsSoft{
-  0%, 18% { opacity:.30; }
-  34% { opacity:.56; }
-  48% { opacity:.24; }
-  67% { opacity:.48; }
-  82%, 100% { opacity:.32; }
+.nuonuo-meteor::after{
+  content:"";
+  position:absolute;
+  right:-1px;
+  top:50%;
+  width:4px;
+  height:4px;
+  transform:translateY(-50%);
+  border-radius:50%;
+  background:rgba(214,190,235,.55);
+  box-shadow:0 0 7px rgba(196,164,225,.3);
 }
 
-@keyframes nuonuoMeteorSoft{
-  0%{
-    transform:translate3d(0,0,0) rotate(-35deg);
-    opacity:0;
-  }
-  8%{
-    opacity:.34;
-  }
-  16%{
-    opacity:0;
-  }
-  100%{
-    transform:translate3d(-900px,600px,0) rotate(-35deg);
-    opacity:0;
-  }
+@keyframes nuonuoStarPulse{
+  0%,100%{opacity:.16;transform:scale(.9)}
+  42%{opacity:.16;transform:scale(1)}
+  56%{opacity:.72;transform:scale(1.16)}
+  68%{opacity:.28;transform:scale(.96)}
+}
+
+@keyframes nuonuoMeteor{
+  0%{left:108%;opacity:0}
+  10%{opacity:.08}
+  22%{opacity:.42}
+  55%{opacity:.30}
+  82%{opacity:.08}
+  100%{left:62%;opacity:0}
 }
 
 @media (prefers-reduced-motion:reduce){
-  body::before,body::after{animation:none;}
+  .nuonuo-space-star,.nuonuo-meteor{animation:none!important}
 }
