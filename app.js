@@ -22,9 +22,16 @@ function isDubaiChewyProduct(productId){
   return haystack.includes('dubai chewy cookies');
 }
 function addonOptionsForProduct(productId){
+  // Keep the storefront connected to the same Management > NuoNuo > Menu
+  // data. Management's order builder uses explicit product_addons links when
+  // they exist, and falls back to all active add-ons in the active channel
+  // when a product has no explicit links. Mirror that exact behavior here.
   if(!isDubaiChewyProduct(productId))return [];
-  const ids=productAddonLinks.filter(x=>String(x.product_id)===String(productId)).map(x=>String(x.addon_id));
-  return ids.map(id=>addons.find(a=>String(a.id)===id)).filter(Boolean);
+  const ids=productAddonLinks
+    .filter(x=>String(x.product_id)===String(productId))
+    .map(x=>String(x.addon_id));
+  const linked=ids.map(id=>addons.find(a=>String(a.id)===id)).filter(Boolean);
+  return linked.length ? linked : addons.filter(a=>a && a.active!==false);
 }
 function addToCart(p,selectedAddons=[],quantity=1){
   if(!p)return;
