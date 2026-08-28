@@ -1844,3 +1844,10 @@ body{isolation:isolate;}
   .nuonuo-star{animation:none;}
   .nuonuo-meteor{animation:none;display:none;}
 }
+
+/* V4 transparent subtle sky effect */
+.nuonuo-space{background:transparent!important;opacity:1!important;}
+.nuonuo-star{background:rgba(245,215,110,.78)!important;box-shadow:0 0 5px rgba(245,215,110,.35)!important;}
+.nuonuo-star.large{box-shadow:0 0 7px rgba(245,215,110,.45)!important;}
+.nuonuo-meteor{height:1px!important;background:linear-gradient(90deg,transparent,rgba(167,115,220,.22),rgba(198,155,245,.62),transparent)!important;box-shadow:none!important;}
+.nuonuo-meteor::after{background:rgba(202,164,248,.72)!important;box-shadow:0 0 5px rgba(202,164,248,.45)!important;}
