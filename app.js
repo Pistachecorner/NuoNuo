@@ -12,43 +12,69 @@ function scrollToId(id){document.getElementById(id)?.scrollIntoView({behavior:'s
 let toastTimer;function showToast(message){const t=$('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900)}
 function render(){ $('#count').textContent=cart.reduce((n,x)=>n+x.qty,0);$('#total').textContent=money(cart.reduce((n,x)=>n+x.qty*x.price,0));$('#items').innerHTML=cart.length?cart.map((x,i)=>`<div class="line"><div><b>${esc(x.name)}</b><br><span class="qty"><button onclick="qty(${i},-1)">−</button>${x.qty}<button onclick="qty(${i},1)">+</button></span></div><b>${money(x.qty*x.price)}</b></div>`).join(''):'<p>Cart is empty.</p>'}
 window.qty=(i,d)=>{cart[i].qty+=d;if(cart[i].qty<1)cart.splice(i,1);render()};window.add=(id)=>{let p=products.find(x=>x.id===id);if(!p)return;let x=cart.find(x=>x.id===id);x?x.qty++:cart.push({id:p.id,name:p.name,price:Number(p.selling_price||0),cost:Number(p.calculated_cost||0),qty:1});render();showToast('Item added')};
-function imageSrc(value){
-  const raw=String(value||'').trim();
-  if(!raw)return '';
-  if(/^https?:\/\//i.test(raw)||raw.startsWith('data:')||raw.startsWith('blob:'))return raw;
-  if(!sb?.storage?.from)return raw;
-  try{
-    let clean=raw.replace(/^\/+/, '');
-    // Handle Supabase storage URLs/paths saved by Management in several common forms:
-    // 1) https://<project>.supabase.co/storage/v1/object/public/product-images/<path>
-    // 2) /storage/v1/object/public/product-images/<path>
-    // 3) product-images/<path>
-    // 4) <path> (assumed to be inside product-images)
-    const publicMatch=clean.match(/^storage\/v1\/object\/public\/([^/]+)\/(.+)$/i);
-    if(publicMatch){
-      const bucket=publicMatch[1];
-      const path=publicMatch[2];
-      if(/^(product-images|nuonuo-images)$/i.test(bucket)){
-        return sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl||raw;
-      }
+function imageCandidates(value){
+  const raw=String(value??'').trim();
+  if(!raw)return [];
+  const out=[];
+  const push=v=>{v=String(v||'').trim();if(v&&!out.includes(v))out.push(v)};
+  if(/^data:|^blob:/i.test(raw)){push(raw);return out;}
+  if(/^https?:\/\//i.test(raw)){
+    try{
+      const u=new URL(raw);
+      const m=u.pathname.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/i);
+      if(m){
+        const bucket=m[1],path=decodeURIComponent(m[2]);
+        if(sb?.storage?.from){
+          const pub=sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl;
+          push(pub);
+        }
+        push(raw);
+      }else push(raw);
+    }catch{push(raw)}
+    return out;
+  }
+  let clean=raw.replace(/^\/+/, '').replace(/^https?:\/\/[^/]+\//i,'');
+  clean=clean.replace(/^storage\/v1\/object\/(?:public|sign|authenticated)\//i,'');
+  const bucketMatch=clean.match(/^(product-images|product-image|nuonuo-images|nuonuo-image)\/(.+)$/i);
+  if(bucketMatch){
+    const bucket=bucketMatch[1],path=bucketMatch[2];
+    if(sb?.storage?.from){push(sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl)}
+    return out;
+  }
+  if(sb?.storage?.from){
+    for(const bucket of ['product-images','product-image','nuonuo-images','nuonuo-image']){
+      try{push(sb.storage.from(bucket).getPublicUrl(clean).data?.publicUrl)}catch{}
     }
-    const bucketHint=clean.match(/^(product-images|nuonuo-images)\/(.+)$/i);
-    if(bucketHint){
-      const bucket=bucketHint[1],path=bucketHint[2];
-      return sb.storage.from(bucket).getPublicUrl(path).data?.publicUrl||raw;
-    }
-    // Some older records may contain the storage object path without a bucket.
-    for(const bucket of ['product-images','nuonuo-images']){
-      try{
-        const u=sb.storage.from(bucket).getPublicUrl(clean).data?.publicUrl;
-        if(u)return u;
-      }catch{}
-    }
-  }catch(e){ console.warn('NuoNuo image URL normalization failed:',e); }
-  return raw;
+  }
+  push(raw);
+  return out;
 }
-function productImage(p){
-  return imageSrc(p?.image_url||p?.image||p?.imageUrl||p?.photo_url||p?.photoUrl||'');
+function imageSrc(value){return imageCandidates(value)[0]||'';}
+function productImageCandidates(p){
+  const values=[p?.image_url,p?.image,p?.imageUrl,p?.photo_url,p?.photoUrl,p?.product_image,p?.productImage,p?.image_path,p?.photo];
+  const out=[];for(const v of values)for(const u of imageCandidates(v))if(!out.includes(u))out.push(u);return out;
+}
+function productImage(p){return productImageCandidates(p)[0]||'';}
+function handleImageError(img){
+  try{
+    const list=JSON.parse(img.dataset.imageCandidates||'[]');
+    const current=img.dataset.currentCandidate||img.getAttribute('src')||'';
+    const index=list.indexOf(current);
+    const next=list[index+1];
+    if(next){
+      img.dataset.currentCandidate=next;
+      img.src=next;
+      return;
+    }
+  }catch{}
+  img.style.display='none';
+  img.parentElement?.classList.add('no-image');
+}
+window.handleImageError=handleImageError;
+function imageTag(candidates,alt,className=''){
+  if(!candidates?.length)return '';
+  const first=candidates[0];
+  return `<img class="${className}" src="${esc(first)}" data-current-candidate="${esc(first)}" data-image-candidates="${esc(JSON.stringify(candidates))}" alt="${esc(alt||'')}" onerror="handleImageError(this)">`;
 }
 function sameId(a,b){return String(a??'').trim()===String(b??'').trim();}
 function categoryProducts(catId){return products.filter(p=>sameId(p.category_id,catId));}
@@ -60,9 +86,10 @@ function menu(cat='',query=''){
   }
   let list=products.filter(p=>sameId(p.category_id,cat)&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
-    const img=productImage(p);
-    return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
+    const imgs=productImageCandidates(p);
+    return `<article class="card"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" type="button" data-add-product="${esc(p.id)}">Add</button></div></div></article>`
   }).join('')||'<p>No products available in this category.</p>';
+  $('#grid').querySelectorAll('[data-add-product]').forEach(btn=>btn.onclick=()=>window.add(btn.dataset.addProduct));
 }
 
 function renderTrending(){
@@ -83,9 +110,9 @@ function renderPopular(){
   if(!holder)return;
   const list=products.filter(p=>productImage(p)).slice(0,4);
   holder.innerHTML=list.map(p=>{
-    const img=productImage(p);
+    const imgs=productImageCandidates(p);
     const category=cats.find(c=>sameId(c.id,p.category_id));
-    return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}" ${img?`style="background-image:url('${esc(img)}')"`:''}><span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
+    return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}">${imgs.length?imageTag(imgs,p.name):''}<span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
   }).join('')||'<p class="menu-empty">No featured products available.</p>';
   if(holder.dataset.bound==='1')return;
   holder.dataset.bound='1';
@@ -100,8 +127,9 @@ function renderPopular(){
 function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;
   holder.innerHTML=cats.map(c=>{
-    const p=categoryProducts(c.id)[0],img=imageSrc(c.image_url||c.image||c.photo_url||productImage(p));
-    return `<button class="category-card" type="button" data-category-id="${esc(c.id)}" aria-label="View ${esc(c.name)}">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
+    const p=categoryProducts(c.id)[0];
+    const imgs=[...imageCandidates(c.image_url||c.image||c.photo_url||''),...productImageCandidates(p)];
+    return `<button class="category-card" type="button" data-category-id="${esc(c.id)}" aria-label="View ${esc(c.name)}">${imgs.length?imageTag(imgs,c.name):''}<h3>${esc(c.name)}</h3></button>`
   }).join('')||'<p>No categories yet.</p>';
 }
 
@@ -126,10 +154,10 @@ function renderHero(){
   const slides=heroProducts();
   if(!slides.length)return;
   heroIndex=Math.max(0,Math.min(heroIndex,slides.length-1));
-  const p=slides[heroIndex],img=productImage(p);
+  const p=slides[heroIndex],imgs=productImageCandidates(p);
   const holder=$('#heroVisual');
   if(!holder)return;
-  holder.innerHTML=`<img src="${esc(img)}" alt="${esc(p.name)}"><div class="hero-caption"><span>${esc(p.name)}</span><small>Shop NuoNuo</small></div><div class="hero-controls" aria-label="Hero image controls"><button type="button" class="hero-arrow hero-prev" aria-label="Previous">‹</button><div class="hero-dots">${slides.map((_,i)=>`<button type="button" class="hero-dot ${i===heroIndex?'active':''}" data-hero-index="${i}" aria-label="Slide ${i+1}"></button>`).join('')}</div><button type="button" class="hero-arrow hero-next" aria-label="Next">›</button></div>`;
+  holder.innerHTML=`${imgs.length?imageTag(imgs,p.name):'<div class="hero-placeholder">NuoNuo</div>'}<div class="hero-caption"><span>${esc(p.name)}</span><small>Shop NuoNuo</small></div><div class="hero-controls" aria-label="Hero image controls"><button type="button" class="hero-arrow hero-prev" aria-label="Previous">‹</button><div class="hero-dots">${slides.map((_,i)=>`<button type="button" class="hero-dot ${i===heroIndex?'active':''}" data-hero-index="${i}" aria-label="Slide ${i+1}"></button>`).join('')}</div><button type="button" class="hero-arrow hero-next" aria-label="Next">›</button></div>`;
   if(holder.dataset.bound==='1')return;
   holder.dataset.bound='1';
   holder.addEventListener('click',e=>{
@@ -412,5 +440,9 @@ if(oe)throw oe;
 const orderNumber=result?.order_number||'';
 const birthdayGift=!!result?.birthday_gift;
 const vouchersEarned=Number(result?.vouchers_earned||0);cart=[];render();$('#modal').classList.add('hidden');$('#orderno').textContent=orderNumber;$('#successBirthday').classList.toggle('hidden',!birthdayGift);$('#successVoucher').classList.toggle('hidden',vouchersEarned<1);$('#successVoucher').textContent=vouchersEarned>0?`🎟️ You earned ${vouchersEarned} RM 10 voucher${vouchersEarned===1?'':'s'} for your next purchase.`:'';$('#success').classList.remove('hidden')}catch(err){console.error(err);$('#error').textContent=errText(err)}finally{$('#place').disabled=false}};
+document.addEventListener('click',e=>{
+  const addBtn=e.target.closest?.('[data-add-product]');
+  if(addBtn){e.preventDefault();window.add(addBtn.dataset.addProduct);return;}
+});
 async function initStore(){render();await load();if(sb){sb.auth.onAuthStateChange(()=>refreshAuth());await refreshAuth()}}
 initStore();
