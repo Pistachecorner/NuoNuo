@@ -1186,3 +1186,36 @@ body{background:#FFFFFF;color:#4F606A}
   .overlay{background:rgba(0,0,0,.78)!important}
   .toast{background:#CCBBAE!important;color:#3E2D3E!important}
 }
+
+
+/* V22 final visual + interaction overrides */
+.hero-wrap::before,.hero-wrap::after{display:none!important;}
+@media (prefers-color-scheme: dark){
+  html,body{background:#000000!important;background-image:none!important;}
+  body{background:#000000!important;background-image:none!important;}
+  .site-header,.hero-wrap,.section,.site-footer,.about-section{background:#000000!important;background-image:none!important;}
+  .hero-visual{background:#0A0A0A!important;box-shadow:none!important;}
+  .hero-wrap{overflow:hidden;}
+  .hero-controls{position:absolute;left:18px;right:18px;bottom:18px;display:flex;align-items:center;justify-content:space-between;z-index:5;pointer-events:none;}
+  .hero-arrow{width:34px;height:34px;border:1px solid rgba(183,155,180,.55);border-radius:50%;background:rgba(0,0,0,.55);color:#B79BB4;display:grid;place-items:center;font-size:24px;line-height:1;pointer-events:auto;cursor:pointer;}
+  .hero-dots{display:flex;gap:7px;align-items:center;justify-content:center;pointer-events:auto;}
+  .hero-dot{width:7px;height:7px;padding:0;border:1px solid #B79BB4;border-radius:50%;background:transparent;cursor:pointer;}
+  .hero-dot.active{background:#B79BB4;}
+}
+@media (prefers-color-scheme: light){
+  html,body{background:#FFFFFF!important;background-image:none!important;}
+  body{background:#FFFFFF!important;background-image:none!important;}
+  .site-header,.hero-wrap,.section,.site-footer{background:#FFFFFF!important;background-image:none!important;}
+  .about-section{background:#FFFFFF!important;background-image:none!important;}
+  .hero-controls{position:absolute;left:18px;right:18px;bottom:18px;display:flex;align-items:center;justify-content:space-between;z-index:5;pointer-events:none;}
+  .hero-arrow{width:34px;height:34px;border:1px solid #D8C7B8;border-radius:50%;background:rgba(255,255,255,.86);color:#586A75;display:grid;place-items:center;font-size:24px;line-height:1;pointer-events:auto;cursor:pointer;}
+  .hero-dots{display:flex;gap:7px;align-items:center;justify-content:center;pointer-events:auto;}
+  .hero-dot{width:7px;height:7px;padding:0;border:1px solid #586A75;border-radius:50%;background:transparent;cursor:pointer;}
+  .hero-dot.active{background:#586A75;}
+}
+.hero-visual{touch-action:pan-y;}
+.hero-visual img{user-select:none;-webkit-user-drag:none;}
+/* Make every storefront card explicitly clickable above visual overlays. */
+.trending-link,.popular-image,.category-card,.text-btn,.hero-btn{position:relative;z-index:3;pointer-events:auto;}
+.category-card img,.category-card:after{pointer-events:none;}
+.popular-image:after,.popular-image span{pointer-events:none;}

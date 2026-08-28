@@ -18,27 +18,28 @@ function imageSrc(value){
   if(/^https?:\/\//i.test(raw)||raw.startsWith('data:')||raw.startsWith('blob:'))return raw;
   if(!sb?.storage?.from)return raw;
   try{
-    const clean=raw.replace(/^\/+/,'');
-    const bucketHint=clean.startsWith('product-images/')?'product-images':clean.startsWith('nuonuo-images/')?'nuonuo-images':'';
-    const path=bucketHint?clean.replace(/^product-images\//,'').replace(/^nuonuo-images\//,''):clean;
-    const buckets=bucketHint?[bucketHint]:['product-images','nuonuo-images'];
-    for(const bucket of buckets){
-      try{
-        const {data}=sb.storage.from(bucket).getPublicUrl(path);
-        if(data?.publicUrl)return data.publicUrl;
-      }catch{}
-    }
-  }catch{}
-  return raw;
+    let clean=raw.replace(/^\/+/, '').replace(/^storage\/v1\/object\/public\//i,'');
+    let bucket='product-images';
+    const m=clean.match(/^([^/]+)\/(.+)$/);
+    if(m && /^(product-images|nuonuo-images)$/i.test(m[1])){bucket=m[1];clean=m[2]}
+    const {data}=sb.storage.from(bucket).getPublicUrl(clean);
+    return data?.publicUrl||raw;
+  }catch(e){ return raw; }
 }
+function productImage(p){
+  return imageSrc(p?.image_url||p?.image||p?.imageUrl||p?.photo_url||p?.photoUrl||'');
+}
+function sameId(a,b){return String(a??'').trim()===String(b??'').trim();}
+function categoryProducts(catId){return products.filter(p=>sameId(p.category_id,catId));}
+
 function menu(cat='',query=''){
   let q=query.trim().toLowerCase();
   if(!cat){
     $('#grid').innerHTML='<div class="menu-empty">Select a category to view the menu.</div>';return;
   }
-  let list=products.filter(p=>p.category_id===cat&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
+  let list=products.filter(p=>sameId(p.category_id,cat)&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
-    const img=imageSrc(p.image_url);
+    const img=productImage(p);
     return `<article class="card"><div class="pic ${img?'':'no-image'}" ${img?`style="background-image:url('${esc(img)}')"`:''}>${img?'':'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><button class="add" onclick="add('${p.id}')">Add</button></div></div></article>`
   }).join('')||'<p>No products available in this category.</p>';
 }
@@ -59,10 +60,10 @@ function renderTrending(){
 function renderPopular(){
   const holder=$('#popularGrid');
   if(!holder)return;
-  const list=products.filter(p=>p.image_url).slice(0,4);
+  const list=products.filter(p=>productImage(p)).slice(0,4);
   holder.innerHTML=list.map(p=>{
-    const img=imageSrc(p.image_url);
-    const category=cats.find(c=>c.id===p.category_id);
+    const img=productImage(p);
+    const category=cats.find(c=>sameId(c.id,p.category_id));
     return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}" ${img?`style="background-image:url('${esc(img)}')"`:''}><span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
   }).join('')||'<p class="menu-empty">No featured products available.</p>';
   if(holder.dataset.bound==='1')return;
@@ -78,7 +79,7 @@ function renderPopular(){
 function renderCategories(){
   const holder=$('#categoryCards');if(!holder)return;
   holder.innerHTML=cats.map(c=>{
-    const p=products.find(x=>x.category_id===c.id),img=imageSrc(p?.image_url);
+    const p=categoryProducts(c.id)[0],img=imageSrc(c.image_url||c.image||c.photo_url||productImage(p));
     return `<button class="category-card" type="button" data-category-id="${esc(c.id)}" aria-label="View ${esc(c.name)}">${img?`<img src="${esc(img)}" alt="${esc(c.name)}">`:''}<h3>${esc(c.name)}</h3></button>`
   }).join('')||'<p>No categories yet.</p>';
 }
@@ -96,13 +97,36 @@ function bindCategoryCards(){
     if(id) filterByCategory(id);
   });
 }
-function renderHero(){
-  if(!products.length)return;
-  const featured=products.filter(p=>p.image_url).slice(0,5);if(!featured.length)return;
-  const p=featured[heroIndex%featured.length],img=imageSrc(p.image_url);
-  $('#heroVisual').innerHTML=`<img src="${esc(img)}" alt="${esc(p.name)}"><div class="hero-caption"><span>${esc(p.name)}</span><small>Shop NuoNuo</small></div>`;
+function heroProducts(){
+  // Exactly four hero slides, sourced from the live Management menu.
+  return products.filter(p=>productImage(p)).slice(0,4);
 }
-function startHero(){if(products.filter(p=>p.image_url).length<2)return;setInterval(()=>{heroIndex++;renderHero()},4500)}
+function renderHero(){
+  const slides=heroProducts();
+  if(!slides.length)return;
+  heroIndex=Math.max(0,Math.min(heroIndex,slides.length-1));
+  const p=slides[heroIndex],img=productImage(p);
+  const holder=$('#heroVisual');
+  if(!holder)return;
+  holder.innerHTML=`<img src="${esc(img)}" alt="${esc(p.name)}"><div class="hero-caption"><span>${esc(p.name)}</span><small>Shop NuoNuo</small></div><div class="hero-controls" aria-label="Hero image controls"><button type="button" class="hero-arrow hero-prev" aria-label="Previous">‹</button><div class="hero-dots">${slides.map((_,i)=>`<button type="button" class="hero-dot ${i===heroIndex?'active':''}" data-hero-index="${i}" aria-label="Slide ${i+1}"></button>`).join('')}</div><button type="button" class="hero-arrow hero-next" aria-label="Next">›</button></div>`;
+  if(holder.dataset.bound==='1')return;
+  holder.dataset.bound='1';
+  holder.addEventListener('click',e=>{
+    const dot=e.target.closest('[data-hero-index]');
+    if(dot){heroIndex=Number(dot.dataset.heroIndex)||0;renderHero();return;}
+    if(e.target.closest('.hero-prev')){heroIndex=(heroIndex-1+heroProducts().length)%heroProducts().length;renderHero();return;}
+    if(e.target.closest('.hero-next')){heroIndex=(heroIndex+1)%heroProducts().length;renderHero();return;}
+  });
+  let sx=0,sy=0;
+  holder.addEventListener('touchstart',e=>{const t=e.changedTouches[0];sx=t.clientX;sy=t.clientY},{passive:true});
+  holder.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){const n=heroProducts().length;heroIndex=(heroIndex+(dx<0?1:-1)+n)%n;renderHero();}},{passive:true});
+}
+function startHero(){
+  clearInterval(window.__nuonuoHeroTimer);
+  window.__nuonuoHeroTimer=null;
+  // Hero is intentionally manual: swipe, arrows, or dots.
+}
+
 function isNuoNuoChannel(value){const v=String(value??'').trim().toLowerCase().replace(/[·–—_\-]+/g,' ').replace(/\s+/g,' ');if(!v)return true;return v==='nuonuo'||v.startsWith('nuonuo ')}
 async function load(){
   try{
@@ -128,6 +152,9 @@ async function load(){
     }
     products=Array.isArray(menuData?.products)?menuData.products:[];
     cats=Array.isArray(menuData?.categories)?menuData.categories:[];
+    // Normalize IDs/URLs so cards always follow the same live Management records.
+    products=products.map(p=>({...p,category_id:String(p.category_id??'')}));
+    cats=cats.map(c=>({...c,id:String(c.id??'')}));
 
     $('#loading')?.remove();
     const select=$('#categorySelect');
