@@ -1880,23 +1880,25 @@ body{position:relative}
   min-height:100vh;
   height:auto;
   pointer-events:none!important;
-  z-index:0!important;
+  z-index:2!important;
   overflow:hidden!important;
 }
 
 /* Keep normal page content above the decorative layer. */
-.site-header,.hero-wrap,.section,.about-section,.site-footer{position:relative;z-index:1}
+.site-header,.hero-wrap,.section,.about-section,.site-footer{position:relative;z-index:3}
 
 /* Mobile: fewer, but not only a handful. Keep the page feeling alive. */
 @media screen and (max-width:650px) and (orientation:portrait){
+  /* Keep a moderate mobile density: 24 page stars, not 6. */
   .nuonuo-space > .nuonuo-space-star:nth-child(n+25){display:none!important}
   .nuonuo-space > .nuonuo-space-star{
-    width:clamp(6px,calc(var(--star-size,15px)*.60),10px)!important;
-    height:clamp(6px,calc(var(--star-size,15px)*.60),10px)!important;
+    width:clamp(7px,calc(var(--star-size,15px)*.62),11px)!important;
+    height:clamp(7px,calc(var(--star-size,15px)*.62),11px)!important;
   }
+  /* A few additional stars stay around the hero headline. */
   .hero-copy > .nuonuo-hero-star:nth-of-type(n+5){display:none!important}
   .hero-copy > .nuonuo-hero-star{
-    width:clamp(6px,calc(var(--star-size,15px)*.60),10px)!important;
-    height:clamp(6px,calc(var(--star-size,15px)*.60),10px)!important;
+    width:clamp(7px,calc(var(--star-size,15px)*.62),11px)!important;
+    height:clamp(7px,calc(var(--star-size,15px)*.62),11px)!important;
   }
 }
