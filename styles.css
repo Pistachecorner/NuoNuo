@@ -1450,7 +1450,7 @@ body{color-scheme:light;}
 .popular-image{background:#F5F5F5!important;}
 
 @media (prefers-color-scheme:dark){
-  :root{--bg:#000000;--ink:#FFFFFF;--muted:#C8C8C8;--line:#242424;--card:#000000;--accent:#8F7D92;--accent-soft:#2A2327;}
+  :root{--bg:#000000;--ink:#FFFFFF;--muted:#C8C8C8;--line:#242424;--card:#000000;--accent:#FFFFFF;--accent-soft:#111111;}
   html,body{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
   body{color-scheme:dark;}
   .site-header,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success,.mobile-nav{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
@@ -1458,20 +1458,20 @@ body{color-scheme:light;}
   .icon-btn,.account-link,.header-title,.mobile-nav button{color:#FFFFFF!important;}
   .mobile-nav{border-color:#242424!important;box-shadow:0 12px 28px rgba(0,0,0,.75)!important;}
   .cart-btn{background:#000000!important;color:#FFFFFF!important;border-color:#242424!important;}
-  .cart-btn i{background:#8F7D92!important;color:#FFFFFF!important;}
-  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#8F7D92!important;}
+  .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
+  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small{color:#FFFFFF!important;}
   .hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3{color:#FFFFFF!important;}
   .hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint{color:#C8C8C8!important;}
   .hero-btn,.add,.dark{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;}
   .hero-btn:hover,.add:hover,.dark:hover{background:#EAEAEA!important;border-color:#EAEAEA!important;}
   .hero-visual{border-color:#242424!important;box-shadow:none!important;}
-  .hero-placeholder{background:#000000!important;color:#8F7D92!important;}
+  .hero-placeholder{background:#000000!important;color:#FFFFFF!important;}
   .no-image{background:#171717!important;color:#FFFFFF!important;}
-  .text-btn,.trending-link{color:#8F7D92!important;}
+  .text-btn,.trending-link{color:#FFFFFF!important;}
   .trending-links{border-color:#242424!important;}
   .category-card{border-color:#242424!important;}
   .tab{background:#000000!important;color:#C8C8C8!important;border-color:#333333!important;}
-  .tab.active{background:#8F7D92!important;color:#FFFFFF!important;border-color:#8F7D92!important;}
+  .tab.active{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;}
   .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
   .search-wrap input::placeholder{color:#777777!important;}
   .card{border-color:#242424!important;box-shadow:none!important;}
@@ -1482,7 +1482,7 @@ body{color-scheme:light;}
   .close-btn{color:#FFFFFF!important;}
   .line,.summary{border-color:#242424!important;}
   .qty button{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
-  .toast{background:#8F7D92!important;color:#FFFFFF!important;}
+  .toast{background:#FFFFFF!important;color:#000000!important;}
   .popular-image{background:#000000!important;}
   .hero-visual:after{display:none!important;}
 }
@@ -1529,11 +1529,34 @@ body{color-scheme:light;}
   .product-detail-close{background:#111;color:#fff}
   .product-detail-image{background:#111}
   .product-detail-image img{background:#111}
-  .product-detail-info>small{color:#8f8790}
-  .product-detail-description{color:#c8c8c8}
+  .product-detail-info>small{color:#FFFFFF}
+  .product-detail-description{color:#d8d8d8}
   .product-detail-addons{border-color:#2d2d2d}
   .addon-heading small{color:#888}
   .addon-option{border-color:#2d2d2d;background:#050505}
   .addon-option input{accent-color:#fff}
   .summary small{color:#999}
+}
+
+
+/* V27 DARK MODE FINAL PALETTE GUARD: pure black + white only. */
+@media (prefers-color-scheme: dark){
+  html,body{background:#000000!important;color:#FFFFFF!important;background-image:none!important;}
+  .site-header,.mobile-nav,.hero-wrap,.section,.site-footer,.about-section,.card,.category-card,.hero-visual,.popular-card,.panel,.modal,.account-modal,.success{background:#000000!important;background-image:none!important;color:#FFFFFF!important;}
+  .icon-btn,.account-link,.header-title,.mobile-nav button,.hero-copy h1,.section-title-row h2,.about-section h2,.panel h2,.modal h2,.success h2,.account-modal h2,.body h3,.popular-meta h3,.product-detail-modal,.product-detail-info h2,.product-detail-price,.product-detail-info>small{color:#FFFFFF!important;}
+  .hero-copy p,.body p,.about-section p,.modal-sub,.checkout-hint,.product-detail-description{color:#FFFFFF!important;opacity:.82;}
+  .hero-copy small,.section-kicker,.modal small,.success small,.popular-meta small,.text-btn,.trending-link{color:#FFFFFF!important;}
+  .hero-btn,.add,.dark,.tab.active,.toast{background:#FFFFFF!important;color:#000000!important;border-color:#FFFFFF!important;box-shadow:none!important;}
+  .cart-btn{background:#000000!important;color:#FFFFFF!important;border-color:#242424!important;}
+  .cart-btn i{background:#FFFFFF!important;color:#000000!important;}
+  .tab{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#000000!important;color:#FFFFFF!important;border-color:#333333!important;}
+  .hero-visual:after{display:none!important;}
+  .product-detail-modal{background:#000000!important;}
+  .product-detail-close{background:#111111!important;color:#FFFFFF!important;}
+  .product-detail-image,.product-detail-image img{background:#111111!important;}
+  .product-detail-addons{border-color:#2D2D2D!important;}
+  .addon-option{background:#050505!important;border-color:#2D2D2D!important;color:#FFFFFF!important;}
+  .addon-heading small,.summary small{color:#FFFFFF!important;opacity:.7;}
+  .footer-mark{background:#111111!important;color:#FFFFFF!important;}
 }
