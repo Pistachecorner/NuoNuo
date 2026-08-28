@@ -30,7 +30,7 @@
   position:absolute;
   display:block;
   transform:translate(-50%,-50%);
-  opacity:.72;
+  opacity:.86;
   will-change:opacity,transform;
   animation:nnStarTwinkle var(--twinkle-duration,3.8s) ease-in-out var(--twinkle-delay,0s) infinite;
 }
@@ -40,13 +40,13 @@
   height:100%;
   overflow:visible;
 }
-#nuonuo-stars-only-layer .nn-star.purple{color:rgba(180,125,235,.82);}
-#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(242,207,82,.88);}
+#nuonuo-stars-only-layer .nn-star.purple{color:rgba(188,132,245,.94);}
+#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(248,214,78,.96);}
 @keyframes nnStarTwinkle{
-  0%,100%{opacity:.22;transform:translate(-50%,-50%) scale(.88)}
-  34%{opacity:.78;transform:translate(-50%,-50%) scale(1)}
-  48%{opacity:.38;transform:translate(-50%,-50%) scale(.94)}
-  66%{opacity:.72;transform:translate(-50%,-50%) scale(1.03)}
+  0%,100%{opacity:.32;transform:translate(-50%,-50%) scale(.88)}
+  34%{opacity:.95;transform:translate(-50%,-50%) scale(1)}
+  48%{opacity:.48;transform:translate(-50%,-50%) scale(.94)}
+  66%{opacity:.86;transform:translate(-50%,-50%) scale(1.03)}
 }
 @media (max-width:650px){
   #nuonuo-stars-only-layer .nn-star{animation-duration:4.2s;}
@@ -263,21 +263,25 @@
     var mobile=window.matchMedia('(max-width:650px)').matches;
     var pageHeight=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,window.innerHeight);
     /* Mobile keeps the same star density as desktop. Only the star size is responsive. */
-    var count=Math.max(28,Math.round(pageHeight/430));
-    count=Math.min(count,58);
+    var count=Math.max(42,Math.round(pageHeight/280));
+    count=Math.min(count,82);
 
     /* Keep the two colours as evenly split as possible. */
+    var colors=[];
+    for(var c=0;c<count;c++) colors.push(c%2===0?'yellow':'purple');
+    for(var c=count-1;c>0;c--){var k=Math.floor(Math.random()*(c+1));var tmp=colors[c];colors[c]=colors[k];colors[k]=tmp;}
+
     var used=[];
     for(var i=0;i<count;i++){
       var s=document.createElement('span');
-      s.className='nn-star '+(i < Math.ceil(count/2) ? 'yellow' : 'purple');
+      s.className='nn-star '+colors[i];
 
-      var size=(mobile ? 12 : 14) + Math.round(Math.random()*(mobile ? 7 : 10));
+      var size=(mobile ? 14 : 16) + Math.round(Math.random()*(mobile ? 9 : 12));
       var left=3 + Math.random()*94;
       var top=45 + Math.random()*(pageHeight-90);
       var tooClose=false;
       for(var j=0;j<used.length;j++){
-        if(Math.abs(left-used[j][0])<5 && Math.abs(top-used[j][1])<120){tooClose=true;break;}
+        if(Math.abs(left-used[j][0])<4 && Math.abs(top-used[j][1])<90){tooClose=true;break;}
       }
       if(tooClose){
         i--; continue;
@@ -298,7 +302,7 @@
       poly.setAttribute('points',starPoints(46,19));
       poly.setAttribute('fill','none');
       poly.setAttribute('stroke','currentColor');
-      poly.setAttribute('stroke-width','5.5');
+      poly.setAttribute('stroke-width','6');
       poly.setAttribute('stroke-linejoin','round');
       svg.appendChild(poly);
       s.appendChild(svg);
