@@ -15,28 +15,44 @@
   <script src="config.js"></script>
 
 <style id="nuonuo-stars-only-style">
+/* NuoNuo stars: hollow five-point stars, split evenly between yellow and purple. */
 #nuonuo-stars-only-layer{
-  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:0;
+  pointer-events:none;
+  z-index:2;
+  overflow:visible;
 }
 #nuonuo-stars-only-layer .nn-star{
-  position:absolute; width:10px; height:10px; opacity:.7;
-  transform:rotate(45deg);
-  animation:nnStarTwinkle 2.8s ease-in-out infinite;
-}
-#nuonuo-stars-only-layer .nn-star::before,
-#nuonuo-stars-only-layer .nn-star::after{
-  content:""; position:absolute; left:50%; top:50%;
+  position:absolute;
+  display:block;
   transform:translate(-50%,-50%);
-  background:currentColor; border-radius:999px;
+  opacity:.72;
+  will-change:opacity,transform;
+  animation:nnStarTwinkle var(--twinkle-duration,3.8s) ease-in-out var(--twinkle-delay,0s) infinite;
 }
-#nuonuo-stars-only-layer .nn-star::before{width:100%;height:2px;}
-#nuonuo-stars-only-layer .nn-star::after{width:2px;height:100%;}
-#nuonuo-stars-only-layer .nn-star.purple{color:rgba(150,95,210,.72);}
-#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(235,205,95,.78);}
+#nuonuo-stars-only-layer .nn-star svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+#nuonuo-stars-only-layer .nn-star.purple{color:rgba(180,125,235,.82);}
+#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(242,207,82,.88);}
 @keyframes nnStarTwinkle{
-  0%,100%{opacity:.25;transform:rotate(45deg) scale(.82)}
-  45%{opacity:.82;transform:rotate(45deg) scale(1.18)}
-  70%{opacity:.38;transform:rotate(45deg) scale(.92)}
+  0%,100%{opacity:.22;transform:translate(-50%,-50%) scale(.88)}
+  34%{opacity:.78;transform:translate(-50%,-50%) scale(1)}
+  48%{opacity:.38;transform:translate(-50%,-50%) scale(.94)}
+  66%{opacity:.72;transform:translate(-50%,-50%) scale(1.03)}
+}
+@media (max-width:650px){
+  #nuonuo-stars-only-layer .nn-star{animation-duration:4.2s;}
+}
+@media (prefers-reduced-motion:reduce){
+  #nuonuo-stars-only-layer .nn-star{animation:none;opacity:.55;}
 }
 </style>
 </head>
@@ -225,30 +241,90 @@
 
 <script id="nuonuo-stars-only-script">
 (function(){
-  function addStars(){
-    if(document.getElementById('nuonuo-stars-only-layer')) return;
+  'use strict';
+
+  function starPoints(outer, inner){
+    var pts=[];
+    for(var i=0;i<10;i++){
+      var a=(-90 + i*36) * Math.PI/180;
+      var r=(i%2===0)?outer:inner;
+      pts.push((Math.cos(a)*r).toFixed(2)+','+(Math.sin(a)*r).toFixed(2));
+    }
+    return pts.join(' ');
+  }
+
+  function buildStars(){
+    var old=document.getElementById('nuonuo-stars-only-layer');
+    if(old) old.remove();
+
     var layer=document.createElement('div');
     layer.id='nuonuo-stars-only-layer';
-    var positions=[
-      [7,13],[16,28],[24,9],[32,22],[41,12],[50,31],[58,17],[67,7],
-      [76,25],[86,13],[94,34],[11,48],[20,65],[29,43],[38,72],[47,54],
-      [56,66],[64,45],[73,78],[82,58],[91,69],[5,87],[18,82],[31,92],
-      [44,84],[57,94],[69,88],[80,91],[93,83]
-    ];
-    positions.forEach(function(p,i){
+
+    var mobile=window.matchMedia('(max-width:650px)').matches;
+    var pageHeight=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,window.innerHeight);
+    /* Mobile keeps the same star density as desktop. Only the star size is responsive. */
+    var count=Math.max(28,Math.round(pageHeight/430));
+    count=Math.min(count,58);
+
+    /* Keep the two colours as evenly split as possible. */
+    var used=[];
+    for(var i=0;i<count;i++){
       var s=document.createElement('span');
-      s.className='nn-star '+(i%2?'yellow':'purple');
-      s.style.left=p[0]+'%';
-      s.style.top=p[1]+'%';
-      s.style.width=(7+(i%4)*2)+'px';
-      s.style.height=(7+(i%4)*2)+'px';
-      s.style.animationDelay=(-((i*0.37)%2.8))+'s';
+      s.className='nn-star '+(i < Math.ceil(count/2) ? 'yellow' : 'purple');
+
+      var size=(mobile ? 12 : 14) + Math.round(Math.random()*(mobile ? 7 : 10));
+      var left=3 + Math.random()*94;
+      var top=45 + Math.random()*(pageHeight-90);
+      var tooClose=false;
+      for(var j=0;j<used.length;j++){
+        if(Math.abs(left-used[j][0])<5 && Math.abs(top-used[j][1])<120){tooClose=true;break;}
+      }
+      if(tooClose){
+        i--; continue;
+      }
+      used.push([left,top]);
+
+      s.style.left=left+'%';
+      s.style.top=top+'px';
+      s.style.width=size+'px';
+      s.style.height=size+'px';
+      s.style.setProperty('--twinkle-delay',(-Math.random()*4.2).toFixed(2)+'s');
+      s.style.setProperty('--twinkle-duration',(3.4+Math.random()*2.2).toFixed(2)+'s');
+
+      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 100 100');
+      svg.setAttribute('aria-hidden','true');
+      var poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly.setAttribute('points',starPoints(46,19));
+      poly.setAttribute('fill','none');
+      poly.setAttribute('stroke','currentColor');
+      poly.setAttribute('stroke-width','5.5');
+      poly.setAttribute('stroke-linejoin','round');
+      svg.appendChild(poly);
+      s.appendChild(svg);
       layer.appendChild(s);
-    });
+    }
+
     document.body.appendChild(layer);
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addStars);
-  else addStars();
+
+  var resizeTimer;
+  function refresh(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(buildStars,180);
+  }
+
+  function init(){
+    buildStars();
+    window.addEventListener('resize',refresh,{passive:true});
+    if(window.ResizeObserver){
+      var ro=new ResizeObserver(refresh);
+      ro.observe(document.body);
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
 })();
 </script>
 </body>
