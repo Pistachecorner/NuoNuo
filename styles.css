@@ -1728,3 +1728,39 @@ body{color-scheme:light;}
     border-color: #FFFFFF !important;
   }
 }
+
+/* ============================================================
+   MOBILE PORTRAIT ONLY
+   Keep desktop/tablet unchanged. On phones in landscape,
+   hide the storefront and ask the customer to rotate back.
+   ============================================================ */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    overflow: hidden !important;
+  }
+
+  body > * {
+    display: none !important;
+  }
+
+  body::before {
+    content: 'Please rotate your phone to portrait mode';
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    letter-spacing: .02em;
+  }
+}
