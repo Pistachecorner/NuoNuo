@@ -1942,41 +1942,42 @@ body{color-scheme:light;}
   .craft-copy p{font-size:12px;line-height:1.6}
 }
 
-/* V42 · Light mode: pure white canvas + dark typography */
-@media (prefers-color-scheme: light), (prefers-color-scheme: no-preference){
+/* V42 · Light mode only: clean white editorial palette */
+@media (prefers-color-scheme: light){
   :root{
     --ink:#111111;
-    --muted:#666666;
-    --line:#e5e5e5;
+    --muted:#5d5d5d;
+    --line:#e8e8e8;
     --bg:#ffffff;
     --card:#ffffff;
-    --accent:#728b9a;
+    --accent:#111111;
   }
-  html,body{background:#fff;color:#111;}
-  .site-header{background:rgba(255,255,255,.97);border-bottom-color:#e5e5e5;box-shadow:0 5px 24px rgba(0,0,0,.045)}
-  .mobile-nav{background:#fff;border-color:#e5e5e5;box-shadow:0 14px 35px rgba(0,0,0,.08)}
-  .header-title{color:#111}
-  .header-title-sub,.hero-copy small,.section-kicker,.modal small,.success small{color:#666}
-  .icon-btn,.account-link{color:#111}
-  .hero-wrap,.section{background:#fff}
-  .hero-visual{background:#fff;box-shadow:0 18px 45px rgba(0,0,0,.07)}
-  .category-card{background:#fff;border-color:#e5e5e5}
-  .about-section{background:#fff;border-color:#e5e5e5}
-  .site-footer{background:#fff;border-color:#e5e5e5}
-  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#fff;color:#111;border-color:#dedede}
-  .tab{background:#fff;color:#111;border-color:#dedede}
-  .card{background:#fff;border-color:#e5e5e5;box-shadow:0 8px 26px rgba(0,0,0,.045)}
-  .panel,.modal,.account-modal,.success{background:#fff}
-  .trending-link{color:#111}
-}
+  html,body{background:#fff!important;color:#111!important}
+  .site-header{background:rgba(255,255,255,.96)!important;border-bottom-color:#e8e8e8!important;box-shadow:0 5px 24px rgba(0,0,0,.04)!important}
+  .mobile-nav{background:#fff!important;border-color:#e8e8e8!important;box-shadow:0 14px 35px rgba(0,0,0,.07)!important}
+  .hero-wrap,.section{background:transparent!important}
+  .hero-copy,.hero-copy h1,.hero-copy p,.section-title-row h2,.about-section h2,.craft-copy,.craft-copy h3,.craft-copy p,.popular-meta h3,.popular-meta b{color:#111!important}
+  .hero-copy small,.section-kicker,.modal small,.success small,.hero-copy p,.about-section p{color:#555!important}
+  .hero-accent-purple,.hero-accent-yellow{color:#111!important}
+  .hero-btn,.add,.dark{background:#111!important;color:#fff!important;border-color:#111!important;box-shadow:none!important}
+  .hero-btn:hover,.add:hover,.dark:hover{background:#222!important;border-color:#222!important}
+  .hero-visual{background:#f7f7f7!important;box-shadow:0 18px 45px rgba(0,0,0,.06)!important}
+  .category-card{background:#fff!important;border-color:#e8e8e8!important}
+  .about-section{background:#fff!important;border-color:#e8e8e8!important}
+  .search-wrap input,.fields input,.fields select,.fields textarea,.account-modal input{background:#fff!important;color:#111!important;border-color:#e5e5e5!important}
+  .tab{background:#fff!important;color:#111!important;border-color:#e5e5e5!important}
+  .tab.active{background:#111!important;color:#fff!important;border-color:#111!important}
+  .card{background:#fff!important;border-color:#e8e8e8!important;box-shadow:0 8px 26px rgba(0,0,0,.04)!important}
+  .panel{background:#fff!important;box-shadow:-16px 0 40px rgba(0,0,0,.08)!important}
+  .modal,.account-modal,.success{background:#fff!important;box-shadow:0 20px 60px rgba(0,0,0,.10)!important}
+  .site-footer{background:#fff!important;border-color:#e8e8e8!important;color:#111!important}
+  .site-footer a{color:#111!important}
+  .header-title,.icon-btn,.account-link{color:#111!important}
+  .cart-btn{background:#fff!important;color:#111!important;border-color:#111!important}
+  .cart-btn i{background:#111!important;color:#fff!important}
+  .header-title-sub{color:#555!important}
 
-/* V44 · Theme-specific decorations: light = birds, dark = stars. */
-@media (prefers-color-scheme: light), (prefers-color-scheme: no-preference){
-  #nuonuo-theme-decor-layer .nn-bird.bluegrey{color:rgba(126,151,166,.64)!important;}
-  #nuonuo-theme-decor-layer .nn-bird.pink{color:rgba(222,157,171,.62)!important;}
-  #nuonuo-theme-decor-layer .nn-star{display:none!important;}
-}
-@media (prefers-color-scheme: dark){
-  #nuonuo-theme-decor-layer .nn-bird{display:none!important;}
-  #nuonuo-theme-decor-layer .nn-star{color:rgba(210,190,92,.72)!important;}
+  /* Light mode has birds instead of the decorative stars. */
+  #nuonuo-stars-only-layer{display:none!important}
+  #nuonuo-birds-only-layer{display:block}
 }

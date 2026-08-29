@@ -14,39 +14,57 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 
-<style id="nuonuo-theme-decor-style">
-/* NuoNuo theme decorations: light mode = muted birds, dark mode = stars. */
-#nuonuo-theme-decor-layer{
-  position:absolute;left:0;top:0;width:100%;height:0;
-  pointer-events:none;z-index:2;overflow:visible;
+<style id="nuonuo-stars-only-style">
+/* NuoNuo stars: hollow five-point stars, split evenly between yellow and purple. */
+#nuonuo-stars-only-layer{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:0;
+  pointer-events:none;
+  z-index:2;
+  overflow:visible;
 }
-#nuonuo-theme-decor-layer .nn-bird,
-#nuonuo-theme-decor-layer .nn-star{
-  position:absolute;display:block;transform:translate(-50%,-50%);
-  will-change:transform,opacity;
+#nuonuo-stars-only-layer .nn-star{
+  position:absolute;
+  display:block;
+  transform:translate(-50%,-50%);
+  opacity:.86;
+  will-change:opacity,transform;
+  animation:nnStarTwinkle var(--twinkle-duration,3.8s) ease-in-out var(--twinkle-delay,0s) infinite;
 }
-#nuonuo-theme-decor-layer .nn-bird svg{display:block;width:100%;height:100%;overflow:visible;}
-#nuonuo-theme-decor-layer .nn-bird.bluegrey{color:rgba(126,151,166,.64);}
-#nuonuo-theme-decor-layer .nn-bird.pink{color:rgba(222,157,171,.62);}
-#nuonuo-theme-decor-layer .nn-star{font-size:22px;line-height:1;color:rgba(196,177,76,.72);font-family:Georgia,serif;}
-@keyframes nnBirdFloat{
-  0%,100%{transform:translate(-50%,-50%) translateY(0) rotate(0deg)}
-  50%{transform:translate(-50%,-50%) translateY(-4px) rotate(-1deg)}
+#nuonuo-stars-only-layer .nn-star svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
 }
-@keyframes nnStarFloat{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.62}
-  50%{transform:translate(-50%,-50%) scale(1.08);opacity:.88}
+#nuonuo-stars-only-layer .nn-star.purple{color:rgba(188,132,245,.94);}
+#nuonuo-stars-only-layer .nn-star.yellow{color:rgba(248,214,78,.96);}
+@keyframes nnStarTwinkle{
+  0%,100%{opacity:.32;transform:translate(-50%,-50%) scale(.88)}
+  34%{opacity:.95;transform:translate(-50%,-50%) scale(1)}
+  48%{opacity:.48;transform:translate(-50%,-50%) scale(.94)}
+  66%{opacity:.86;transform:translate(-50%,-50%) scale(1.03)}
 }
-#nuonuo-theme-decor-layer .nn-bird{animation:nnBirdFloat 5.5s ease-in-out var(--decor-delay,0s) infinite;}
-#nuonuo-theme-decor-layer .nn-star{animation:nnStarFloat 4.8s ease-in-out var(--decor-delay,0s) infinite;}
-@media(max-width:650px){
-  #nuonuo-theme-decor-layer .nn-bird{opacity:.58}
-  #nuonuo-theme-decor-layer .nn-star{font-size:18px}
+@media (max-width:650px){
+  #nuonuo-stars-only-layer .nn-star{animation-duration:4.2s;}
 }
-@media(prefers-reduced-motion:reduce){
-  #nuonuo-theme-decor-layer .nn-bird,
-  #nuonuo-theme-decor-layer .nn-star{animation:none}
+@media (prefers-reduced-motion:reduce){
+  #nuonuo-stars-only-layer .nn-star{animation:none;opacity:.55;}
 }
+</style>
+
+<style id="nuonuo-birds-light-style">
+@media (prefers-color-scheme: light){
+  #nuonuo-birds-only-layer{position:absolute;left:0;top:0;width:100%;height:0;pointer-events:none;z-index:2;overflow:visible;}
+  #nuonuo-birds-only-layer .nn-bird{position:absolute;display:block;transform:translate(-50%,-50%);opacity:.68;}
+  #nuonuo-birds-only-layer .nn-bird svg{display:block;width:100%;height:100%;overflow:visible;}
+  #nuonuo-birds-only-layer .nn-bird.blue{color:#879cab;}
+  #nuonuo-birds-only-layer .nn-bird.pink{color:#d8a4ad;}
+}
+@media (prefers-color-scheme: dark){#nuonuo-birds-only-layer{display:none!important;}}
 </style>
 </head>
 <body>
@@ -262,75 +280,170 @@
   <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
 
-<script id="nuonuo-theme-decor-script">
+<script id="nuonuo-stars-only-script">
 (function(){
   'use strict';
-  function buildDecor(){
-    var old=document.getElementById('nuonuo-theme-decor-layer');
+
+  function starPoints(outer, inner){
+    var pts=[];
+    for(var i=0;i<10;i++){
+      var a=(-90 + i*36) * Math.PI/180;
+      var r=(i%2===0)?outer:inner;
+      pts.push((Math.cos(a)*r).toFixed(2)+','+(Math.sin(a)*r).toFixed(2));
+    }
+    return pts.join(' ');
+  }
+
+  function buildStars(){
+    var old=document.getElementById('nuonuo-stars-only-layer');
     if(old) old.remove();
 
     var layer=document.createElement('div');
-    layer.id='nuonuo-theme-decor-layer';
-    var dark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    layer.id='nuonuo-stars-only-layer';
+
     var mobile=window.matchMedia('(max-width:650px)').matches;
     var pageHeight=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,window.innerHeight);
-    var count=Math.max(7,Math.round(pageHeight/620));
-    count=Math.min(count,16);
+    /* Mobile keeps the same star density as desktop. Only the star size is responsive. */
+    var count=Math.max(42,Math.round(pageHeight/280));
+    count=Math.min(count,82);
 
+    /* Keep the two colours as evenly split as possible. */
+    var colors=[];
+    for(var c=0;c<count;c++) colors.push(c%2===0?'yellow':'purple');
+    for(var c=count-1;c>0;c--){var k=Math.floor(Math.random()*(c+1));var tmp=colors[c];colors[c]=colors[k];colors[k]=tmp;}
+
+    var used=[];
+
+    /*
+     * Keep stars in the open black space, never on top of the actual
+     * product/hero imagery or the main menu cards.  Positions are document
+     * coordinates so the stars naturally travel with the page while scrolling.
+     */
     var protectedRects=[];
-    var protectedSelectors=['.site-header','.announcement-bar','.hero-visual','.craft-card','.craft-image','.category-card','.card','.pic','.about-section','.overlay','.panel','.modal','.account-modal','.success'];
+    var protectedSelectors=[
+      '.site-header', '.announcement-bar', '.hero-visual', '.craft-card', '.craft-image',
+      '.category-card', '.card', '.pic', '.about-section',
+      '.overlay', '.panel', '.modal', '.account-modal', '.success'
+    ];
     protectedSelectors.forEach(function(sel){
       document.querySelectorAll(sel).forEach(function(el){
         var r=el.getBoundingClientRect();
-        protectedRects.push({left:r.left+window.scrollX-18,right:r.right+window.scrollX+18,top:r.top+window.scrollY-18,bottom:r.bottom+window.scrollY+18});
+        protectedRects.push({
+          left:r.left+window.scrollX-18,
+          right:r.right+window.scrollX+18,
+          top:r.top+window.scrollY-18,
+          bottom:r.bottom+window.scrollY+18
+        });
       });
     });
+
     function isProtected(x,y,pad){
-      for(var i=0;i<protectedRects.length;i++){
-        var r=protectedRects[i];
-        if(x>=r.left-pad&&x<=r.right+pad&&y>=r.top-pad&&y<=r.bottom+pad)return true;
+      for(var r=0;r<protectedRects.length;r++){
+        var box=protectedRects[r];
+        if(x>=box.left-pad && x<=box.right+pad && y>=box.top-pad && y<=box.bottom+pad) return true;
       }
       return false;
     }
 
     for(var i=0;i<count;i++){
-      var el=document.createElement('span');
-      var size=(mobile?15:18)+Math.round(Math.random()*(mobile?8:11));
-      var left=5+Math.random()*90;
-      var top=75+Math.random()*Math.max(1,pageHeight-160);
-      var px=(left/100)*document.documentElement.clientWidth;
-      var py=top, tries=0;
-      while(isProtected(px,py,Math.max(10,size*.55))&&tries<150){
-        left=5+Math.random()*90; top=75+Math.random()*Math.max(1,pageHeight-160);
-        px=(left/100)*document.documentElement.clientWidth; py=top; tries++;
-      }
-      if(isProtected(px,py,Math.max(10,size*.55)))continue;
-      el.style.left=left+'%'; el.style.top=top+'px';
-      el.style.setProperty('--decor-delay',(-Math.random()*5).toFixed(2)+'s');
+      var s=document.createElement('span');
+      s.className='nn-star '+colors[i];
 
-      if(dark){
-        el.className='nn-star';
-        el.textContent=(i%3===0?'✦':i%3===1?'☆':'✧');
-      }else{
-        el.className='nn-bird '+(i%2===0?'bluegrey':'pink');
-        el.style.width=(size*1.45)+'px'; el.style.height=size+'px';
-        var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.setAttribute('viewBox','0 0 120 70'); svg.setAttribute('aria-hidden','true');
-        var path=document.createElementNS('http://www.w3.org/2000/svg','path');
-        path.setAttribute('d','M10 38 C24 18,42 18,55 34 C68 18,86 18,110 38');
-        path.setAttribute('fill','none'); path.setAttribute('stroke','currentColor'); path.setAttribute('stroke-width','7'); path.setAttribute('stroke-linecap','round'); path.setAttribute('stroke-linejoin','round');
-        svg.appendChild(path); el.appendChild(svg);
+      var size=(mobile ? 14 : 16) + Math.round(Math.random()*(mobile ? 9 : 12));
+      var left,top,px,py,tooClose,tries=0;
+      do{
+        left=3 + Math.random()*94;
+        top=45 + Math.random()*Math.max(1,pageHeight-90);
+        px=(left/100)*document.documentElement.clientWidth;
+        py=top;
+        tooClose=false;
+        for(var j=0;j<used.length;j++){
+          if(Math.abs(left-used[j][0])<4 && Math.abs(top-used[j][1])<90){tooClose=true;break;}
+        }
+        tries++;
+      }while((tooClose || isProtected(px,py,Math.max(10,size*.65))) && tries<180);
+
+      /* If an unusually dense page leaves no perfect spot, keep searching
+         rather than placing a star over a product image. */
+      if(isProtected(px,py,Math.max(10,size*.65))){
+        i--;
+        continue;
       }
-      layer.appendChild(el);
+      used.push([left,top]);
+
+      s.style.left=left+'%';
+      s.style.top=top+'px';
+      s.style.width=size+'px';
+      s.style.height=size+'px';
+      s.style.setProperty('--twinkle-delay',(-Math.random()*4.2).toFixed(2)+'s');
+      s.style.setProperty('--twinkle-duration',(3.4+Math.random()*2.2).toFixed(2)+'s');
+
+      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 100 100');
+      svg.setAttribute('aria-hidden','true');
+      var poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly.setAttribute('points',starPoints(46,19));
+      poly.setAttribute('fill','none');
+      poly.setAttribute('stroke','currentColor');
+      poly.setAttribute('stroke-width','6');
+      poly.setAttribute('stroke-linejoin','round');
+      svg.appendChild(poly);
+      s.appendChild(svg);
+      layer.appendChild(s);
+    }
+
+    document.body.appendChild(layer);
+  }
+
+  var resizeTimer;
+  function refresh(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(buildStars,180);
+  }
+
+  function init(){
+    buildStars();
+    window.addEventListener('resize',refresh,{passive:true});
+    if(window.ResizeObserver){
+      var ro=new ResizeObserver(refresh);
+      ro.observe(document.body);
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+</script>
+
+<script id="nuonuo-birds-light-script">
+(function(){
+  'use strict';
+  function buildBirds(){
+    if(window.matchMedia('(prefers-color-scheme: dark)').matches) return;
+    var old=document.getElementById('nuonuo-birds-only-layer');
+    if(old) old.remove();
+    var layer=document.createElement('div');
+    layer.id='nuonuo-birds-only-layer';
+    var pageHeight=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,window.innerHeight);
+    var count=Math.max(10,Math.min(18,Math.round(pageHeight/520)));
+    var protectedRects=[];
+    var protectedSelectors=['.site-header','.announcement-bar','.hero-visual','.craft-card','.craft-image','.category-card','.card','.pic','.about-section','.overlay','.panel','.modal','.account-modal','.success'];
+    protectedSelectors.forEach(function(sel){document.querySelectorAll(sel).forEach(function(el){var r=el.getBoundingClientRect();protectedRects.push({left:r.left+window.scrollX-24,right:r.right+window.scrollX+24,top:r.top+window.scrollY-24,bottom:r.bottom+window.scrollY+24});});});
+    function blocked(x,y,pad){for(var i=0;i<protectedRects.length;i++){var r=protectedRects[i];if(x>=r.left-pad&&x<=r.right+pad&&y>=r.top-pad&&y<=r.bottom+pad)return true;}return false;}
+    var used=[];
+    for(var i=0;i<count;i++){
+      var b=document.createElement('span'); b.className='nn-bird '+(i%2?'pink':'blue');
+      var size=16+Math.round(Math.random()*10),left,top,px,py,tries=0,tooClose;
+      do{left=4+Math.random()*92;top=70+Math.random()*Math.max(1,pageHeight-140);px=(left/100)*document.documentElement.clientWidth;py=top;tooClose=false;for(var j=0;j<used.length;j++){if(Math.abs(left-used[j][0])<7&&Math.abs(top-used[j][1])<120){tooClose=true;break;}}tries++;}while((tooClose||blocked(px,py,size*.7))&&tries<180);
+      if(blocked(px,py,size*.7)){i--;continue;}
+      used.push([left,top]);b.style.left=left+'%';b.style.top=top+'px';b.style.width=(size*1.45)+'px';b.style.height=size+'px';
+      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 36 22');svg.setAttribute('aria-hidden','true');
+      var path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','M2 15 C8 6 13 6 18 13 C23 6 28 6 34 15 C27 11 23 12 18 18 C13 12 9 11 2 15 Z');path.setAttribute('fill','currentColor');svg.appendChild(path);b.appendChild(svg);layer.appendChild(b);
     }
     document.body.appendChild(layer);
   }
-  var resizeTimer;
-  function refresh(){clearTimeout(resizeTimer);resizeTimer=setTimeout(buildDecor,180)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',buildDecor);else buildDecor();
-  window.addEventListener('resize',refresh,{passive:true});
-  var mq=window.matchMedia('(prefers-color-scheme: dark)');
-  if(mq.addEventListener)mq.addEventListener('change',buildDecor);else if(mq.addListener)mq.addListener(buildDecor);
+  var timer;function refresh(){clearTimeout(timer);timer=setTimeout(buildBirds,180);}function init(){buildBirds();window.addEventListener('resize',refresh,{passive:true});if(window.ResizeObserver){var ro=new ResizeObserver(refresh);ro.observe(document.body);}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 </body>
