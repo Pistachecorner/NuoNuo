@@ -161,7 +161,8 @@ function menu(cat='',query=''){
   let list=products.filter(p=>(!cat||sameId(p.category_id,cat))&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.map(p=>{
     const imgs=productImageCandidates(p);
-    return `<article class="card product-card-clickable" tabindex="0" role="button" data-product-detail="${esc(p.id)}"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><span class="view-product">View details →</span></div></div></article>`
+    const category=cats.find(c=>sameId(c.id,p.category_id));
+    return `<article class="card product-card-clickable" tabindex="0" role="button" data-product-detail="${esc(p.id)}"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><small class="product-category">${esc(category?.name||'NUONUO')}</small><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><span class="view-product">View details →</span></div></div></article>`
   }).join('')||'<p>No products available.</p>';
   $('#grid').querySelectorAll('[data-product-detail]').forEach(card=>{
     const open=()=>openProductDetail(card.dataset.productDetail);
