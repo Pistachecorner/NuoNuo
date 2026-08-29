@@ -1958,7 +1958,9 @@ body{color-scheme:light;}
   .hero-wrap,.section{background:transparent!important}
   .hero-copy,.hero-copy h1,.hero-copy p,.section-title-row h2,.about-section h2,.craft-copy,.craft-copy h3,.craft-copy p,.popular-meta h3,.popular-meta b{color:#111!important}
   .hero-copy small,.section-kicker,.modal small,.success small,.hero-copy p,.about-section p{color:#555!important}
-  .hero-accent-purple,.hero-accent-yellow{color:#111!important}
+  /* Light mode accent colors only: sweet = muted blue-gray, delicious = muted pink. */
+  .hero-accent-purple{color:#8799A6!important;-webkit-text-fill-color:#8799A6!important}
+  .hero-accent-yellow{color:#D3A0AA!important;-webkit-text-fill-color:#D3A0AA!important}
   .hero-btn,.add,.dark{background:#111!important;color:#fff!important;border-color:#111!important;box-shadow:none!important}
   .hero-btn:hover,.add:hover,.dark:hover{background:#222!important;border-color:#222!important}
   .hero-visual{background:#f7f7f7!important;box-shadow:0 18px 45px rgba(0,0,0,.06)!important}

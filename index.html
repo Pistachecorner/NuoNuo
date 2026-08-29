@@ -425,7 +425,7 @@
     var layer=document.createElement('div');
     layer.id='nuonuo-birds-only-layer';
     var pageHeight=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,window.innerHeight);
-    var count=Math.max(10,Math.min(18,Math.round(pageHeight/520)));
+    var count=Math.max(16,Math.min(28,Math.round(pageHeight/380)));
     var protectedRects=[];
     var protectedSelectors=['.site-header','.announcement-bar','.hero-visual','.craft-card','.craft-image','.category-card','.card','.pic','.about-section','.overlay','.panel','.modal','.account-modal','.success'];
     protectedSelectors.forEach(function(sel){document.querySelectorAll(sel).forEach(function(el){var r=el.getBoundingClientRect();protectedRects.push({left:r.left+window.scrollX-24,right:r.right+window.scrollX+24,top:r.top+window.scrollY-24,bottom:r.bottom+window.scrollY+24});});});
