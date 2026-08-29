@@ -1983,3 +1983,19 @@ body{color-scheme:light;}
   #nuonuo-stars-only-layer{display:none!important}
   #nuonuo-birds-only-layer{display:block}
 }
+
+/* V44 · FINAL LIGHT MODE ACCENT OVERRIDE
+   Strong selector placed at the very end so Light Mode cannot fall back
+   to the previous purple / yellow accent colors. Dark Mode is untouched. */
+@media (prefers-color-scheme: light){
+  html body .hero-copy h1 span.hero-accent-purple,
+  html body .hero-copy h1 .hero-accent-purple{
+    color:#8799A6!important;
+    -webkit-text-fill-color:#8799A6!important;
+  }
+  html body .hero-copy h1 span.hero-accent-yellow,
+  html body .hero-copy h1 .hero-accent-yellow{
+    color:#D3A0AA!important;
+    -webkit-text-fill-color:#D3A0AA!important;
+  }
+}
