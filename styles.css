@@ -2023,3 +2023,74 @@ body{color-scheme:light;}
 @media(max-width:650px){
   .product-category{font-size:8px;margin-bottom:5px;letter-spacing:.14em}
 }
+
+
+/* V46 category navigation: All stays with the category choices, while the full menu remains visible and selections jump to the matching section. */
+.menu-category-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 28px;padding:0 0 2px;overflow-x:auto;scrollbar-width:none;}
+.menu-category-nav::-webkit-scrollbar{display:none;}
+.menu-category-link{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:all .2s ease;}
+.menu-category-link:hover,.menu-category-link.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.menu-category-section{scroll-margin-top:110px;margin:0 0 42px;}
+.menu-category-heading{display:flex;align-items:baseline;gap:14px;margin:0 0 14px;padding-top:2px;}
+.menu-category-heading .section-kicker{margin:0;}
+.menu-category-heading h3{font:26px Georgia,serif;margin:0;color:var(--ink);}
+.menu-category-products{display:flex;flex-direction:column;gap:12px;}
+@media(max-width:650px){
+  .menu-category-nav{flex-wrap:nowrap;margin:14px 0 22px;padding-bottom:4px;}
+  .menu-category-link{font-size:10px;padding:7px 12px;}
+  .menu-category-section{scroll-margin-top:92px;margin-bottom:32px;}
+  .menu-category-heading{gap:9px;margin-bottom:10px;}
+  .menu-category-heading h3{font-size:22px;}
+}
+
+
+
+/* NuoNuo mobile portrait-only behavior */
+@media (max-width: 768px) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  /* Keep the mobile page in portrait layout and prevent horizontal scrolling. */
+  body {
+    min-width: 0 !important;
+  }
+
+  /* Category navigation stays usable without making the page horizontally scrollable. */
+  .category-nav,
+  .categories-nav,
+  .category-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .category-nav::-webkit-scrollbar,
+  .categories-nav::-webkit-scrollbar,
+  .category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Prevent individual menu cards/content from forcing a landscape-width layout. */
+  .menu-card,
+  .product-card,
+  .menu-item,
+  .product-item {
+    max-width: 100%;
+  }
+
+  img, video {
+    max-width: 100%;
+  }
+}
+
+/* On narrow/mobile screens, do not allow the page itself to become wider than the viewport. */
+@media (orientation: landscape) and (max-width: 768px) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+}

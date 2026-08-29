@@ -154,21 +154,50 @@ function imageTag(candidates,alt,className=''){
 function sameId(a,b){return String(a??'').trim()===String(b??'').trim();}
 function categoryProducts(catId){return products.filter(p=>sameId(p.category_id,catId));}
 
-function menu(cat='',query=''){
-  let q=query.trim().toLowerCase();
-  // No category means Shop all. Category/trending links pass a category id.
-  // This keeps navigation visibly responsive instead of landing on an empty menu.
-  let list=products.filter(p=>(!cat||sameId(p.category_id,cat))&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
-  $('#grid').innerHTML=list.map(p=>{
-    const imgs=productImageCandidates(p);
-    const category=cats.find(c=>sameId(c.id,p.category_id));
-    return `<article class="card product-card-clickable" tabindex="0" role="button" data-product-detail="${esc(p.id)}"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><small class="product-category">${esc(category?.name||'NUONUO')}</small><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><span class="view-product">View details →</span></div></div></article>`
-  }).join('')||'<p>No products available.</p>';
+function productCardMarkup(p){
+  const imgs=productImageCandidates(p);
+  const category=cats.find(c=>sameId(c.id,p.category_id));
+  return `<article class="card product-card-clickable" tabindex="0" role="button" data-product-detail="${esc(p.id)}"><div class="pic ${imgs.length?'':'no-image'}">${imgs.length?imageTag(imgs,p.name):'NuoNuo'}</div><div class="body"><small class="product-category">${esc(category?.name||'NUONUO')}</small><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}<div class="row"><b>${money(p.selling_price)}</b><span class="view-product">View details →</span></div></div></article>`;
+}
+function bindProductCards(){
   $('#grid').querySelectorAll('[data-product-detail]').forEach(card=>{
     const open=()=>openProductDetail(card.dataset.productDetail);
     card.onclick=e=>{if(e.target.closest('a,button'))return;open()};
     card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};
   });
+}
+function menu(cat='',query=''){
+  const q=query.trim().toLowerCase();
+  const filtered=products.filter(p=>(!cat||sameId(p.category_id,cat))&&(!q||`${p.name} ${p.description||''}`.toLowerCase().includes(q)));
+  if(cat){
+    const category=cats.find(c=>sameId(c.id,cat));
+    $('#grid').innerHTML=filtered.length?`<section class="menu-category-section" id="menu-category-${esc(cat)}"><div class="menu-category-heading"><div class="section-kicker">CATEGORY</div><h3>${esc(category?.name||'Category')}</h3></div><div class="menu-category-products">${filtered.map(productCardMarkup).join('')}</div></section>`:'<p>No products available.</p>';
+  }else{
+    const sections=cats.map(c=>{
+      const list=filtered.filter(p=>sameId(p.category_id,c.id));
+      if(!list.length)return '';
+      return `<section class="menu-category-section" id="menu-category-${esc(c.id)}"><div class="menu-category-heading"><div class="section-kicker">CATEGORY</div><h3>${esc(c.name)}</h3></div><div class="menu-category-products">${list.map(productCardMarkup).join('')}</div></section>`;
+    }).join('');
+    const uncategorized=filtered.filter(p=>!cats.some(c=>sameId(c.id,p.category_id)));
+    const extra=uncategorized.length?`<section class="menu-category-section" id="menu-category-other"><div class="menu-category-heading"><div class="section-kicker">CATEGORY</div><h3>Other</h3></div><div class="menu-category-products">${uncategorized.map(productCardMarkup).join('')}</div></section>`:'';
+    $('#grid').innerHTML=(sections+extra)||'<p>No products available.</p>';
+  }
+  bindProductCards();
+}
+function renderCategoryNav(){
+  const holder=$('#menuCategoryNav');
+  if(!holder)return;
+  holder.innerHTML=`<button type="button" class="menu-category-link active" data-menu-category="">All</button>`+cats.map(c=>`<button type="button" class="menu-category-link" data-menu-category="${esc(c.id)}">${esc(c.name)}</button>`).join('');
+  holder.onclick=e=>{
+    const btn=e.target.closest('[data-menu-category]');
+    if(!btn)return;
+    const id=btn.dataset.menuCategory||'';
+    filterByCategory(id);
+  };
+}
+function scrollToMenuCategory(id){
+  const target=id?document.getElementById(`menu-category-${id}`):document.getElementById('menu');
+  if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function renderTrending(){
@@ -302,9 +331,10 @@ async function load(){
     $('#loading')?.remove();
     const select=$('#categorySelect');
     if(select){
-      select.innerHTML='<option value="">Categories</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-      select.onchange=()=>menu(select.value,$('#searchInput')?.value||'');
+      select.innerHTML='<option value="">All</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+      select.onchange=()=>filterByCategory(select.value);
     }
+    renderCategoryNav();
     renderTrending();
     renderPopular();
     renderCategories();
@@ -323,8 +353,9 @@ window.filterByCategory=(id)=>{
   const categoryId=String(id??'');
   const select=$('#categorySelect');
   if(select)select.value=categoryId;
-  menu(categoryId,$('#searchInput')?.value||'');
-  scrollToId('menu');
+  $('#menuCategoryNav')?.querySelectorAll('.menu-category-link').forEach(btn=>btn.classList.toggle('active',(btn.dataset.menuCategory||'')===categoryId));
+  menu('', $('#searchInput')?.value||'');
+  requestAnimationFrame(()=>scrollToMenuCategory(categoryId));
 };
 window.filterCat=(b,id)=>window.filterByCategory(id);
 function currentCategory(){return $('#categorySelect')?.value||''}
