@@ -1999,3 +1999,11 @@ body{color-scheme:light;}
     -webkit-text-fill-color:#D3A0AA!important;
   }
 }
+
+/* FINAL LIGHT MODE ONLY: ingredient labels in muted pink */
+@media (prefers-color-scheme: light){
+  html body .craft-script{
+    color:#C98FA3!important;
+    -webkit-text-fill-color:#C98FA3!important;
+  }
+}
