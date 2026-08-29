@@ -2094,3 +2094,13 @@ body{color-scheme:light;}
     overflow-x: hidden !important;
   }
 }
+
+/* NuoNuo mobile portrait preference: prevent the website from becoming a landscape canvas. */
+@media (max-width: 768px) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+}
