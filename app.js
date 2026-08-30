@@ -571,6 +571,16 @@ function timeToMinutes(v){if(!v)return NaN;const [h,m]=v.split(':').map(Number);
 function formatFulfilmentDate(v){if(!v)return '';const [y,m,d]=v.split('-').map(Number);return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}).format(new Date(Date.UTC(y,m-1,d)))}
 function formatFulfilmentTime(v){if(!v)return '';const [h,m]=v.split(':').map(Number);const suffix=h>=12?'PM':'AM';const hh=(h%12)||12;return `${hh}:${String(m).padStart(2,'0')} ${suffix}`}
 function minutesToTime(total){const h=Math.floor(total/60),m=total%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`}
+let checkoutSubtotal=0,checkoutDiscount=0,checkoutDeliveryFee=0;
+function updateCheckoutTotals(){
+  const fulfil=$('#fulfil')?.value||'pickup';
+  checkoutDeliveryFee=fulfil==='delivery' && checkoutSubtotal<60 ? 6 : 0;
+  const row=$('#deliveryFeeRow'),fee=$('#deliveryFee');
+  if(row&&fee){row.classList.toggle('hidden',fulfil!=='delivery');fee.textContent=checkoutDeliveryFee?'RM 6.00':'FREE';}
+  const total=Math.max(0,checkoutSubtotal+checkoutDeliveryFee-checkoutDiscount);
+  if($('#checkoutTotal'))$('#checkoutTotal').textContent=money(total);
+  return total;
+}
 function updateCheckoutAddressRequirement(){
   const delivery=$('#fulfil').value==='delivery';
   const input=$('#address');if(input)input.required=delivery;
@@ -599,8 +609,8 @@ function updateCheckoutAddressRequirement(){
       hint.textContent=`Pickup: ${formatFulfilmentDate(date.value)} · ${formatFulfilmentTime(time.value)}. Available 12:00 PM–10:00 PM on the selected date.`;
     }
   }
-}
-function validateFulfilmentSchedule(date,time,fulfil){
+  updateCheckoutTotals();
+}function validateFulfilmentSchedule(date,time,fulfil){
   const now=malaysiaNowParts(),today=now.date,tomorrow=addDaysDate(today,1);
   if(!date)throw new Error('Please select a fulfilment date.');
   if(fulfil==='delivery'){
@@ -659,14 +669,14 @@ async function applyCheckoutVoucher(code){
     const amount=Number(data.discount||10);
     discount.textContent=`RM ${amount.toFixed(2)} discount applied`;
     msg.dataset.valid='true';msg.dataset.code=code;msg.textContent='Voucher selected.';
-    $('#checkoutTotal').textContent=money(Math.max(0,subtotal-amount));
+    checkoutDiscount=amount;updateCheckoutTotals();
     $('#voucherCheckoutStatus').textContent='Selected';$('#voucherCheckoutStatus').classList.add('is-selected');
     document.querySelectorAll('.checkout-voucher-card').forEach(card=>card.classList.toggle('is-selected',card.dataset.voucherCode===code));
   }catch(err){msg.textContent=errText(err);}
 }
-async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value='';$('#fulfilTime').value='';$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}${x.addons?.length?`<small>${x.addons.map(a=>`+ ${esc(a.name)}`).join(', ')}</small>`:''}</span><b>${money(cartItemTotal(x))}</b></div>`).join('');const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0);$('#checkoutTotal').textContent=money(subtotal);$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';$('#voucherMessage').dataset.valid='false';delete $('#voucherMessage').dataset.code;document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();await renderCheckoutVouchers(subtotal);$('#modal').classList.remove('hidden')}
+async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value='';$('#fulfilTime').value='';$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}${x.addons?.length?`<small>${x.addons.map(a=>`+ ${esc(a.name)}`).join(', ')}</small>`:''}</span><b>${money(cartItemTotal(x))}</b></div>`).join('');checkoutSubtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0);checkoutDiscount=0;checkoutDeliveryFee=0;$('#checkoutTotal').textContent=money(checkoutSubtotal);$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';$('#voucherMessage').dataset.valid='false';delete $('#voucherMessage').dataset.code;$('#deliveryFeeRow').classList.add('hidden');$('#deliveryFee').textContent='RM 0.00';document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();await renderCheckoutVouchers(checkoutSubtotal);$('#modal').classList.remove('hidden')}
 $('#checkout').onclick=prepareCheckout;$('#fulfil').onchange=()=>{updateCheckoutAddressRequirement()};$('#date').onchange=updateCheckoutAddressRequirement;$('#fulfilTime').onchange=updateCheckoutAddressRequirement;$('#x').onclick=()=>$('#modal').classList.add('hidden');$('#done').onclick=()=>{$('#success').classList.add('hidden');scrollToId('menu')};
-$('#form').onsubmit=async e=>{e.preventDefault();$('#error').textContent='';$('#place').disabled=true;try{const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0),name=$('#name').value.trim(),phone=$('#phone').value.trim(),email=$('#email').value.trim(),address=$('#address').value.trim(),birthday=$('#birthdayCheckout').value||null,fulfil=$('#fulfil').value,payment=$('#payment').value,note=$('#note').value.trim(),date=$('#date').value,time=$('#fulfilTime').value;validateFulfilmentSchedule(date,time,fulfil);const scheduleNote=`${fulfil==='delivery'?'Local delivery':'Self pickup'}: ${date}${fulfil==='delivery'?' · 4:00 PM–8:00 PM':` ${time}`}`;const orderNote=[scheduleNote,note].filter(Boolean).join(' | ');const {data:{session}}=await sb.auth.getSession();if(!name||!phone)throw new Error('Name and phone number are required to place an order.');if(fulfil==='delivery'&&!address)throw new Error('Address is required for delivery orders.');if(!/^\+?[0-9]{8,15}$/.test(normalizePhone(phone)))throw new Error('Please enter a valid phone number.');if(session){await saveProfile({name,phone,email,address,birthday})}const items=cart.map(x=>({product_id:x.id,quantity:x.qty,addon_ids:(x.addons||[]).map(a=>a.id)}));
+$('#form').onsubmit=async e=>{e.preventDefault();$('#error').textContent='';$('#place').disabled=true;try{const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0),name=$('#name').value.trim(),phone=$('#phone').value.trim(),email=$('#email').value.trim(),address=$('#address').value.trim(),birthday=$('#birthdayCheckout').value||null,fulfil=$('#fulfil').value,payment=$('#payment').value,note=$('#note').value.trim(),date=$('#date').value,time=$('#fulfilTime').value;validateFulfilmentSchedule(date,time,fulfil);const scheduleNote=`${fulfil==='delivery'?'Local delivery':'Self pickup'}: ${date}${fulfil==='delivery'?' · 4:00 PM–8:00 PM':` ${time}`}`;const shippingNote=fulfil==='delivery'?(checkoutDeliveryFee>0?'Local delivery fee: RM 6.00 (order below RM 60).':'Local delivery: FREE (order RM 60 or above).'):'';const orderNote=[scheduleNote,shippingNote,note].filter(Boolean).join(' | ');const {data:{session}}=await sb.auth.getSession();if(!name||!phone)throw new Error('Name and phone number are required to place an order.');if(fulfil==='delivery'&&!address)throw new Error('Address is required for delivery orders.');if(!/^\+?[0-9]{8,15}$/.test(normalizePhone(phone)))throw new Error('Please enter a valid phone number.');if(session){await saveProfile({name,phone,email,address,birthday})}const items=cart.map(x=>({product_id:x.id,quantity:x.qty,addon_ids:(x.addons||[]).map(a=>a.id)}));
 const voucherCode=$('#voucherMessage').dataset.valid==='true'?$('#voucherMessage').dataset.code:'';
 let result,oe;
 if(session){
@@ -685,7 +695,7 @@ if(session){
 if(oe)throw oe;
 const orderNumber=result?.order_number||'';
 const birthdayGift=!!result?.birthday_gift;
-const vouchersEarned=Number(result?.vouchers_earned||0);cart=[];render();$('#modal').classList.add('hidden');$('#orderno').textContent=orderNumber;$('#successBirthday').classList.toggle('hidden',!birthdayGift);$('#successVoucher').classList.toggle('hidden',vouchersEarned<1);$('#successVoucher').textContent=vouchersEarned>0?`🎟️ You earned ${vouchersEarned} RM 10 voucher${vouchersEarned===1?'':'s'} for your next purchase.`:'';$('#success').classList.remove('hidden')}catch(err){console.error(err);$('#error').textContent=errText(err)}finally{$('#place').disabled=false}};
+const vouchersEarned=Number(result?.vouchers_earned||0);const payable=updateCheckoutTotals();cart=[];render();$('#modal').classList.add('hidden');$('#orderno').textContent=orderNumber;$('#successBirthday').classList.toggle('hidden',!birthdayGift);$('#successVoucher').classList.toggle('hidden',vouchersEarned<1);$('#successVoucher').textContent=vouchersEarned>0?`🎟️ You earned ${vouchersEarned} RM 10 voucher${vouchersEarned===1?'':'s'} for your next purchase.`:'';$('#successPayable').textContent=money(payable);$('#successPayment').classList.remove('hidden');$('#success').classList.remove('hidden')}catch(err){console.error(err);$('#error').textContent=errText(err)}finally{$('#place').disabled=false}};
 document.addEventListener('click',e=>{
   if(e.target.id==='productDetailModal') closeProductDetail();
 });
