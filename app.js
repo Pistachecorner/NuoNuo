@@ -217,43 +217,64 @@ function normalizePopularText(value){
   return String(value??'').toLowerCase().replace(/[^a-z0-9]+/g,'');
 }
 function findPopularProduct(categoryNeedles, productNeedles){
-  const catsForProduct=p=>cats.find(c=>sameId(c.id,p.category_id));
-  const categoryMatch=(p)=>{
-    const name=normalizePopularText(catsForProduct(p)?.name);
-    return categoryNeedles.some(n=>name.includes(normalizePopularText(n)));
+  const categoryNames=(p)=>{
+    const c=cats.find(c=>sameId(c.id,p.category_id));
+    return normalizePopularText(c?.name);
   };
-  const productMatch=(p)=>{
-    const name=normalizePopularText(p.name);
-    return productNeedles.some(n=>name.includes(normalizePopularText(n)));
-  };
-  return products.find(p=>productImage(p)&&categoryMatch(p)&&productMatch(p))
-    || products.find(p=>productImage(p)&&productMatch(p))
+  const productName=(p)=>normalizePopularText(p?.name);
+  const categoryMatch=(p)=>categoryNeedles.some(n=>categoryNames(p).includes(normalizePopularText(n)));
+  const productExact=(p)=>productNeedles.some(n=>productName(p)===normalizePopularText(n));
+  const productContains=(p)=>productNeedles.some(n=>productName(p).includes(normalizePopularText(n)));
+
+  // IMPORTANT: curated homepage picks must match the requested product name.
+  // Never fall back to a generic word such as "Oreo", otherwise a different
+  // Oreo product can accidentally replace the intended pick.
+  return products.find(p=>productExact(p)&&categoryMatch(p))
+    || products.find(p=>productExact(p))
+    || products.find(p=>productContains(p)&&categoryMatch(p))
+    || products.find(p=>productContains(p))
     || null;
 }
 function renderPopular(){
   const holder=$('#popularGrid');
   if(!holder)return;
 
-  // Homepage picks are intentionally fixed here so the five products can be
-  // curated without changing Menu categories or product data.
+  // Fixed homepage picks, in the exact order requested by the owner.
   const picks=[
-    findPopularProduct(['Dubai Chewy Cookies (Marshmallow Version)','Dubai Chewy Cookies'],['Signature Pistachio']),
-    findPopularProduct(['Pistaché Spread','Pistache Spread'],['100% Pistachio Chunky','Pistachio Chunky']),
-    findPopularProduct(['Snowflakes Nougat'],['Cocoa Indulgence']),
-    findPopularProduct(['Daifuku Mochi','Daifuku'],['Matcha Redbean','Matcha Red Bean']),
-    findPopularProduct(['Crispy OatNuoNuo Clusters','Crispy Oat NuoNuo Clusters'],['Oreo Cream','Oreo'])
-  ].filter(Boolean);
+    findPopularProduct(
+      ['Dubai Chewy Cookies (Marshmallow Version)','Dubai Chewy Cookies'],
+      ['Signature Pistachio']
+    ),
+    findPopularProduct(
+      ['Pistaché Spread','Pistache Spread'],
+      ['100% Pistachio Chunky (120g)','100% Pistachio Chunky','Pistahchio Chunky (120g)','Pistachio Chunky (120g)']
+    ),
+    findPopularProduct(
+      ['Snowflakes Nougat'],
+      ['Cocoa Indulgence (200g 20pcs)','Cocoa Indulgence']
+    ),
+    findPopularProduct(
+      ['Daifuku Mochi','Daifuku'],
+      ['Daifuku Mochi Matcha Redbean','Matcha Redbean','Matcha Red Bean']
+    ),
+    findPopularProduct(
+      ['Crispy OatNuoNuo Clusters','Crispy Oat NuoNuo Clusters','Crispy OatNuoNuo'],
+      ['Crispy OatNuoNuo Clusters Oreo Cream','Oreo Cream']
+    )
+  ];
 
   const unique=[];
   const seen=new Set();
   for(const p of picks){
+    if(!p)continue;
     const key=String(p.id||p.name);
     if(!seen.has(key)){seen.add(key);unique.push(p);}
   }
+
   holder.innerHTML=unique.map(p=>{
     const imgs=productImageCandidates(p);
     const category=cats.find(c=>sameId(c.id,p.category_id));
-    return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}">${imgs.length?imageTag(imgs,p.name):''}<span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
+    return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}">${imgs.length?imageTag(imgs,p.name):'<span class="popular-no-image">'+esc(p.name)+'</span>'}<span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
   }).join('')||'<p class="menu-empty">No featured products available.</p>';
   if(holder.dataset.bound==='1')return;
   holder.dataset.bound='1';
