@@ -2106,3 +2106,12 @@ body{color-scheme:light;}
     overflow-x: hidden !important;
   }
 }
+
+/* Checkout payment QR */
+.payment-qr{grid-column:1 / -1;border:1px solid var(--line,rgba(255,255,255,.16));border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-top:2px;background:var(--surface,transparent)}
+.payment-qr small{letter-spacing:.18em;opacity:.7}
+.payment-qr strong{font-size:16px}
+.payment-qr img{display:block;width:min(260px,70vw);height:auto;border-radius:12px;margin:6px 0}
+.payment-qr span{font-size:13px;opacity:.7}
+#fulfilTimeField[style*="display: none"]{display:none!important}
+@media (max-width:700px){.payment-qr{padding:14px}.payment-qr img{width:min(230px,68vw)}}

@@ -277,9 +277,10 @@
         <label>Fulfilment date<input id="date" type="date" required></label>
         <label class="wide">Address <span class="optional">(required for delivery)</span><input id="address" autocomplete="street-address"></label>
         <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday" lang="en-GB"></label>
-        <label>Time<input id="fulfilTime" type="time" required></label>
+        <label id="fulfilTimeField">Time<input id="fulfilTime" type="time"></label>
         <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select><small id="fulfilmentHint" class="fulfilment-hint"></small></label>
-        <label>Payment<select id="payment"><option>Bank transfer</option><option>Cash</option></select></label>
+        <label>Payment<select id="payment"><option value="Bank transfer">Bank transfer</option></select></label>
+        <div id="paymentQr" class="payment-qr" aria-label="DuitNow QR payment"><small>DUITNOW · BANK TRANSFER</small><strong>Scan to pay Pistaché Corner</strong><img src="duitnow-pistache-corner.jpg" alt="Pistaché Corner DuitNow QR"><span>Please scan the QR code to complete your payment.</span></div>
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>
       <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
