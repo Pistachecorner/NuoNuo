@@ -2126,3 +2126,7 @@ body{color-scheme:light;}
 .success-payment b{font-size:20px}
 .success-payment img{display:block;width:190px;height:auto;border-radius:8px;margin:4px 0}
 .success-payment span{font-size:10px;color:var(--muted);line-height:1.4}
+
+
+/* Checkout: show only one account/profile instruction line. */
+#checkoutAccountHint{display:none!important}

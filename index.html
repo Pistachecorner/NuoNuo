@@ -279,7 +279,7 @@
         <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday" lang="en-GB"></label>
         <label id="fulfilTimeField">Time<input id="fulfilTime" type="time"></label>
         <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select><small id="fulfilmentHint" class="fulfilment-hint"></small></label>
-        <label>Payment<select id="payment"><option value="Bank transfer">Bank transfer</option></select></label>
+        <label>Payment<select id="payment"><option value="Bank transfer">Bank transfer</option><option value="Touch 'n Go (TNG)">Touch 'n Go (TNG)</option></select><small class="fulfilment-hint">After placing your order, the same DuitNow QR can be paid with bank apps or Touch 'n Go.</small></label>
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>
       <div id="birthdayGiftNotice" class="birthday-notice hidden">🎁 It’s your birthday month. A complimentary gift will be included with this order.</div>
@@ -303,7 +303,7 @@
     </form>
   </div></div>
 
-  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><div id="successPayment" class="success-payment hidden"><small>PAYMENT</small><strong>Scan to pay Pistaché Corner</strong><b id="successPayable">RM 0.00</b><img src="duitnow-pistache-corner.jpg" alt="Pistaché Corner DuitNow QR"><span>Please scan the QR code to complete your payment.</span></div><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
+  <div id="success" class="hidden overlay"><div class="success"><span class="ok">✓</span><small>ORDER CONFIRMED</small><h2>Thank you 🤍</h2><p>Your NuoNuo order has been received.</p><p id="successBirthday" class="birthday-notice hidden">🎁 Your birthday-month gift has been noted for this order.</p><p id="successVoucher" class="birthday-notice hidden"></p><div id="successPayment" class="success-payment hidden"><small>PAYMENT</small><strong>Scan to pay Pistaché Corner</strong><b id="successPayable">RM 0.00</b><img src="duitnow-pistache-corner.jpg" alt="Pistaché Corner DuitNow QR"><span>Scan this DuitNow QR after placing your order. It accepts participating bank apps and Touch 'n Go.</span></div><b id="orderno"></b><button id="done" class="dark">Back to menu</button></div></div>
   <script src="app.js"></script>
 
 <script id="nuonuo-stars-only-script">
