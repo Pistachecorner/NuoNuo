@@ -274,10 +274,11 @@
         <label>Name<input id="name" required autocomplete="name"></label>
         <label>Phone<input id="phone" required autocomplete="tel"></label>
         <label>Email <span class="optional">(optional)</span><input id="email" type="email" autocomplete="email"></label>
-        <label>Order date<input id="date" type="date" required></label>
+        <label>Fulfilment date<input id="date" type="date" required></label>
         <label class="wide">Address <span class="optional">(required for delivery)</span><input id="address" autocomplete="street-address"></label>
         <label>Birthday <span class="optional">(optional)</span><input id="birthdayCheckout" type="date" autocomplete="bday" lang="en-GB"></label>
-        <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select></label>
+        <label>Time<input id="fulfilTime" type="time" required></label>
+        <label>Fulfilment<select id="fulfil"><option value="pickup">Self pickup</option><option value="delivery">Local delivery</option></select><small id="fulfilmentHint" class="fulfilment-hint"></small></label>
         <label>Payment<select id="payment"><option>Bank transfer</option><option>Cash</option></select></label>
         <label class="wide">Note<textarea id="note"></textarea></label>
       </div>

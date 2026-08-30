@@ -561,7 +561,57 @@ $('#passwordForm').onsubmit=async e=>{
 
 $('#logoutCustomer').onclick=async()=>{if(!sb)return;await sb.auth.signOut();$('#meModal').classList.add('hidden');await refreshAuth();setAuthMode('login');showToast('You are signed out')};
 function birthdayMonthActive(birthday){return !!birthday&&Number(String(birthday).slice(5,7))===new Date().getMonth()+1}
-function updateCheckoutAddressRequirement(){const delivery=$('#fulfil').value==='delivery';const input=$('#address');if(input)input.required=delivery}
+function malaysiaNowParts(){
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  const out={};for(const p of parts)if(p.type!=='literal')out[p.type]=p.value;
+  return {date:`${out.year}-${out.month}-${out.day}`,hour:Number(out.hour),minute:Number(out.minute)};
+}
+function addDaysDate(dateString,days){const [y,m,d]=dateString.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d+days));return dt.toISOString().slice(0,10)}
+function timeToMinutes(v){if(!v)return NaN;const [h,m]=v.split(':').map(Number);return h*60+m}
+function formatFulfilmentDate(v){if(!v)return '';const [y,m,d]=v.split('-').map(Number);return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}).format(new Date(Date.UTC(y,m-1,d)))}
+function formatFulfilmentTime(v){if(!v)return '';const [h,m]=v.split(':').map(Number);const suffix=h>=12?'PM':'AM';const hh=(h%12)||12;return `${hh}:${String(m).padStart(2,'0')} ${suffix}`}
+function minutesToTime(total){const h=Math.floor(total/60),m=total%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`}
+function updateCheckoutAddressRequirement(){
+  const delivery=$('#fulfil').value==='delivery';
+  const input=$('#address');if(input)input.required=delivery;
+  const date=$('#date'),time=$('#fulfilTime'),hint=$('#fulfilmentHint');if(!date||!time)return;
+  const now=malaysiaNowParts(),today=now.date,tomorrow=addDaysDate(today,1);
+  if(delivery){
+    date.min=tomorrow; date.value=(date.value&&date.value>=tomorrow)?date.value:tomorrow;
+    time.min='16:00';time.max='20:00';time.step=900;
+    time.value=(date.value===tomorrow&&time.value>='16:00'&&time.value<='20:00')?time.value:'16:00';
+    hint.textContent=`${date.value&&time.value?`Delivery: ${formatFulfilmentDate(date.value)} · ${formatFulfilmentTime(time.value)}. `:''}Available tomorrow onwards, 4:00 PM–8:00 PM daily.`;
+  }else{
+    const twoHoursLater=now.hour*60+now.minute+120;
+    const earliestToday=Math.max(12*60,twoHoursLater);
+    const canToday=earliestToday<=22*60;
+    date.min=canToday?today:tomorrow;
+    if(!date.value||date.value<date.min)date.value=date.min;
+    if(date.value===today){
+      time.min=minutesToTime(earliestToday);time.max='22:00';time.step=900;
+      if(!time.value||timeToMinutes(time.value)<earliestToday||timeToMinutes(time.value)>22*60)time.value=minutesToTime(earliestToday);
+      hint.textContent=`${date.value&&time.value?`Pickup: ${formatFulfilmentDate(date.value)} · ${formatFulfilmentTime(time.value)}. `:''}Today: ${formatFulfilmentTime(minutesToTime(earliestToday))}–10:00 PM. Minimum 2 hours from now.`;
+    }else{
+      time.min='12:00';time.max='22:00';time.step=900;
+      if(!time.value||timeToMinutes(time.value)<12*60||timeToMinutes(time.value)>22*60)time.value='12:00';
+      hint.textContent=`${date.value&&time.value?`Pickup: ${formatFulfilmentDate(date.value)} · ${formatFulfilmentTime(time.value)}. `:''}Available 12:00 PM–10:00 PM on the selected date.`;
+    }
+  }
+}
+function validateFulfilmentSchedule(date,time,fulfil){
+  const now=malaysiaNowParts(),today=now.date,tomorrow=addDaysDate(today,1),mins=timeToMinutes(time);
+  if(!date||Number.isNaN(mins))throw new Error('Please select a fulfilment date and time.');
+  if(fulfil==='delivery'){
+    if(date<tomorrow)throw new Error('Local delivery is available from tomorrow onwards.');
+    if(mins<16*60||mins>20*60)throw new Error('Local delivery is available only from 4:00 PM to 8:00 PM.');
+  }else{
+    if(date<today)throw new Error('Please select today or a future date.');
+    if(date===today&&mins<Math.max(12*60,now.hour*60+now.minute+120))throw new Error('Self pickup must be at least 2 hours from now.');
+    if(mins<12*60||mins>22*60)throw new Error('Self pickup is available from 12:00 PM to 10:00 PM.');
+    if(date===today&&mins>22*60)throw new Error('Today’s pickup time has passed. Please choose tomorrow.');
+  }
+}
+
 async function renderCheckoutVouchers(subtotal){
   const box=$('#checkoutVouchers'),status=$('#voucherCheckoutStatus'),msg=$('#voucherMessage'),discount=$('#voucherDiscount');
   if(!box)return;
@@ -611,22 +661,22 @@ async function applyCheckoutVoucher(code){
     document.querySelectorAll('.checkout-voucher-card').forEach(card=>card.classList.toggle('is-selected',card.dataset.voucherCode===code));
   }catch(err){msg.textContent=errText(err);}
 }
-async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value=new Date().toISOString().slice(0,10);$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}${x.addons?.length?`<small>${x.addons.map(a=>`+ ${esc(a.name)}`).join(', ')}</small>`:''}</span><b>${money(cartItemTotal(x))}</b></div>`).join('');const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0);$('#checkoutTotal').textContent=money(subtotal);$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';$('#voucherMessage').dataset.valid='false';delete $('#voucherMessage').dataset.code;document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();await renderCheckoutVouchers(subtotal);$('#modal').classList.remove('hidden')}
-$('#checkout').onclick=prepareCheckout;$('#fulfil').onchange=updateCheckoutAddressRequirement;$('#x').onclick=()=>$('#modal').classList.add('hidden');$('#done').onclick=()=>{$('#success').classList.add('hidden');scrollToId('menu')};
-$('#form').onsubmit=async e=>{e.preventDefault();$('#error').textContent='';$('#place').disabled=true;try{const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0),name=$('#name').value.trim(),phone=$('#phone').value.trim(),email=$('#email').value.trim(),address=$('#address').value.trim(),birthday=$('#birthdayCheckout').value||null,fulfil=$('#fulfil').value,payment=$('#payment').value,note=$('#note').value.trim(),date=$('#date').value;const {data:{session}}=await sb.auth.getSession();if(!name||!phone)throw new Error('Name and phone number are required to place an order.');if(fulfil==='delivery'&&!address)throw new Error('Address is required for delivery orders.');if(!/^\+?[0-9]{8,15}$/.test(normalizePhone(phone)))throw new Error('Please enter a valid phone number.');if(session){await saveProfile({name,phone,email,address,birthday})}const items=cart.map(x=>({product_id:x.id,quantity:x.qty,addon_ids:(x.addons||[]).map(a=>a.id)}));
+async function prepareCheckout(){if(!cart.length)return;$('#drawer').classList.add('hidden');$('#drawer').setAttribute('aria-hidden','true');document.body.classList.remove('cart-open');$('#date').value='';$('#fulfilTime').value='';$('#summary').innerHTML=cart.map(x=>`<div class="summary"><span>${esc(x.name)} × ${x.qty}${x.addons?.length?`<small>${x.addons.map(a=>`+ ${esc(a.name)}`).join(', ')}</small>`:''}</span><b>${money(cartItemTotal(x))}</b></div>`).join('');const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0);$('#checkoutTotal').textContent=money(subtotal);$('#voucherMessage').textContent='';$('#voucherDiscount').textContent='';$('#voucherMessage').dataset.valid='false';delete $('#voucherMessage').dataset.code;document.querySelectorAll('#meBirthday,#birthdayCheckout').forEach(el=>el.setAttribute('lang','en-GB'));const {data:{session}}=await sb.auth.getSession();currentProfile=session?await getProfile():null;const p=currentProfile||{};$('#name').value=p.name||'';$('#phone').value=p.phone||session?.user?.phone||'';$('#email').value=p.email||'';$('#address').value=p.address||'';$('#birthdayCheckout').value=p.birthday||'';$('#checkoutProfileNote').textContent=session?(profileComplete(p)?'Your saved name and phone have been filled in. Address is only needed for delivery.':'Please complete your name and phone below. Address is only needed for delivery. Email and birthday are optional.'):'Guest checkout: name and phone are required. Address is required only for delivery. Email and birthday are optional.';$('#birthdayGiftNotice').classList.toggle('hidden',!birthdayMonthActive(p.birthday));updateCheckoutAddressRequirement();await renderCheckoutVouchers(subtotal);$('#modal').classList.remove('hidden')}
+$('#checkout').onclick=prepareCheckout;$('#fulfil').onchange=()=>{updateCheckoutAddressRequirement()};$('#date').onchange=updateCheckoutAddressRequirement;$('#fulfilTime').onchange=updateCheckoutAddressRequirement;$('#x').onclick=()=>$('#modal').classList.add('hidden');$('#done').onclick=()=>{$('#success').classList.add('hidden');scrollToId('menu')};
+$('#form').onsubmit=async e=>{e.preventDefault();$('#error').textContent='';$('#place').disabled=true;try{const subtotal=cart.reduce((n,x)=>n+cartItemTotal(x),0),name=$('#name').value.trim(),phone=$('#phone').value.trim(),email=$('#email').value.trim(),address=$('#address').value.trim(),birthday=$('#birthdayCheckout').value||null,fulfil=$('#fulfil').value,payment=$('#payment').value,note=$('#note').value.trim(),date=$('#date').value,time=$('#fulfilTime').value;validateFulfilmentSchedule(date,time,fulfil);const scheduleNote=`${fulfil==='delivery'?'Local delivery':'Self pickup'}: ${date} ${time}`;const orderNote=[scheduleNote,note].filter(Boolean).join(' | ');const {data:{session}}=await sb.auth.getSession();if(!name||!phone)throw new Error('Name and phone number are required to place an order.');if(fulfil==='delivery'&&!address)throw new Error('Address is required for delivery orders.');if(!/^\+?[0-9]{8,15}$/.test(normalizePhone(phone)))throw new Error('Please enter a valid phone number.');if(session){await saveProfile({name,phone,email,address,birthday})}const items=cart.map(x=>({product_id:x.id,quantity:x.qty,addon_ids:(x.addons||[]).map(a=>a.id)}));
 const voucherCode=$('#voucherMessage').dataset.valid==='true'?$('#voucherMessage').dataset.code:'';
 let result,oe;
 if(session){
-  const v2=await sb.rpc('place_nuonuo_public_order_rewards',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:note||null,p_order_date:date||null,p_items:items,p_voucher_code:voucherCode||null});
+  const v2=await sb.rpc('place_nuonuo_public_order_rewards',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:orderNote||null,p_order_date:date||null,p_items:items,p_voucher_code:voucherCode||null});
   result=v2.data;oe=v2.error;
   // Safety fallback: if the optional rewards RPC has not been installed,
   // use the original checkout RPC so normal ordering never breaks.
   if(oe && /place_nuonuo_public_order_rewards|does not exist|42883/i.test(`${oe.message||''} ${oe.code||''}`)){
-    const base=await sb.rpc('place_nuonuo_public_order',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:note||null,p_order_date:date||null,p_items:items});
+    const base=await sb.rpc('place_nuonuo_public_order',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:orderNote||null,p_order_date:date||null,p_items:items});
     result=base.data;oe=base.error;
   }
 }else{
-  const base=await sb.rpc('place_nuonuo_public_order',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:note||null,p_order_date:date||null,p_items:items});
+  const base=await sb.rpc('place_nuonuo_public_order',{p_name:name,p_phone:normalizePhone(phone),p_email:email||null,p_address:address,p_birthday:birthday,p_fulfilment:fulfil,p_payment_method:payment,p_note:orderNote||null,p_order_date:date||null,p_items:items});
   result=base.data;oe=base.error;
 }
 if(oe)throw oe;
