@@ -83,9 +83,14 @@
   window.addEventListener('orientationchange', function(){ setTimeout(tryLockPortrait,100); });
 })();
 </script>
+
+<style id="nuonuo-malaysia-time-style">
+.announcement-bar .malaysia-time{margin-left:14px;white-space:nowrap;letter-spacing:.12em;}
+@media(max-width:650px){.announcement-bar .malaysia-time{margin-left:10px;}}
+</style>
 </head>
 <body>
-  <div class="announcement-bar">CRAFTED IN IPOH · MADE FRESH FOR YOU</div>
+  <div class="announcement-bar">CRAFTED IN IPOH · MADE FRESH FOR YOU <span class="malaysia-time" id="malaysiaTime" aria-label="Malaysia time">MYT · --:-- --</span></div>
   <header class="site-header">
     <div class="header-left">
       <button id="menuToggle" class="icon-btn" aria-label="Open menu">☰</button>
@@ -462,6 +467,27 @@
   }
   var timer;function refresh(){clearTimeout(timer);timer=setTimeout(buildBirds,180);}function init(){buildBirds();window.addEventListener('resize',refresh,{passive:true});if(window.ResizeObserver){var ro=new ResizeObserver(refresh);ro.observe(document.body);}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script id="nuonuo-malaysia-time-script">
+(function(){
+  function updateMalaysiaTime(){
+    var el=document.getElementById('malaysiaTime');
+    if(!el)return;
+    try{
+      var now=new Date();
+      var parts=new Intl.DateTimeFormat('en-MY',{
+        timeZone:'Asia/Kuala_Lumpur',hour:'numeric',minute:'2-digit',hour12:true
+      }).formatToParts(now);
+      var hour=parts.find(function(p){return p.type==='hour';})?.value||'--';
+      var minute=parts.find(function(p){return p.type==='minute';})?.value||'--';
+      var dayPeriod=parts.find(function(p){return p.type==='dayPeriod';})?.value||'';
+      el.textContent='MYT · '+hour+':'+minute+' '+dayPeriod;
+    }catch(e){el.textContent='MYT';}
+  }
+  updateMalaysiaTime();
+  setInterval(updateMalaysiaTime,1000);
 })();
 </script>
 </body>
