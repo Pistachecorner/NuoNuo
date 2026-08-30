@@ -213,11 +213,44 @@ function renderTrending(){
     window.filterByCategory(b.dataset.categoryId);
   });
 }
+function normalizePopularText(value){
+  return String(value??'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+}
+function findPopularProduct(categoryNeedles, productNeedles){
+  const catsForProduct=p=>cats.find(c=>sameId(c.id,p.category_id));
+  const categoryMatch=(p)=>{
+    const name=normalizePopularText(catsForProduct(p)?.name);
+    return categoryNeedles.some(n=>name.includes(normalizePopularText(n)));
+  };
+  const productMatch=(p)=>{
+    const name=normalizePopularText(p.name);
+    return productNeedles.some(n=>name.includes(normalizePopularText(n)));
+  };
+  return products.find(p=>productImage(p)&&categoryMatch(p)&&productMatch(p))
+    || products.find(p=>productImage(p)&&productMatch(p))
+    || null;
+}
 function renderPopular(){
   const holder=$('#popularGrid');
   if(!holder)return;
-  const list=products.filter(p=>productImage(p)).slice(0,8);
-  holder.innerHTML=list.map(p=>{
+
+  // Homepage picks are intentionally fixed here so the five products can be
+  // curated without changing Menu categories or product data.
+  const picks=[
+    findPopularProduct(['Dubai Chewy Cookies (Marshmallow Version)','Dubai Chewy Cookies'],['Signature Pistachio']),
+    findPopularProduct(['Pistaché Spread','Pistache Spread'],['100% Pistachio Chunky','Pistachio Chunky']),
+    findPopularProduct(['Snowflakes Nougat'],['Cocoa Indulgence']),
+    findPopularProduct(['Daifuku Mochi','Daifuku'],['Matcha Redbean','Matcha Red Bean']),
+    findPopularProduct(['Crispy OatNuoNuo Clusters','Crispy Oat NuoNuo Clusters'],['Oreo Cream','Oreo'])
+  ].filter(Boolean);
+
+  const unique=[];
+  const seen=new Set();
+  for(const p of picks){
+    const key=String(p.id||p.name);
+    if(!seen.has(key)){seen.add(key);unique.push(p);}
+  }
+  holder.innerHTML=unique.map(p=>{
     const imgs=productImageCandidates(p);
     const category=cats.find(c=>sameId(c.id,p.category_id));
     return `<article class="popular-card"><button type="button" class="popular-image" data-category-id="${esc(p.category_id||'')}">${imgs.length?imageTag(imgs,p.name):''}<span>View collection →</span></button><div class="popular-meta"><small>${esc(category?.name||'NuoNuo')}</small><h3>${esc(p.name)}</h3><b>${money(p.selling_price)}</b></div></article>`;
